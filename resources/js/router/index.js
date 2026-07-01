@@ -6,6 +6,7 @@ import RegisterView from '../views/RegisterView.vue';
 import StudentDetailView from '../views/StudentDetailView.vue';
 import StudentFormView from '../views/StudentFormView.vue';
 import StudentsView from '../views/StudentsView.vue';
+import UsersSettingsView from '../views/UsersSettingsView.vue';
 import { useAuthStore } from '../stores/auth';
 
 export const router = createRouter({
@@ -49,6 +50,12 @@ export const router = createRouter({
             path: '/alunos/:id',
             name: 'alunos.detalhe',
             component: StudentDetailView,
+            meta: { requiresAuth: true },
+        },
+        {
+            path: '/configuracoes/usuarios',
+            name: 'configuracoes.usuarios',
+            component: UsersSettingsView,
             meta: { requiresAuth: true },
         },
         {

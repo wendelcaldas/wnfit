@@ -128,6 +128,19 @@ class StudentController extends Controller
         ]);
     }
 
+    public function update(Request $request, Aluno $student): JsonResponse
+    {
+        $organization = $request->user()->organizacoes()->firstOrFail();
+        abort_unless($student->organizacao_id === $organization->id, 404);
+
+        $data = $request->validate($this->profileValidationRules());
+        $student->update($data);
+
+        return response()->json([
+            'student' => $this->studentDetailPayload($student->fresh(['assinatura.plano', 'cobrancas.eventos'])),
+        ]);
+    }
+
     public function options(Request $request): JsonResponse
     {
         $organization = $request->user()->organizacoes()->firstOrFail();
@@ -138,7 +151,12 @@ class StudentController extends Controller
                 ->where('ativo', true)
                 ->orderBy('valor_mensal')
                 ->get(['id', 'nome', 'valor_mensal', 'ciclo']),
-            'teachers' => ['Lucas Oliveira', 'Camila Alves', 'Pedro Henrique', 'Amanda Rocha'],
+            'teachers' => $organization->usuarios()
+                ->wherePivot('papel', 'professor')
+                ->wherePivot('status', 'ativo')
+                ->orderBy('name')
+                ->pluck('name')
+                ->values(),
             'units' => ['Unidade Vila Madalena', 'Unidade Centro', 'Online'],
         ]);
     }
@@ -175,7 +193,7 @@ class StudentController extends Controller
         return [
             'nome' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
-            'telefone' => ['nullable', 'string', 'max:20'],
+            'telefone' => ['required', 'string', 'max:20'],
             'data_nascimento' => ['nullable', 'date'],
             'genero' => ['nullable', 'string', 'max:30'],
             'cpf' => ['nullable', 'string', 'max:20'],
@@ -190,7 +208,7 @@ class StudentController extends Controller
             'cep' => ['nullable', 'string', 'max:20'],
             'peso' => ['nullable', 'numeric'],
             'altura' => ['nullable', 'integer'],
-            'objetivo' => ['required', 'string', 'max:80'],
+            'objetivo' => ['nullable', 'string', 'max:80'],
             'treinador' => ['nullable', 'string', 'max:80'],
             'unidade' => ['nullable', 'string', 'max:255'],
             'como_conheceu' => ['nullable', 'string', 'max:255'],
@@ -202,6 +220,36 @@ class StudentController extends Controller
             'auto_renovacao' => ['sometimes', 'boolean'],
             'metodo_pagamento' => ['nullable', 'string', 'max:30'],
             'valor_mensal' => ['nullable', 'numeric'],
+        ];
+    }
+
+    private function profileValidationRules(): array
+    {
+        return [
+            'nome' => ['sometimes', 'required', 'string', 'max:255'],
+            'email' => ['sometimes', 'nullable', 'email', 'max:255'],
+            'telefone' => ['sometimes', 'required', 'string', 'max:20'],
+            'contato_emergencia' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'telefone_emergencia' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'data_nascimento' => ['sometimes', 'nullable', 'date'],
+            'genero' => ['sometimes', 'nullable', 'string', 'max:30'],
+            'cpf' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'rg' => ['sometimes', 'nullable', 'string', 'max:30'],
+            'profissao' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'endereco' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'numero' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'complemento' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'bairro' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'cidade' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'estado' => ['sometimes', 'nullable', 'string', 'max:2'],
+            'cep' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'peso' => ['sometimes', 'nullable', 'numeric'],
+            'altura' => ['sometimes', 'nullable', 'integer'],
+            'objetivo' => ['sometimes', 'nullable', 'string', 'max:80'],
+            'restricoes_medicas' => ['sometimes', 'nullable', 'string'],
+            'lesoes' => ['sometimes', 'nullable', 'string'],
+            'medicamentos' => ['sometimes', 'nullable', 'string'],
+            'observacoes' => ['sometimes', 'nullable', 'string'],
         ];
     }
 
@@ -268,6 +316,7 @@ class StudentController extends Controller
             'status' => ucfirst($student->status),
             'email' => $student->email,
             'phone' => $student->telefone,
+            'profileCompletion' => $this->profileCompletion($student),
             'birthDate' => optional($student->data_nascimento)->format('d/m/Y'),
             'city' => $student->cidade,
             'state' => $student->estado,
@@ -277,14 +326,34 @@ class StudentController extends Controller
             'goal' => $student->objetivo,
             'observations' => $student->observacoes,
             'profile' => [
+                'name' => $student->nome,
+                'email' => $student->email,
+                'phone' => $student->telefone,
+                'birthDateInput' => optional($student->data_nascimento)->format('Y-m-d'),
+                'gender' => $student->genero,
                 'cpf' => $student->cpf,
                 'rg' => $student->rg,
                 'profession' => $student->profissao,
-                'address' => trim("{$student->endereco}, {$student->numero}"),
+                'address' => $student->endereco,
+                'number' => $student->numero,
+                'complement' => $student->complemento,
                 'neighborhood' => $student->bairro,
+                'city' => $student->cidade,
+                'state' => $student->estado,
                 'zip' => $student->cep,
                 'weight' => $student->peso,
                 'height' => $student->altura,
+                'emergencyContact' => $student->contato_emergencia,
+                'emergencyPhone' => $student->telefone_emergencia,
+            ],
+            'health' => [
+                'goal' => $student->objetivo,
+                'weight' => $student->peso,
+                'height' => $student->altura,
+                'medicalRestrictions' => $student->restricoes_medicas,
+                'injuries' => $student->lesoes,
+                'medications' => $student->medicamentos,
+                'notes' => $student->observacoes,
             ],
             'financial' => [
                 'status' => $open > 0 ? 'Com pendencia' : 'Em dia',
@@ -333,5 +402,13 @@ class StudentController extends Controller
     private function initials(string $name): string
     {
         return collect(explode(' ', $name))->filter()->take(2)->map(fn ($part) => mb_substr($part, 0, 1))->implode('');
+    }
+
+    private function profileCompletion(Aluno $student): int
+    {
+        $fields = ['nome', 'telefone', 'email', 'data_nascimento', 'cpf', 'cidade', 'contato_emergencia', 'objetivo', 'peso', 'altura', 'restricoes_medicas'];
+        $filled = collect($fields)->filter(fn ($field) => filled($student->{$field}))->count();
+
+        return (int) round(($filled / count($fields)) * 100);
     }
 }

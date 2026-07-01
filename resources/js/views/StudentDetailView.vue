@@ -35,10 +35,18 @@
                         </div>
                     </div>
                     <div class="flex gap-3">
-                        <button class="btn-secondary gap-2"><Pencil class="h-5 w-5" />Editar aluno</button>
+                        <button class="btn-secondary gap-2" @click="openProfile"><Pencil class="h-5 w-5" />Editar aluno</button>
                         <button class="icon-button"><MoreHorizontal class="h-5 w-5" /></button>
                     </div>
                 </div>
+            </div>
+
+            <div class="border-t border-[var(--wn-line)] px-6 py-4">
+                <div class="flex items-center justify-between gap-4 text-sm">
+                    <span class="font-medium">Perfil {{ student.profileCompletion }}% completo</span>
+                    <button class="font-semibold text-[var(--wn-primary-strong)]" @click="openProfile">Completar perfil</button>
+                </div>
+                <div class="mt-2 h-2 overflow-hidden rounded-full bg-[var(--wn-neutral-soft)]"><div class="h-full rounded-full bg-[var(--wn-primary-strong)]" :style="{ width: `${student.profileCompletion}%` }"></div></div>
             </div>
 
             <nav class="flex gap-2 overflow-x-auto border-t border-[var(--wn-line)] px-6">
@@ -93,6 +101,47 @@
                     </div>
                 </section>
             </aside>
+        </section>
+
+        <section v-if="student && activeTab === 'profile'" class="mt-5 grid gap-5 xl:grid-cols-[1fr_320px]">
+            <form class="panel-card" @submit.prevent="saveProfile">
+                <div class="flex items-center justify-between gap-4">
+                    <div><h2 class="text-xl font-semibold">Dados pessoais</h2><p class="mt-1 text-sm text-[var(--wn-muted)]">Contato, documentos e endereco do aluno.</p></div>
+                    <button class="btn-primary" :disabled="saving">{{ saving ? 'Salvando...' : 'Salvar alteracoes' }}</button>
+                </div>
+                <div class="mt-6 grid gap-4 md:grid-cols-2">
+                    <ProfileField label="Nome completo *" v-model="profileForm.nome" required />
+                    <ProfileField label="Telefone *" v-model="profileForm.telefone" required />
+                    <ProfileField label="E-mail" v-model="profileForm.email" type="email" />
+                    <ProfileField label="Data de nascimento" v-model="profileForm.data_nascimento" type="date" />
+                    <ProfileField label="CPF" v-model="profileForm.cpf" /><ProfileField label="RG" v-model="profileForm.rg" />
+                    <ProfileField label="Profissao" v-model="profileForm.profissao" /><ProfileField label="Genero" v-model="profileForm.genero" />
+                    <ProfileField label="Endereco" v-model="profileForm.endereco" /><ProfileField label="Numero" v-model="profileForm.numero" />
+                    <ProfileField label="Complemento" v-model="profileForm.complemento" /><ProfileField label="Bairro" v-model="profileForm.bairro" />
+                    <ProfileField label="Cidade" v-model="profileForm.cidade" /><ProfileField label="Estado" v-model="profileForm.estado" maxlength="2" />
+                    <ProfileField label="CEP" v-model="profileForm.cep" />
+                </div>
+                <FormMessage :text="formMessage" />
+            </form>
+            <aside class="space-y-5">
+                <section class="panel-card"><h2 class="text-lg font-semibold">Contato de emergencia</h2><div class="mt-4 space-y-4"><ProfileField label="Nome do contato" v-model="profileForm.contato_emergencia" /><ProfileField label="Telefone" v-model="profileForm.telefone_emergencia" /></div></section>
+                <section class="panel-card bg-[var(--wn-primary-soft)]"><h2 class="font-semibold">Preencha aos poucos</h2><p class="mt-2 text-sm leading-6 text-[var(--wn-muted)]">Os campos complementares ajudam no atendimento, mas nao bloqueiam a matricula.</p></section>
+            </aside>
+        </section>
+
+        <section v-if="student && activeTab === 'health'" class="mt-5">
+            <form class="panel-card" @submit.prevent="saveHealth">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div><h2 class="text-xl font-semibold">Saude e anamnese</h2><p class="mt-1 text-sm text-[var(--wn-muted)]">Informacoes para um acompanhamento mais seguro e individualizado.</p></div>
+                    <button class="btn-primary justify-center" :disabled="saving">{{ saving ? 'Salvando...' : 'Salvar saude' }}</button>
+                </div>
+                <div class="mt-6 grid gap-4 md:grid-cols-3">
+                    <ProfileField label="Objetivo principal" v-model="healthForm.objetivo" /><ProfileField label="Peso (kg)" v-model="healthForm.peso" type="number" /><ProfileField label="Altura (cm)" v-model="healthForm.altura" type="number" />
+                    <TextField label="Restricoes medicas" v-model="healthForm.restricoes_medicas" /><TextField label="Lesoes ou limitacoes" v-model="healthForm.lesoes" /><TextField label="Medicamentos" v-model="healthForm.medicamentos" />
+                    <div class="md:col-span-3"><TextField label="Observacoes do acompanhamento" v-model="healthForm.observacoes" /></div>
+                </div>
+                <FormMessage :text="formMessage" />
+            </form>
         </section>
 
         <section v-if="student && activeTab === 'financial'" class="mt-5 grid gap-5 xl:grid-cols-[1fr_420px]">
@@ -192,7 +241,7 @@
 </template>
 
 <script setup>
-import { defineComponent, h, onMounted, ref } from 'vue';
+import { defineComponent, h, onMounted, reactive, ref } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { ArrowLeft, CheckCircle2, Mail, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Plus, ReceiptText } from 'lucide-vue-next';
 
@@ -207,6 +256,29 @@ const MiniKpi = defineComponent({
             h('p', { class: 'mt-2 text-xs text-[var(--wn-muted)]' }, props.caption),
         ]);
     },
+});
+
+const ProfileField = defineComponent({
+    props: { label: String, modelValue: [String, Number], type: { type: String, default: 'text' }, required: Boolean, maxlength: [String, Number] },
+    emits: ['update:modelValue'],
+    setup: (props, { emit }) => () => h('label', { class: 'block space-y-2' }, [
+        h('span', { class: 'text-sm font-medium text-[var(--wn-muted)]' }, props.label),
+        h('input', { value: props.modelValue ?? '', type: props.type, required: props.required, maxlength: props.maxlength, class: 'form-control', onInput: (event) => emit('update:modelValue', event.target.value) }),
+    ]),
+});
+
+const TextField = defineComponent({
+    props: { label: String, modelValue: String },
+    emits: ['update:modelValue'],
+    setup: (props, { emit }) => () => h('label', { class: 'block space-y-2' }, [
+        h('span', { class: 'text-sm font-medium text-[var(--wn-muted)]' }, props.label),
+        h('textarea', { value: props.modelValue ?? '', rows: 5, class: 'form-control', onInput: (event) => emit('update:modelValue', event.target.value) }),
+    ]),
+});
+
+const FormMessage = defineComponent({
+    props: { text: String },
+    setup: (props) => () => props.text ? h('p', { class: 'mt-5 rounded-lg bg-[var(--wn-primary-soft)] px-4 py-3 text-sm text-[var(--wn-primary-strong)]' }, props.text) : null,
 });
 
 const PlanCard = defineComponent({
@@ -246,9 +318,15 @@ const AutomationRow = defineComponent({
 
 const route = useRoute();
 const student = ref(null);
-const activeTab = ref('overview');
+const activeTab = ref(route.query.tab ?? 'overview');
+const saving = ref(false);
+const formMessage = ref('');
+const profileForm = reactive({});
+const healthForm = reactive({});
 const tabs = [
     { key: 'overview', label: 'Visão geral' },
+    { key: 'profile', label: 'Dados pessoais' },
+    { key: 'health', label: 'Saude e anamnese' },
     { key: 'workouts', label: 'Treinos' },
     { key: 'evaluations', label: 'Avaliações' },
     { key: 'frequency', label: 'Frequência' },
@@ -264,7 +342,37 @@ const labelStatus = (status) => ({ pago: 'Pago', pendente: 'Pendente', atrasado:
 const loadStudent = async () => {
     const { data } = await window.axios.get(`/api/students/${route.params.id}`);
     student.value = data.student;
+    Object.assign(profileForm, {
+        nome: data.student.profile.name, email: data.student.profile.email, telefone: data.student.profile.phone,
+        data_nascimento: data.student.profile.birthDateInput, genero: data.student.profile.gender, cpf: data.student.profile.cpf,
+        rg: data.student.profile.rg, profissao: data.student.profile.profession, endereco: data.student.profile.address,
+        numero: data.student.profile.number, complemento: data.student.profile.complement, bairro: data.student.profile.neighborhood,
+        cidade: data.student.profile.city, estado: data.student.profile.state, cep: data.student.profile.zip,
+        contato_emergencia: data.student.profile.emergencyContact, telefone_emergencia: data.student.profile.emergencyPhone,
+    });
+    Object.assign(healthForm, {
+        objetivo: data.student.health.goal, peso: data.student.health.weight, altura: data.student.health.height,
+        restricoes_medicas: data.student.health.medicalRestrictions, lesoes: data.student.health.injuries,
+        medicamentos: data.student.health.medications, observacoes: data.student.health.notes,
+    });
 };
+
+const saveChanges = async (payload) => {
+    saving.value = true;
+    formMessage.value = '';
+    try {
+        const { data } = await window.axios.patch(`/api/students/${student.value.id}`, payload);
+        student.value = data.student;
+        formMessage.value = 'Alteracoes salvas com sucesso.';
+    } catch (exception) {
+        const errors = exception.response?.data?.errors;
+        formMessage.value = errors ? Object.values(errors).flat()[0] : 'Nao foi possivel salvar as alteracoes.';
+    } finally { saving.value = false; }
+};
+
+const saveProfile = () => saveChanges(profileForm);
+const saveHealth = () => saveChanges(healthForm);
+const openProfile = () => { activeTab.value = 'profile'; formMessage.value = ''; };
 
 const generateCharge = async () => {
     await window.axios.post(`/api/students/${student.value.id}/charges`);

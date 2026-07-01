@@ -17,6 +17,8 @@ class Aluno extends Model
         'nome',
         'email',
         'telefone',
+        'contato_emergencia',
+        'telefone_emergencia',
         'data_nascimento',
         'genero',
         'cpf',
@@ -39,6 +41,9 @@ class Aluno extends Model
         'como_conheceu',
         'unidade',
         'observacoes',
+        'restricoes_medicas',
+        'lesoes',
+        'medicamentos',
     ];
 
     protected function casts(): array
