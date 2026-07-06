@@ -4,6 +4,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrganizationUserController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\WorkoutController;
+use App\Http\Controllers\ExerciseController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('api')->group(function () {
@@ -14,6 +16,12 @@ Route::prefix('api')->group(function () {
 
     Route::middleware('auth')->group(function () {
         Route::get('/dashboard', DashboardController::class);
+        Route::get('/workouts', [WorkoutController::class, 'index']);
+        Route::get('/exercises', [ExerciseController::class, 'index']);
+        Route::post('/exercises', [ExerciseController::class, 'store']);
+        Route::post('/workouts', [WorkoutController::class, 'store']);
+        Route::get('/workouts/{workout}', [WorkoutController::class, 'show']);
+        Route::put('/workouts/{workout}', [WorkoutController::class, 'update']);
         Route::get('/organization/users', [OrganizationUserController::class, 'index']);
         Route::post('/organization/users', [OrganizationUserController::class, 'store']);
         Route::patch('/organization/users/{user}', [OrganizationUserController::class, 'update']);

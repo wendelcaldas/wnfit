@@ -46,4 +46,9 @@ class Organizacao extends Model
     {
         return $this->hasMany(Plano::class);
     }
+
+    public function treinos(): HasMany
+    {
+        return $this->hasMany(Treino::class);
+    }
 }

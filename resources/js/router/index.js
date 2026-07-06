@@ -7,6 +7,8 @@ import StudentDetailView from '../views/StudentDetailView.vue';
 import StudentFormView from '../views/StudentFormView.vue';
 import StudentsView from '../views/StudentsView.vue';
 import UsersSettingsView from '../views/UsersSettingsView.vue';
+import WorkoutsView from '../views/WorkoutsView.vue';
+import WorkoutBuilderView from '../views/WorkoutBuilderView.vue';
 import { useAuthStore } from '../stores/auth';
 
 export const router = createRouter({
@@ -50,6 +52,24 @@ export const router = createRouter({
             path: '/alunos/:id',
             name: 'alunos.detalhe',
             component: StudentDetailView,
+            meta: { requiresAuth: true },
+        },
+        {
+            path: '/treinos',
+            name: 'treinos',
+            component: WorkoutsView,
+            meta: { requiresAuth: true },
+        },
+        {
+            path: '/treinos/novo',
+            name: 'treinos.novo',
+            component: WorkoutBuilderView,
+            meta: { requiresAuth: true },
+        },
+        {
+            path: '/treinos/:id/editar',
+            name: 'treinos.editar',
+            component: WorkoutBuilderView,
             meta: { requiresAuth: true },
         },
         {
