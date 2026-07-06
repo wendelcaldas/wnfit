@@ -484,6 +484,15 @@ textarea.form-control {
     backdrop-filter: blur(12px);
 }
 
+.header-account summary { list-style: none; }
+.header-account summary::-webkit-details-marker { display: none; }
+.header-account-trigger { display: flex; min-height: 2.5rem; cursor: pointer; align-items: center; gap: 0.65rem; border: 1px solid transparent; border-radius: 0.65rem; padding: 0.15rem 0.4rem; transition: border-color 160ms ease, background-color 160ms ease; }
+.header-account-trigger:hover,
+.header-account[open] .header-account-trigger { border-color: var(--wn-line); background: var(--wn-surface-soft); }
+.header-account-menu { position: absolute; top: calc(100% + 0.5rem); right: 0; z-index: 50; width: 13.5rem; overflow: hidden; border: 1px solid var(--wn-line); border-radius: 0.75rem; background: white; padding: 0.35rem; box-shadow: 0 16px 42px rgba(15, 23, 42, 0.14); }
+.header-account-item { display: flex; align-items: center; gap: 0.65rem; min-height: 2.5rem; border-radius: 0.5rem; padding: 0 0.75rem; font-size: 0.875rem; font-weight: 600; transition: background-color 160ms ease; }
+.header-account-item:hover { background: var(--wn-surface-soft); }
+
 .dashboard-content {
     width: 100%;
 }

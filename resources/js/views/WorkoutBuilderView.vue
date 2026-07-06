@@ -1,9 +1,13 @@
 <template>
     <AppShell eyebrow="Treinos > Montador" :title="isEditing ? 'Editar treino' : 'Novo treino'" description="Organize a rotina por dias e detalhe a execucao de cada exercicio.">
-        <template #page-actions><div class="flex flex-wrap justify-end gap-3"><RouterLink to="/treinos" class="btn-secondary">Cancelar</RouterLink><button class="btn-secondary" :disabled="saving" @click="save('rascunho')">Salvar rascunho</button><button class="btn-primary" :disabled="saving" @click="save('ativo')">{{ saving ? 'Salvando...' : 'Salvar e ativar' }}</button></div></template>
-
         <div class="grid gap-5 xl:grid-cols-[330px_1fr]">
-            <aside><section class="panel-card"><h2 class="text-lg font-semibold">Informacoes do treino</h2><div class="mt-5 space-y-4"><Field label="Nome do treino *" v-model="form.nome" placeholder="Ex.: Hipertrofia ABC" /><Field label="Objetivo *" v-model="form.objetivo" placeholder="Ex.: Hipertrofia" /><label class="block space-y-2"><span class="text-sm font-medium text-[var(--wn-muted)]">Nivel *</span><select v-model="form.nivel" class="form-control"><option value="iniciante">Iniciante</option><option value="intermediario">Intermediario</option><option value="avancado">Avancado</option></select></label><div class="grid grid-cols-2 gap-3"><Field label="Sessoes/semana" v-model="form.sessoes_semana" type="number" /><Field label="Duracao (semanas)" v-model="form.duracao_semanas" type="number" /></div><label class="block space-y-2"><span class="text-sm font-medium text-[var(--wn-muted)]">Descricao</span><textarea v-model="form.descricao" rows="4" class="form-control" placeholder="Orientacoes gerais do programa."></textarea></label></div></section></aside>
+            <aside class="space-y-3"><section class="panel-card"><h2 class="text-lg font-semibold">Informacoes do treino</h2><div class="mt-5 space-y-4"><Field label="Nome do treino *" v-model="form.nome" placeholder="Ex.: Hipertrofia ABC" /><Field label="Objetivo *" v-model="form.objetivo" placeholder="Ex.: Hipertrofia" /><label class="block space-y-2"><span class="text-sm font-medium text-[var(--wn-muted)]">Nivel *</span><select v-model="form.nivel" class="form-control"><option value="iniciante">Iniciante</option><option value="intermediario">Intermediario</option><option value="avancado">Avancado</option></select></label><div class="grid grid-cols-2 gap-3"><Field label="Sessoes/semana" v-model="form.sessoes_semana" type="number" /><Field label="Duracao (semanas)" v-model="form.duracao_semanas" type="number" /></div><label class="block space-y-2"><span class="text-sm font-medium text-[var(--wn-muted)]">Descricao</span><textarea v-model="form.descricao" rows="4" class="form-control" placeholder="Orientacoes gerais do programa."></textarea></label></div></section>
+                <div class="grid grid-cols-[auto_auto_1fr] gap-2 rounded-xl border border-[var(--wn-line)] bg-white p-3 shadow-sm">
+                    <RouterLink to="/treinos" class="btn-secondary !min-h-11 !px-3" title="Cancelar" aria-label="Cancelar"><ArrowLeft class="h-4 w-4" /><span class="hidden sm:inline xl:hidden">Cancelar</span></RouterLink>
+                    <button class="btn-secondary !min-h-11 !px-3" type="button" :disabled="saving" title="Salvar rascunho" aria-label="Salvar rascunho" @click="save('rascunho')"><FilePenLine class="h-4 w-4" /><span class="hidden sm:inline xl:hidden">Rascunho</span></button>
+                    <button class="btn-primary !min-h-11 justify-center !px-3" type="button" :disabled="saving" @click="save('ativo')"><Save class="h-4 w-4" /><span>{{ saving ? 'Salvando...' : 'Salvar' }}</span></button>
+                </div>
+            </aside>
 
             <main v-if="currentDay" class="space-y-5">
                 <div class="space-y-3">
@@ -25,7 +29,7 @@
 <script setup>
 import { computed, defineComponent, h, onMounted, reactive, ref } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import { Dumbbell, Plus, Search, Trash2, X } from 'lucide-vue-next';
+import { ArrowLeft, Dumbbell, FilePenLine, Plus, Save, Search, Trash2, X } from 'lucide-vue-next';
 import AppShell from '../components/AppShell.vue';
 
 const Field = defineComponent({ props: { label: String, modelValue: [String, Number], type: { type: String, default: 'text' }, placeholder: String }, emits: ['update:modelValue'], setup: (props, { emit }) => () => h('label', { class: 'block space-y-2' }, [h('span', { class: 'text-sm font-medium text-[var(--wn-muted)]' }, props.label), h('input', { value: props.modelValue ?? '', type: props.type, placeholder: props.placeholder, class: 'form-control', onInput: (event) => emit('update:modelValue', event.target.value) })]) });
