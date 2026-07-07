@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Treino;
+use App\Models\Aluno;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -64,11 +65,16 @@ class WorkoutController extends Controller
 
         $workout = DB::transaction(function () use ($data, $organization, $request) {
             $workout = Treino::query()->create([
-                ...collect($data)->except('days')->all(),
+                ...collect($data)->except(['days', 'studentId'])->all(),
                 'organizacao_id' => $organization->id,
                 'criado_por' => $request->user()->id,
             ]);
             $this->syncDays($workout, $data['days']);
+            if (! empty($data['studentId'])) {
+                $student = Aluno::query()->findOrFail($data['studentId']);
+                $student->treinos()->updateExistingPivot($student->treinos()->pluck('treinos.id'), ['ativo' => false]);
+                $student->treinos()->attach($workout->id, ['ativo' => true]);
+            }
             return $workout;
         });
 
@@ -107,6 +113,7 @@ class WorkoutController extends Controller
             'status' => ['required', Rule::in(['rascunho', 'ativo'])],
             'descricao' => ['nullable', 'string'],
             'days' => ['required', 'array', 'min:1', 'max:7'],
+            'studentId' => ['nullable', Rule::exists('alunos', 'id')->where('organizacao_id', $organization->id)],
             'days.*.name' => ['required', 'string', 'max:100'],
             'days.*.focus' => ['nullable', 'string', 'max:120'],
             'days.*.exercises' => ['required', 'array', 'min:1'],

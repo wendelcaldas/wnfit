@@ -5,18 +5,12 @@
         description="Veja, filtre e gerencie todos os alunos do seu studio."
         search-placeholder="Buscar alunos, planos, status..."
     >
-        <template #page-actions>
-            <div class="flex justify-end gap-3">
-                <button class="btn-secondary gap-2">
-                    <Download class="h-5 w-5" />
-                    Importar alunos
-                </button>
-                <RouterLink to="/alunos/novo" class="btn-primary justify-center gap-2">
-                    <Plus class="h-5 w-5" />
-                    Novo aluno
-                </RouterLink>
-            </div>
-        </template>
+        <div class="mb-4 flex justify-end">
+            <RouterLink to="/alunos/novo" class="btn-primary justify-center gap-2">
+                <Plus class="h-5 w-5" />
+                Novo aluno
+            </RouterLink>
+        </div>
 
         <section class="grid gap-4 xl:grid-cols-4">
             <article v-for="item in summary" :key="item.label" class="stat-card">
@@ -132,7 +126,7 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
 import { RouterLink } from 'vue-router';
-import { AlertTriangle, Download, Hourglass, MoreVertical, Plus, Search, SlidersHorizontal, UserCheck, Users } from 'lucide-vue-next';
+import { AlertTriangle, Hourglass, MoreVertical, Plus, Search, SlidersHorizontal, UserCheck, Users } from 'lucide-vue-next';
 
 import AppShell from '../components/AppShell.vue';
 

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Organizacao;
+use App\Models\Aluno;
 use App\Models\Exercicio;
 use App\Models\Treino;
 use App\Models\User;
@@ -94,6 +95,25 @@ class WorkoutTest extends TestCase
         $workout = Treino::query()->create(['organizacao_id' => $organization->id, 'criado_por' => $owner->id, 'nome' => 'Privado', 'objetivo' => 'Forca']);
 
         $this->actingAs($outsider)->getJson("/api/workouts/{$workout->id}")->assertNotFound();
+    }
+
+    public function test_student_can_receive_and_replace_an_active_workout(): void
+    {
+        [$user, $organization] = $this->organizationWithUser('academia-aluno-treino');
+        $student = Aluno::query()->create(['organizacao_id' => $organization->id, 'nome' => 'Aluno Teste']);
+        $first = Treino::query()->create(['organizacao_id' => $organization->id, 'nome' => 'Modelo A', 'objetivo' => 'Forca', 'status' => 'ativo']);
+        $second = Treino::query()->create(['organizacao_id' => $organization->id, 'nome' => 'Modelo B', 'objetivo' => 'Mobilidade', 'status' => 'ativo']);
+
+        $this->actingAs($user)->postJson("/api/students/{$student->id}/workouts/{$first->id}")
+            ->assertOk()->assertJsonPath('workout.name', 'Modelo A');
+        $this->actingAs($user)->postJson("/api/students/{$student->id}/workouts/{$second->id}")
+            ->assertOk()->assertJsonPath('workout.name', 'Modelo B');
+
+        $this->actingAs($user)->getJson("/api/students/{$student->id}/workouts")
+            ->assertOk()->assertJsonPath('current.id', $second->id)
+            ->assertJsonFragment(['id' => $second->id, 'selected' => true]);
+        $this->assertDatabaseHas('aluno_treino', ['aluno_id' => $student->id, 'treino_id' => $first->id, 'ativo' => false]);
+        $this->assertDatabaseHas('aluno_treino', ['aluno_id' => $student->id, 'treino_id' => $second->id, 'ativo' => true]);
     }
 
     private function organizationWithUser(string $slug): array

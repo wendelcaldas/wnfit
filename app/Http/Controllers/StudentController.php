@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Aluno;
 use App\Models\Cobranca;
 use App\Models\Plano;
+use App\Models\Treino;
 use App\Services\BillingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -159,6 +160,53 @@ class StudentController extends Controller
                 ->values(),
             'units' => ['Unidade Vila Madalena', 'Unidade Centro', 'Online'],
         ]);
+    }
+
+    public function workouts(Request $request, Aluno $student): JsonResponse
+    {
+        $organization = $request->user()->organizacoes()->firstOrFail();
+        abort_unless($student->organizacao_id === $organization->id, 404);
+
+        $current = $student->treinos()->wherePivot('ativo', true)->with('dias.exercicios')->latest('aluno_treino.updated_at')->first();
+        $templates = Treino::query()->where('organizacao_id', $organization->id)->where('status', 'ativo')
+            ->withCount('dias')->latest('updated_at')->get();
+
+        return response()->json([
+            'current' => $current ? $this->studentWorkoutPayload($current) : null,
+            'templates' => $templates->map(fn (Treino $workout) => [
+                'id' => $workout->id, 'name' => $workout->nome, 'objective' => $workout->objetivo,
+                'level' => $workout->nivel, 'sessionsPerWeek' => $workout->sessoes_semana,
+                'durationWeeks' => $workout->duracao_semanas, 'daysCount' => $workout->dias_count,
+                'selected' => $current?->id === $workout->id,
+            ])->values(),
+        ]);
+    }
+
+    public function assignWorkout(Request $request, Aluno $student, Treino $workout): JsonResponse
+    {
+        $organization = $request->user()->organizacoes()->firstOrFail();
+        abort_unless($student->organizacao_id === $organization->id && $workout->organizacao_id === $organization->id, 404);
+
+        DB::transaction(function () use ($student, $workout) {
+            $student->treinos()->updateExistingPivot($student->treinos()->pluck('treinos.id'), ['ativo' => false]);
+            $student->treinos()->syncWithoutDetaching([$workout->id => ['ativo' => true]]);
+            $student->treinos()->updateExistingPivot($workout->id, ['ativo' => true]);
+        });
+
+        return response()->json(['workout' => $this->studentWorkoutPayload($workout->load('dias.exercicios'))]);
+    }
+
+    private function studentWorkoutPayload(Treino $workout): array
+    {
+        return [
+            'id' => $workout->id, 'name' => $workout->nome, 'objective' => $workout->objetivo,
+            'level' => $workout->nivel, 'sessionsPerWeek' => $workout->sessoes_semana,
+            'durationWeeks' => $workout->duracao_semanas, 'description' => $workout->descricao,
+            'days' => $workout->dias->map(fn ($day) => [
+                'id' => $day->id, 'name' => $day->nome, 'focus' => $day->foco,
+                'exercisesCount' => $day->exercicios->count(),
+            ])->values(),
+        ];
     }
 
     public function generateCharge(Request $request, Aluno $student): JsonResponse

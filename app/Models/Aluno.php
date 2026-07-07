@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Aluno extends Model
 {
@@ -68,5 +69,10 @@ class Aluno extends Model
     public function cobrancas(): HasMany
     {
         return $this->hasMany(Cobranca::class);
+    }
+
+    public function treinos(): BelongsToMany
+    {
+        return $this->belongsToMany(Treino::class, 'aluno_treino')->withPivot('ativo')->withTimestamps();
     }
 }
