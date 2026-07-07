@@ -11,7 +11,6 @@ use App\Services\BillingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -126,12 +125,12 @@ class DashboardController extends Controller
     {
         $start = $today->copy()->subMonths(5)->startOfMonth();
         $rows = Cobranca::query()
-            ->selectRaw("strftime('%Y-%m', pago_em) as month, sum(valor) as total")
             ->where('organizacao_id', $organizationId)
             ->where('status', 'pago')
             ->where('pago_em', '>=', $start)
-            ->groupBy('month')
-            ->pluck('total', 'month');
+            ->get(['pago_em', 'valor'])
+            ->groupBy(fn (Cobranca $charge) => $charge->pago_em->format('Y-m'))
+            ->map(fn ($charges) => $charges->sum(fn (Cobranca $charge) => (float) $charge->valor));
 
         $values = collect(range(0, 5))->map(function (int $offset) use ($start, $rows) {
             $date = $start->copy()->addMonths($offset);
