@@ -1,0 +1,41 @@
+server {
+    listen ${PORT};
+    listen [::]:${PORT};
+    server_name _;
+
+    root /var/www/html/public;
+    index index.php;
+    charset utf-8;
+
+    client_max_body_size 20M;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        include fastcgi_params;
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param HTTP_X_FORWARDED_FOR $http_x_forwarded_for;
+        fastcgi_param HTTP_X_FORWARDED_HOST $http_x_forwarded_host;
+        fastcgi_param HTTP_X_FORWARDED_PROTO $http_x_forwarded_proto;
+        fastcgi_read_timeout 60s;
+    }
+
+    location ~* \.(?:css|js|jpg|jpeg|gif|png|svg|ico|webp|woff2?)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+        try_files $uri =404;
+    }
+
+    location ~ /\. {
+        deny all;
+    }
+
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript application/xml image/svg+xml;
+}
