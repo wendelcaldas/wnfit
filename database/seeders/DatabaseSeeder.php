@@ -14,9 +14,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(ExerciseSeeder::class);
-        $this->call([
-            OrganizacaoSeeder::class,
-        ]);
+        $this->call(StandardDataSeeder::class);
+
+        if (app()->environment(['local', 'testing'])) {
+            $this->call(OrganizacaoSeeder::class);
+        }
     }
 }

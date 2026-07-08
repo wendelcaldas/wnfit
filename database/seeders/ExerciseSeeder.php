@@ -25,9 +25,17 @@ class ExerciseSeeder extends Seeder
         ];
 
         foreach ($exercises as [$name, $muscle, $secondary, $equipment]) {
-            Exercicio::query()->firstOrCreate(
+            Exercicio::query()->updateOrCreate(
                 ['organizacao_id' => null, 'nome' => $name],
-                ['grupo_muscular' => $muscle, 'grupo_secundario' => $secondary, 'equipamento' => $equipment, 'categoria' => 'musculacao', 'nivel' => 'todos', 'origem' => 'wnfit'],
+                [
+                    'grupo_muscular' => $muscle,
+                    'grupo_secundario' => $secondary,
+                    'equipamento' => $equipment,
+                    'categoria' => 'musculacao',
+                    'nivel' => 'todos',
+                    'origem' => 'wnfit',
+                    'ativo' => true,
+                ],
             );
         }
     }
