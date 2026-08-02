@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Agendamento extends Model
 {
     protected $fillable = [
-        'organizacao_id', 'titulo', 'tipo', 'status', 'inicio_em', 'fim_em',
+        'organizacao_id', 'serie_id', 'titulo', 'tipo', 'recorrencia_frequencia', 'status', 'inicio_em', 'fim_em', 'recorrencia_ate',
         'instrutor_id', 'modalidade', 'local', 'endereco', 'capacidade', 'observacoes',
     ];
 
@@ -18,6 +18,7 @@ class Agendamento extends Model
         return [
             'inicio_em' => 'datetime',
             'fim_em' => 'datetime',
+            'recorrencia_ate' => 'date',
             'capacidade' => 'integer',
         ];
     }

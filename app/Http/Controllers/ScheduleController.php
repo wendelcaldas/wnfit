@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -78,16 +79,34 @@ class ScheduleController extends Controller
         [$organization, $role] = $this->agendaContext($request);
         $data = $this->validatedData($request);
         $this->assertRelationsBelongToOrganization($organization, $data, $role, $request->user()->id);
-        $this->ensureNoInstructorConflict($organization, $data);
+        $occurrences = $this->recurringOccurrences($data);
+        foreach ($occurrences as $occurrence) {
+            $this->ensureNoInstructorConflict($organization, [...$data, ...$occurrence]);
+        }
 
-        $event = DB::transaction(function () use ($organization, $data) {
-            $event = Agendamento::query()->create([...$this->eventFields($data), 'organizacao_id' => $organization->id]);
-            $this->syncParticipants($event, $data['participant_ids'] ?? []);
+        $events = DB::transaction(function () use ($organization, $data, $occurrences) {
+            $seriesId = count($occurrences) > 1 ? (string) Str::uuid() : null;
 
-            return $event;
+            return collect($occurrences)->map(function (array $occurrence) use ($organization, $data, $seriesId) {
+                $event = Agendamento::query()->create([
+                    ...$this->eventFields([...$data, ...$occurrence]),
+                    'organizacao_id' => $organization->id,
+                    'serie_id' => $seriesId,
+                    'recorrencia_frequencia' => $seriesId ? $data['repeat_frequency'] : null,
+                    'recorrencia_ate' => $seriesId ? $data['repeat_until'] : null,
+                ]);
+                $this->syncParticipants($event, $data['participant_ids'] ?? []);
+
+                return $event;
+            });
         });
 
-        return response()->json(['event' => $this->payload($event->load(['instrutor:id,name', 'alunos:id,nome']))], 201);
+        $event = $events->first()->load(['instrutor:id,name', 'alunos:id,nome']);
+
+        return response()->json([
+            'event' => $this->payload($event),
+            'createdCount' => $events->count(),
+        ], 201);
     }
 
     public function update(Request $request, Agendamento $schedule): JsonResponse
@@ -108,7 +127,7 @@ class ScheduleController extends Controller
 
     private function validatedData(Request $request): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'title' => ['required', 'string', 'max:120'],
             'type' => ['required', Rule::in(['individual', 'coletiva', 'tematica', 'personalizada'])],
             'status' => ['required', Rule::in(['agendado', 'concluido', 'cancelado'])],
@@ -122,7 +141,16 @@ class ScheduleController extends Controller
             'notes' => ['nullable', 'string', 'max:3000'],
             'participant_ids' => ['present', 'array', 'max:1000'],
             'participant_ids.*' => ['integer', 'distinct'],
+            'repeat_frequency' => ['sometimes', Rule::in(['none', 'weekly', 'biweekly', 'monthly'])],
+            'repeat_until' => ['nullable', 'date', 'after_or_equal:starts_at'],
         ]);
+
+        $data['repeat_frequency'] = $data['repeat_frequency'] ?? 'none';
+        if ($data['repeat_frequency'] !== 'none' && empty($data['repeat_until'])) {
+            throw ValidationException::withMessages(['repeat_until' => 'Informe ate quando o agendamento deve se repetir.']);
+        }
+
+        return $data;
     }
 
     private function assertRelationsBelongToOrganization(Organizacao $organization, array &$data, string $role, int $userId): void
@@ -185,6 +213,35 @@ class ScheduleController extends Controller
         ];
     }
 
+    private function recurringOccurrences(array $data): array
+    {
+        $start = Carbon::parse($data['starts_at']);
+        $end = Carbon::parse($data['ends_at']);
+        if ($data['repeat_frequency'] === 'none') {
+            return [['starts_at' => $start, 'ends_at' => $end]];
+        }
+
+        $until = Carbon::parse($data['repeat_until'])->endOfDay();
+        $durationInSeconds = $start->diffInSeconds($end);
+        $occurrences = [];
+        $current = $start->copy();
+
+        while ($current->lessThanOrEqualTo($until)) {
+            $occurrences[] = ['starts_at' => $current->copy(), 'ends_at' => $current->copy()->addSeconds($durationInSeconds)];
+            if (count($occurrences) > 104) {
+                throw ValidationException::withMessages(['repeat_until' => 'Para criar mais de 104 ocorrencias, reduza o periodo ou configure a serie em etapas.']);
+            }
+
+            $current = match ($data['repeat_frequency']) {
+                'weekly' => $current->addWeek(),
+                'biweekly' => $current->addWeeks(2),
+                'monthly' => $current->addMonthNoOverflow(),
+            };
+        }
+
+        return $occurrences;
+    }
+
     private function eventsQuery(Organizacao $organization, string $role, int $userId)
     {
         return Agendamento::query()
@@ -216,6 +273,8 @@ class ScheduleController extends Controller
         return [
             'id' => $event->id, 'title' => $event->titulo, 'type' => $event->tipo, 'status' => $event->status,
             'startsAt' => $event->inicio_em->toIso8601String(), 'endsAt' => $event->fim_em->toIso8601String(),
+            'seriesId' => $event->serie_id, 'recurrenceFrequency' => $event->recorrencia_frequencia,
+            'recurrenceUntil' => $event->recorrencia_ate?->toDateString(),
             'instructorId' => $event->instrutor_id, 'instructorName' => $event->instrutor?->name,
             'modality' => $event->modalidade, 'location' => $event->local, 'address' => $event->endereco,
             'capacity' => $event->capacidade, 'notes' => $event->observacoes, 'participants' => $participants,

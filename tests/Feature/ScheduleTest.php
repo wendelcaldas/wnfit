@@ -57,6 +57,25 @@ class ScheduleTest extends TestCase
             ->assertJsonValidationErrors('starts_at');
     }
 
+    public function test_recurring_appointment_creates_each_weekly_occurrence_as_an_independent_event(): void
+    {
+        [$owner, $organization] = $this->organizationWithUser('proprietario', 'agenda-recorrente');
+        $payload = $this->payload($owner->id);
+        $payload['title'] = 'Boxe de terca';
+        $payload['repeat_frequency'] = 'weekly';
+        $payload['repeat_until'] = '2026-08-24';
+
+        $response = $this->actingAs($owner)->postJson('/api/schedule', $payload)
+            ->assertCreated()
+            ->assertJsonPath('createdCount', 4)
+            ->assertJsonPath('event.recurrenceFrequency', 'weekly');
+
+        $seriesId = $response->json('event.seriesId');
+        $this->assertNotNull($seriesId);
+        $this->assertDatabaseCount('agendamentos', 4);
+        $this->assertDatabaseHas('agendamentos', ['serie_id' => $seriesId, 'recorrencia_ate' => '2026-08-24 00:00:00']);
+    }
+
     public function test_professor_only_sees_and_creates_appointments_in_own_agenda(): void
     {
         [$professor, $organization] = $this->organizationWithUser('professor', 'agenda-professor');
