@@ -75,4 +75,11 @@ class Aluno extends Model
     {
         return $this->belongsToMany(Treino::class, 'aluno_treino')->withPivot('ativo')->withTimestamps();
     }
+
+    public function agendamentos(): BelongsToMany
+    {
+        return $this->belongsToMany(Agendamento::class, 'agendamento_aluno')
+            ->withPivot('status')
+            ->withTimestamps();
+    }
 }

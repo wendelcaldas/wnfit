@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Aluno;
-use App\Models\Aula;
+use App\Models\Agendamento;
 use App\Models\Checkin;
 use App\Models\Cobranca;
 use App\Models\Receita;
@@ -35,9 +35,10 @@ class DashboardController extends Controller
             ->whereDate('realizado_em', $today)
             ->count();
 
-        $todayClasses = Aula::query()
+        $todayClasses = Agendamento::query()
             ->where('organizacao_id', $organizationId)
-            ->whereDate('data', $today)
+            ->where('status', '!=', 'cancelado')
+            ->whereDate('inicio_em', $today)
             ->count();
 
         $monthRevenue = (float) Cobranca::query()
@@ -87,17 +88,20 @@ class DashboardController extends Controller
 
     private function upcomingClasses(int $organizationId, Carbon $today): array
     {
-        return Aula::query()
+        return Agendamento::query()
             ->where('organizacao_id', $organizationId)
-            ->whereDate('data', $today)
-            ->orderBy('hora')
+            ->where('status', '!=', 'cancelado')
+            ->whereDate('inicio_em', $today)
+            ->withCount(['alunos as reservas' => fn ($query) => $query->where('agendamento_aluno.status', 'confirmado')])
+            ->with('instrutor:id,name')
+            ->orderBy('inicio_em')
             ->limit(4)
             ->get()
-            ->map(fn (Aula $aula) => [
-                'time' => Carbon::parse($aula->hora)->format('H:i'),
-                'name' => $aula->nome,
-                'room' => trim(($aula->sala ?: 'Sala') . ' - ' . ($aula->instrutor ?: 'Equipe')),
-                'slots' => "{$aula->reservas}/{$aula->capacidade}",
+            ->map(fn (Agendamento $event) => [
+                'time' => $event->inicio_em->format('H:i'),
+                'name' => $event->titulo,
+                'room' => trim(($event->local ?: 'Sem local') . ' - ' . ($event->instrutor?->name ?: 'Equipe')),
+                'slots' => $event->capacidade ? "{$event->reservas}/{$event->capacidade}" : "{$event->reservas} aluno(s)",
                 'dot' => 'bg-slate-400',
             ])
             ->all();
@@ -151,17 +155,18 @@ class DashboardController extends Controller
 
     private function nextClassCaption(int $organizationId, Carbon $today): string
     {
-        $nextClass = Aula::query()
+        $nextClass = Agendamento::query()
             ->where('organizacao_id', $organizationId)
-            ->whereDate('data', $today)
-            ->where('hora', '>=', now()->format('H:i:s'))
-            ->orderBy('hora')
+            ->where('status', '!=', 'cancelado')
+            ->whereDate('inicio_em', $today)
+            ->where('inicio_em', '>=', now())
+            ->orderBy('inicio_em')
             ->first();
 
         if (! $nextClass) {
             return 'Sem proximas aulas hoje';
         }
 
-        return 'Proxima: '.Carbon::parse($nextClass->hora)->format('H:i').' '.$nextClass->nome;
+        return 'Proxima: '.$nextClass->inicio_em->format('H:i').' '.$nextClass->titulo;
     }
 }

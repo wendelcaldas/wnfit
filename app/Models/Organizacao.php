@@ -51,4 +51,9 @@ class Organizacao extends Model
     {
         return $this->hasMany(Treino::class);
     }
+
+    public function agendamentos(): HasMany
+    {
+        return $this->hasMany(Agendamento::class);
+    }
 }

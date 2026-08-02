@@ -9,6 +9,7 @@ import StudentsView from '../views/StudentsView.vue';
 import UsersSettingsView from '../views/UsersSettingsView.vue';
 import WorkoutsView from '../views/WorkoutsView.vue';
 import WorkoutBuilderView from '../views/WorkoutBuilderView.vue';
+import ScheduleView from '../views/ScheduleView.vue';
 import { useAuthStore } from '../stores/auth';
 
 export const router = createRouter({
@@ -70,6 +71,12 @@ export const router = createRouter({
             path: '/treinos/:id/editar',
             name: 'treinos.editar',
             component: WorkoutBuilderView,
+            meta: { requiresAuth: true },
+        },
+        {
+            path: '/agenda',
+            name: 'agenda',
+            component: ScheduleView,
             meta: { requiresAuth: true },
         },
         {

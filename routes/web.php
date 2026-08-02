@@ -6,6 +6,7 @@ use App\Http\Controllers\OrganizationUserController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\WorkoutController;
 use App\Http\Controllers\ExerciseController;
+use App\Http\Controllers\ScheduleController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('api')->group(function () {
@@ -16,6 +17,10 @@ Route::prefix('api')->group(function () {
 
     Route::middleware('auth')->group(function () {
         Route::get('/dashboard', DashboardController::class);
+        Route::get('/schedule', [ScheduleController::class, 'index']);
+        Route::get('/schedule/options', [ScheduleController::class, 'options']);
+        Route::post('/schedule', [ScheduleController::class, 'store']);
+        Route::put('/schedule/{schedule}', [ScheduleController::class, 'update']);
         Route::get('/workouts', [WorkoutController::class, 'index']);
         Route::get('/exercises', [ExerciseController::class, 'index']);
         Route::post('/exercises', [ExerciseController::class, 'store']);

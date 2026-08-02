@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Aluno;
+use App\Models\Agendamento;
 use App\Models\Aula;
 use App\Models\Checkin;
 use App\Models\Organizacao;
@@ -136,6 +137,31 @@ class OrganizacaoSeeder extends Seeder
                 ['organizacao_id' => $organizacao->id, 'data' => $today->toDateString(), 'hora' => $hora],
                 compact('nome', 'sala', 'instrutor', 'capacidade', 'reservas') + ['organizacao_id' => $organizacao->id, 'data' => $today->toDateString()],
             );
+        }
+
+        foreach ([
+            ['07:00', 'Aula funcional - turma da manha', 'coletiva', 'Sala 1', 15, [0, 2, 4]],
+            ['09:30', 'Personal training - Julia Mendes', 'individual', 'Sala 2', 1, [0]],
+            ['18:00', 'HIIT fim de tarde', 'coletiva', 'Sala 1', 15, [1, 3, 5]],
+            ['19:30', 'Mobilidade e recuperacao', 'tematica', 'Sala 3', 12, [2, 4]],
+        ] as [$hora, $titulo, $tipo, $local, $capacidade, $studentIndexes]) {
+            $start = $today->copy()->setTimeFromTimeString($hora);
+            $event = Agendamento::query()->updateOrCreate(
+                ['organizacao_id' => $organizacao->id, 'titulo' => $titulo, 'inicio_em' => $start],
+                [
+                    'tipo' => $tipo,
+                    'status' => 'agendado',
+                    'fim_em' => $start->copy()->addHour(),
+                    'instrutor_id' => $usuarioAdministrador->id,
+                    'modalidade' => 'presencial',
+                    'local' => $local,
+                    'capacidade' => $capacidade,
+                ],
+            );
+
+            $event->alunos()->sync(collect($studentIndexes)
+                ->mapWithKeys(fn (int $index) => [$alunos[$index]->id => ['status' => 'confirmado']])
+                ->all());
         }
 
         $checkinsByDay = [42, 55, 80, 68, 92, 58, 76];

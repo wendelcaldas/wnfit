@@ -61,7 +61,7 @@
                         <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Proximas aulas</h2>
                         <p class="mt-2 text-sm text-[var(--wn-muted)]">Agenda resumida do dia para a operacao.</p>
                     </div>
-                    <a href="#" class="text-sm font-semibold text-[var(--wn-neutral-strong)]">Ver agenda</a>
+                    <RouterLink to="/agenda" class="text-sm font-semibold text-[var(--wn-neutral-strong)]">Ver agenda</RouterLink>
                 </div>
 
                 <div class="mt-8 space-y-4">
@@ -148,6 +148,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { RouterLink } from 'vue-router';
 import {
     CircleDollarSign,
     ClipboardList,
