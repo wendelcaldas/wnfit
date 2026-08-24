@@ -6,12 +6,17 @@ use App\Models\Aluno;
 use App\Models\Assinatura;
 use App\Models\Cobranca;
 use App\Models\Plano;
+use App\Services\Messaging\MessagingService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class BillingService
 {
+    public function __construct(private readonly MessagingService $messaging)
+    {
+    }
+
     public function createSubscriptionForStudent(
         Aluno $student,
         Plano $plan,
@@ -94,14 +99,21 @@ class BillingService
 
     public function sendCharge(Cobranca $charge): Cobranca
     {
-        $charge->update(['enviado_em' => now()]);
+        $message = $this->messaging->sendChargeReminder($charge);
+
+        if ($message->enviado_em) {
+            $charge->update(['enviado_em' => $message->enviado_em]);
+        }
+
         $charge->eventos()->create([
-            'tipo' => 'link_enviado',
-            'descricao' => 'Olá, sua mensalidade venceu. Segue link para pagamento.',
+            'tipo' => $message->status === 'falhou' ? 'mensagem_falhou' : 'link_enviado',
+            'descricao' => $message->status === 'falhou'
+                ? 'Falha ao enviar mensagem de cobranca pelo WhatsApp.'
+                : 'Mensagem de cobranca enviada pelo WhatsApp.',
             'ocorrido_em' => now(),
         ]);
 
-        return $charge;
+        return $charge->refresh();
     }
 
     public function registerPayment(Cobranca $charge, ?float $amount = null, string $method = 'PIX'): Cobranca

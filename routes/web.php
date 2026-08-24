@@ -3,13 +3,19 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrganizationUserController;
+use App\Http\Controllers\OrganizationMessagingController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\WorkoutController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\TwilioWebhookController;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('api')->group(function () {
+    Route::post('/webhooks/twilio/whatsapp/status', [TwilioWebhookController::class, 'whatsappStatus'])
+        ->withoutMiddleware(VerifyCsrfToken::class);
+
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
@@ -30,6 +36,8 @@ Route::prefix('api')->group(function () {
         Route::get('/organization/users', [OrganizationUserController::class, 'index']);
         Route::post('/organization/users', [OrganizationUserController::class, 'store']);
         Route::patch('/organization/users/{user}', [OrganizationUserController::class, 'update']);
+        Route::get('/organization/messaging', [OrganizationMessagingController::class, 'show']);
+        Route::patch('/organization/messaging', [OrganizationMessagingController::class, 'update']);
         Route::get('/students/options', [StudentController::class, 'options']);
         Route::get('/students', [StudentController::class, 'index']);
         Route::post('/students', [StudentController::class, 'store']);

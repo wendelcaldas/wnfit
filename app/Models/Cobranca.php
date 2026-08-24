@@ -38,6 +38,11 @@ class Cobranca extends Model
         return $this->belongsTo(Aluno::class);
     }
 
+    public function organizacao(): BelongsTo
+    {
+        return $this->belongsTo(Organizacao::class);
+    }
+
     public function assinatura(): BelongsTo
     {
         return $this->belongsTo(Assinatura::class);
@@ -51,5 +56,10 @@ class Cobranca extends Model
     public function eventos(): HasMany
     {
         return $this->hasMany(CobrancaEvento::class);
+    }
+
+    public function mensagens(): HasMany
+    {
+        return $this->hasMany(Mensagem::class);
     }
 }

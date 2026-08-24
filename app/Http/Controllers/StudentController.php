@@ -7,6 +7,7 @@ use App\Models\Cobranca;
 use App\Models\Plano;
 use App\Models\Treino;
 use App\Services\BillingService;
+use App\Services\Messaging\MessagingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -14,7 +15,10 @@ use Illuminate\Support\Facades\DB;
 
 class StudentController extends Controller
 {
-    public function __construct(private readonly BillingService $billing)
+    public function __construct(
+        private readonly BillingService $billing,
+        private readonly MessagingService $messaging,
+    )
     {
     }
 
@@ -114,7 +118,9 @@ class StudentController extends Controller
             return $student;
         });
 
-        return response()->json(['student' => $this->studentDetailPayload($student->fresh(['assinatura.plano', 'cobrancas.eventos']))], 201);
+        $this->messaging->sendWelcomeMessage($student->fresh(['organizacao', 'assinatura.plano']));
+
+        return response()->json(['student' => $this->studentDetailPayload($student->fresh(['assinatura.plano', 'cobrancas.eventos', 'cobrancas.mensagens']))], 201);
     }
 
     public function show(Request $request, Aluno $student): JsonResponse
@@ -125,7 +131,7 @@ class StudentController extends Controller
         $this->billing->refreshOverdueCharges($organization->id);
 
         return response()->json([
-            'student' => $this->studentDetailPayload($student->load(['assinatura.plano', 'cobrancas.eventos'])),
+            'student' => $this->studentDetailPayload($student->load(['assinatura.plano', 'cobrancas.eventos', 'cobrancas.mensagens'])),
         ]);
     }
 
@@ -138,7 +144,7 @@ class StudentController extends Controller
         $student->update($data);
 
         return response()->json([
-            'student' => $this->studentDetailPayload($student->fresh(['assinatura.plano', 'cobrancas.eventos'])),
+            'student' => $this->studentDetailPayload($student->fresh(['assinatura.plano', 'cobrancas.eventos', 'cobrancas.mensagens'])),
         ]);
     }
 
@@ -217,7 +223,7 @@ class StudentController extends Controller
         $subscription = $student->assinatura()->with('plano')->firstOrFail();
         $charge = $this->billing->generateCharge($subscription, $request->date('vencimento') ?? $subscription->proximo_vencimento);
 
-        return response()->json(['charge' => $this->chargePayload($charge->load('eventos'))]);
+        return response()->json(['charge' => $this->chargePayload($charge->load(['eventos', 'mensagens']))]);
     }
 
     public function sendCharge(Request $request, Cobranca $charge): JsonResponse
@@ -225,7 +231,7 @@ class StudentController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
         abort_unless($charge->organizacao_id === $organization->id, 404);
 
-        return response()->json(['charge' => $this->chargePayload($this->billing->sendCharge($charge)->load('eventos'))]);
+        return response()->json(['charge' => $this->chargePayload($this->billing->sendCharge($charge)->load(['eventos', 'mensagens']))]);
     }
 
     public function payCharge(Request $request, Cobranca $charge): JsonResponse
@@ -233,7 +239,7 @@ class StudentController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
         abort_unless($charge->organizacao_id === $organization->id, 404);
 
-        return response()->json(['charge' => $this->chargePayload($this->billing->registerPayment($charge)->load('eventos'))]);
+        return response()->json(['charge' => $this->chargePayload($this->billing->registerPayment($charge)->load(['eventos', 'mensagens']))]);
     }
 
     private function validationRules(): array
@@ -353,7 +359,7 @@ class StudentController extends Controller
     private function studentDetailPayload(Aluno $student): array
     {
         $subscription = $student->assinatura;
-        $charges = $student->cobrancas()->with('eventos')->orderByDesc('vencimento')->get();
+        $charges = $student->cobrancas()->with(['eventos', 'mensagens'])->orderByDesc('vencimento')->get();
         $paid = (float) $charges->where('status', 'pago')->sum('valor');
         $open = (float) $charges->whereIn('status', ['pendente', 'atrasado'])->sum('valor');
 
@@ -429,6 +435,10 @@ class StudentController extends Controller
 
     private function chargePayload(Cobranca $charge): array
     {
+        $lastMessage = $charge->relationLoaded('mensagens')
+            ? $charge->mensagens->sortByDesc('created_at')->first()
+            : $charge->mensagens()->latest()->first();
+
         return [
             'id' => $charge->id,
             'competence' => $charge->competencia,
@@ -444,6 +454,13 @@ class StudentController extends Controller
             'paymentMethod' => $charge->forma_pagamento,
             'paidAt' => optional($charge->pago_em)->format('d/m/Y') ?: '-',
             'sentAt' => optional($charge->enviado_em)->format('d/m/Y H:i'),
+            'lastMessage' => $lastMessage ? [
+                'id' => $lastMessage->id,
+                'status' => $lastMessage->status,
+                'provider' => $lastMessage->provedor,
+                'sentAt' => optional($lastMessage->enviado_em)->format('d/m/Y H:i'),
+                'error' => $lastMessage->erro,
+            ] : null,
         ];
     }
 

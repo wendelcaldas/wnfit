@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 
 import DashboardView from '../views/DashboardView.vue';
 import LoginView from '../views/LoginView.vue';
+import MessagingSettingsView from '../views/MessagingSettingsView.vue';
 import RegisterView from '../views/RegisterView.vue';
 import StudentDetailView from '../views/StudentDetailView.vue';
 import StudentFormView from '../views/StudentFormView.vue';
@@ -83,6 +84,12 @@ export const router = createRouter({
             path: '/configuracoes/usuarios',
             name: 'configuracoes.usuarios',
             component: UsersSettingsView,
+            meta: { requiresAuth: true },
+        },
+        {
+            path: '/configuracoes/mensagens',
+            name: 'configuracoes.mensagens',
+            component: MessagingSettingsView,
             meta: { requiresAuth: true },
         },
         {

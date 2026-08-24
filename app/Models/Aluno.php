@@ -71,6 +71,11 @@ class Aluno extends Model
         return $this->hasMany(Cobranca::class);
     }
 
+    public function mensagens(): HasMany
+    {
+        return $this->hasMany(Mensagem::class);
+    }
+
     public function treinos(): BelongsToMany
     {
         return $this->belongsToMany(Treino::class, 'aluno_treino')->withPivot('ativo')->withTimestamps();

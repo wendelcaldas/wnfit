@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Organizacao extends Model
 {
@@ -55,5 +56,10 @@ class Organizacao extends Model
     public function agendamentos(): HasMany
     {
         return $this->hasMany(Agendamento::class);
+    }
+
+    public function mensagemConfiguracao(): HasOne
+    {
+        return $this->hasOne(MensagemConfiguracao::class);
     }
 }

@@ -14,6 +14,6 @@ export const appNavigation = [
     { label: 'Treinos', to: '/treinos', icon: Dumbbell },
     { label: 'Agenda', to: '/agenda', icon: CalendarRange },
     { label: 'Relatorios', to: '#', icon: BarChart3 },
-    { label: 'Comunicacoes', to: '#', icon: MessageSquareText },
+    { label: 'Comunicacoes', to: '/configuracoes/mensagens', icon: MessageSquareText },
     { label: 'Configuracoes', to: '/configuracoes/usuarios', icon: Settings },
 ];
