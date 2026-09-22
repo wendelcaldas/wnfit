@@ -87,6 +87,7 @@ class StudentController extends Controller
     {
         $organization = $request->user()->organizacoes()->firstOrFail();
         $data = $request->validate($this->validationRules());
+        $this->messaging->normalizeBrazilianPhone($data['telefone']);
 
         $student = DB::transaction(function () use ($data, $organization) {
             $plan = Plano::query()->firstOrCreate(
@@ -120,7 +121,7 @@ class StudentController extends Controller
 
         $this->messaging->sendWelcomeMessage($student->fresh(['organizacao', 'assinatura.plano']));
 
-        return response()->json(['student' => $this->studentDetailPayload($student->fresh(['assinatura.plano', 'cobrancas.eventos', 'cobrancas.mensagens']))], 201);
+        return response()->json(['student' => $this->studentDetailPayload($student->fresh(['assinatura.plano', 'cobrancas.eventos', 'cobrancas.mensagens', 'mensagens']))], 201);
     }
 
     public function show(Request $request, Aluno $student): JsonResponse
@@ -131,7 +132,7 @@ class StudentController extends Controller
         $this->billing->refreshOverdueCharges($organization->id);
 
         return response()->json([
-            'student' => $this->studentDetailPayload($student->load(['assinatura.plano', 'cobrancas.eventos', 'cobrancas.mensagens'])),
+            'student' => $this->studentDetailPayload($student->load(['assinatura.plano', 'cobrancas.eventos', 'cobrancas.mensagens', 'mensagens'])),
         ]);
     }
 
@@ -141,10 +142,13 @@ class StudentController extends Controller
         abort_unless($student->organizacao_id === $organization->id, 404);
 
         $data = $request->validate($this->profileValidationRules());
+        if (isset($data['telefone'])) {
+            $this->messaging->normalizeBrazilianPhone($data['telefone']);
+        }
         $student->update($data);
 
         return response()->json([
-            'student' => $this->studentDetailPayload($student->fresh(['assinatura.plano', 'cobrancas.eventos', 'cobrancas.mensagens'])),
+            'student' => $this->studentDetailPayload($student->fresh(['assinatura.plano', 'cobrancas.eventos', 'cobrancas.mensagens', 'mensagens'])),
         ]);
     }
 
@@ -231,7 +235,13 @@ class StudentController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
         abort_unless($charge->organizacao_id === $organization->id, 404);
 
-        return response()->json(['charge' => $this->chargePayload($this->billing->sendCharge($charge)->load(['eventos', 'mensagens']))]);
+        $data = $request->validate(['manual' => ['sometimes', 'boolean'], 'telefone' => ['sometimes', 'required', 'string', 'max:30']]);
+        abort_unless(in_array($charge->status, ['pendente', 'atrasado'], true), 422, 'Esta cobranca nao esta em aberto.');
+        if (isset($data['telefone'])) {
+            $phone = $this->messaging->normalizeBrazilianPhone($data['telefone']);
+            $charge->aluno->update(['telefone' => $phone]);
+        }
+        return response()->json(['charge' => $this->chargePayload($this->billing->sendCharge($charge, $request->boolean('manual'))->load(['eventos', 'mensagens']))]);
     }
 
     public function payCharge(Request $request, Cobranca $charge): JsonResponse
@@ -239,7 +249,9 @@ class StudentController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
         abort_unless($charge->organizacao_id === $organization->id, 404);
 
-        return response()->json(['charge' => $this->chargePayload($this->billing->registerPayment($charge)->load(['eventos', 'mensagens']))]);
+        $data = $request->validate(['method' => ['sometimes', 'in:PIX,Dinheiro,Cartão,Crédito,Débito,Transferência,Boleto']]);
+
+        return response()->json(['charge' => $this->chargePayload($this->billing->registerPayment($charge, method: $data['method'] ?? 'PIX')->load(['eventos', 'mensagens']))]);
     }
 
     private function validationRules(): array
@@ -430,14 +442,20 @@ class StudentController extends Controller
                     'date' => $event->ocorrido_em->format('d/m/Y H:i'),
                 ])->values(),
             ],
+            'communications' => $student->mensagens()
+                ->latest('id')
+                ->take(20)
+                ->get()
+                ->map(fn ($message) => $this->messagePayload($message))
+                ->values(),
         ];
     }
 
     private function chargePayload(Cobranca $charge): array
     {
         $lastMessage = $charge->relationLoaded('mensagens')
-            ? $charge->mensagens->sortByDesc('created_at')->first()
-            : $charge->mensagens()->latest()->first();
+            ? $charge->mensagens->sortByDesc('id')->first()
+            : $charge->mensagens()->latest('id')->first();
 
         return [
             'id' => $charge->id,
@@ -460,7 +478,45 @@ class StudentController extends Controller
                 'provider' => $lastMessage->provedor,
                 'sentAt' => optional($lastMessage->enviado_em)->format('d/m/Y H:i'),
                 'error' => $lastMessage->erro,
+                'manualUrl' => in_array($lastMessage->status, ['manual_preparado', 'manual_aberto'], true)
+                    ? $this->messaging->manualWhatsAppUrlForMessage($lastMessage)
+                    : null,
+                'content' => $lastMessage->conteudo,
             ] : null,
+        ];
+    }
+
+    private function messagePayload($message): array
+    {
+        return [
+            'id' => $message->id,
+            'type' => $message->tipo,
+            'typeLabel' => match ($message->tipo) {
+                'boas_vindas' => 'Boas-vindas',
+                'cobranca_manual', 'cobranca_manual_assistida' => 'Cobranca',
+                default => ucfirst(str_replace('_', ' ', $message->tipo)),
+            },
+            'status' => $message->status,
+            'statusLabel' => match ($message->status) {
+                'manual_preparado' => 'Pronta para envio',
+                'manual_aberto' => 'WhatsApp aberto',
+                'manual_enviado' => 'Enviada manualmente',
+                'queued', 'pendente' => 'Em processamento',
+                'enviado', 'sent' => 'Enviada',
+                'entregue', 'delivered' => 'Entregue',
+                'falhou', 'failed' => 'Falhou',
+                default => ucfirst(str_replace('_', ' ', $message->status)),
+            },
+            'provider' => $message->provedor,
+            'recipient' => $message->destinatario,
+            'content' => $message->conteudo,
+            'error' => $message->erro,
+            'chargeId' => $message->cobranca_id,
+            'createdAt' => optional($message->created_at)->format('d/m/Y H:i'),
+            'sentAt' => optional($message->enviado_em)->format('d/m/Y H:i'),
+            'manualUrl' => in_array($message->status, ['manual_preparado', 'manual_aberto'], true)
+                ? $this->messaging->manualWhatsAppUrlForMessage($message)
+                : null,
         ];
     }
 

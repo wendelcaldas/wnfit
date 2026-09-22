@@ -35,6 +35,10 @@ return [
         ],
     ],
 
+    'messaging' => [
+        'mode' => env('MESSAGING_MODE', 'manual'),
+    ],
+
     'twilio' => [
         'account_sid' => env('TWILIO_ACCOUNT_SID'),
         'auth_token' => env('TWILIO_AUTH_TOKEN'),
@@ -42,7 +46,7 @@ return [
         'whatsapp' => [
             'driver' => env('TWILIO_WHATSAPP_DRIVER', env('APP_ENV') === 'testing' ? 'fake' : 'twilio'),
             'from' => env('TWILIO_WHATSAPP_FROM'),
-            'status_callback_url' => env('TWILIO_WHATSAPP_STATUS_CALLBACK_URL'),
+            'status_callback_url' => env('TWILIO_WHATSAPP_STATUS_CALLBACK_URL', rtrim((string) env('APP_URL'), '/').'/api/webhooks/twilio/whatsapp/status'),
             'templates' => [
                 'charge_reminder' => env('TWILIO_WHATSAPP_CHARGE_TEMPLATE_SID'),
                 'student_welcome' => env('TWILIO_WHATSAPP_WELCOME_TEMPLATE_SID'),

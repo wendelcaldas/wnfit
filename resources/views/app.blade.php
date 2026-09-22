@@ -17,7 +17,9 @@
             href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
             rel="stylesheet"
         >
+        @unless(request()->is('evento/*'))
         <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+        @endunless
 
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
             @vite(['resources/css/app.css', 'resources/js/app.js'])

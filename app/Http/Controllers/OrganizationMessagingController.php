@@ -3,12 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Services\Messaging\MessagingService;
+use App\Services\Messaging\TwilioContentTemplateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class OrganizationMessagingController extends Controller
 {
-    public function __construct(private readonly MessagingService $messaging)
+    public function __construct(
+        private readonly MessagingService $messaging,
+        private readonly TwilioContentTemplateService $twilioTemplates,
+    )
     {
     }
 
@@ -69,6 +73,14 @@ class OrganizationMessagingController extends Controller
             'preview' => $this->preview($settings->charge_message_body),
             'readiness' => $this->readiness($settings),
         ]);
+    }
+
+    public function twilioTemplates(Request $request): JsonResponse
+    {
+        $request->user()->organizacoes()->firstOrFail();
+        $this->ensureManager($request);
+
+        return response()->json($this->twilioTemplates->templates());
     }
 
     private function ensureManager(Request $request): void
