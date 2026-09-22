@@ -4,9 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Mensagem extends Model
 {
+    public function cobrancas(): BelongsToMany
+    {
+        return $this->belongsToMany(Cobranca::class, 'cobranca_mensagem');
+    }
+
     protected $table = 'mensagens';
 
     protected $fillable = [

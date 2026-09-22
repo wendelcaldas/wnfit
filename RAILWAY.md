@@ -23,14 +23,7 @@ SESSION_DRIVER=database
 CACHE_STORE=database
 QUEUE_CONNECTION=database
 SESSION_SECURE_COOKIE=true
-TWILIO_ACCOUNT_SID=AC...
-TWILIO_AUTH_TOKEN=...
-TWILIO_VALIDATE_WEBHOOK_SIGNATURE=true
-TWILIO_WHATSAPP_DRIVER=twilio
-TWILIO_WHATSAPP_FROM=+55...
-TWILIO_WHATSAPP_WELCOME_TEMPLATE_SID=HX...
-TWILIO_WHATSAPP_CHARGE_TEMPLATE_SID=HX...
-TWILIO_WHATSAPP_STATUS_CALLBACK_URL=https://SEU_DOMINIO/api/webhooks/twilio/whatsapp/status
+MESSAGING_MODE=manual
 ```
 
 Gere `APP_KEY` localmente com:
@@ -56,13 +49,18 @@ Nao e necessario definir um Start Command no painel. O Railway usara o `CMD` do 
 
 Gere um dominio no painel do Railway e atualize `APP_URL` com a URL HTTPS completa.
 
-## 5. WhatsApp / Twilio
+## 5. WhatsApp manual
 
-As credenciais globais do Twilio ficam nas variaveis do Railway. O numero remetente, os templates e os textos ficam configurados por organizacao dentro do WNFit, em `Comunicacoes`.
+O MVP usa `MESSAGING_MODE=manual`: o WNFit prepara a mensagem, abre o WhatsApp Web com o texto preenchido e registra o acompanhamento para o gestor marcar como enviada.
 
-Configure no Railway:
+Os textos ficam configurados por organizacao dentro do WNFit, em `Comunicacoes`. Nao e necessario manter numero, assinatura ou template ativo na Twilio para esse fluxo.
+
+## 6. WhatsApp / Twilio
+
+O fluxo Twilio ficou dormente para uso futuro. Se a integracao automatica voltar, altere `MESSAGING_MODE=automatic` e configure no Railway:
 
 ```env
+MESSAGING_MODE=automatic
 TWILIO_ACCOUNT_SID=AC...
 TWILIO_AUTH_TOKEN=...
 TWILIO_VALIDATE_WEBHOOK_SIGNATURE=true
@@ -89,6 +87,15 @@ POST /api/webhooks/twilio/whatsapp/status
 Em producao, mantenha `TWILIO_VALIDATE_WEBHOOK_SIGNATURE=true` para validar a assinatura `X-Twilio-Signature` enviada pela Twilio.
 
 ## Observacoes
+
+### Recorrencia financeira do MVP
+
+- Executar as migrations antes de disponibilizar a nova central financeira.
+- O comando `php artisan billing:sync` gera competencias sem enviar mensagens. Para execucao diaria independente de acessos, manter um processo `php artisan schedule:work` no ambiente de producao.
+- A consulta ao financeiro e aos alunos tambem sincroniza as assinaturas habilitadas, por organizacao.
+- Assinaturas antigas ficam com `recorrencia_inicio` vazio e nao recebem reconstrucoes silenciosas. Revisar pelo painel do aluno na central e confirmar a previa de valores/competencias antes de habilitar a recorrencia.
+- Datas de pausa e encerramento impedem novas competencias a partir da data indicada; nao apagam cobrancas ja existentes. Multiplos intervalos de pausa e precos historicos ainda precisam ser conferidos manualmente.
+- Manter `MESSAGING_MODE=manual` para o MVP. A cobranca conjunta usa exclusivamente links manuais do WhatsApp.
 
 - O banco SQLite nao deve ser usado em producao, pois o filesystem do container e efemero.
 - Arquivos enviados para o disco `local` tambem nao sao permanentes. Antes de implementar uploads de producao, configure um storage externo como S3.

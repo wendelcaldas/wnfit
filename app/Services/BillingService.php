@@ -9,13 +9,10 @@ use App\Models\Plano;
 use App\Services\Messaging\MessagingService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class BillingService
 {
-    public function __construct(private readonly MessagingService $messaging)
-    {
-    }
+    public function __construct(private readonly MessagingService $messaging) {}
 
     public function createSubscriptionForStudent(
         Aluno $student,
@@ -35,6 +32,7 @@ class BillingService
                 'proximo_vencimento' => Carbon::parse($dueDate)->toDateString(),
                 'auto_renovacao' => $autoRenew,
                 'metodo_pagamento' => $paymentMethod,
+                'recorrencia_inicio' => Carbon::parse($dueDate)->toDateString(),
             ]);
 
             $this->generateCharge($subscription, Carbon::parse($dueDate));
@@ -53,18 +51,17 @@ class BillingService
             'competencia' => $competence,
         ]);
 
-        if ($charge->exists && $charge->status === 'pago') {
+        if ($charge->exists) {
             return $charge;
         }
 
         $charge->fill([
-                'organizacao_id' => $subscription->organizacao_id,
-                'aluno_id' => $subscription->aluno_id,
-                'vencimento' => $due->toDateString(),
-                'valor' => $subscription->plano->valor_mensal,
-                'status' => $due->isPast() && ! $due->isToday() ? 'atrasado' : 'pendente',
-                'forma_pagamento' => $subscription->metodo_pagamento,
-                'link_pagamento' => 'https://pay.wnfit.test/'.Str::random(12),
+            'organizacao_id' => $subscription->organizacao_id,
+            'aluno_id' => $subscription->aluno_id,
+            'vencimento' => $due->toDateString(),
+            'valor' => $subscription->plano->valor_mensal,
+            'status' => $due->isPast() && ! $due->isToday() ? 'atrasado' : 'pendente',
+            'forma_pagamento' => $subscription->metodo_pagamento,
         ])->save();
 
         $charge->eventos()->firstOrCreate(
@@ -80,6 +77,7 @@ class BillingService
 
     public function refreshOverdueCharges(int $organizationId): void
     {
+        app(RecurringBillingService::class)->sync($organizationId);
         Cobranca::query()
             ->where('organizacao_id', $organizationId)
             ->where('status', 'pendente')
@@ -97,18 +95,28 @@ class BillingService
             });
     }
 
-    public function sendCharge(Cobranca $charge): Cobranca
+    public function sendCharge(Cobranca $charge, bool $manual = false): Cobranca
     {
-        $message = $this->messaging->sendChargeReminder($charge);
+        abort_unless(in_array($charge->status, ['pendente', 'atrasado'], true), 422, 'Esta cobranca nao esta em aberto.');
+        $message = $manual
+            ? $this->messaging->prepareManualChargeReminder($charge, 'Mensagem preparada pelo gestor para envio manual.')
+            : $this->messaging->sendChargeReminder($charge);
+
+        if ($message->status === 'falhou') {
+            $message = $this->messaging->prepareManualChargeReminder(
+                $charge,
+                $message->erro ?: 'Envio automatico indisponivel.',
+            );
+        }
 
         if ($message->enviado_em) {
             $charge->update(['enviado_em' => $message->enviado_em]);
         }
 
         $charge->eventos()->create([
-            'tipo' => $message->status === 'falhou' ? 'mensagem_falhou' : 'link_enviado',
-            'descricao' => $message->status === 'falhou'
-                ? 'Falha ao enviar mensagem de cobranca pelo WhatsApp.'
+            'tipo' => $message->status === 'manual_preparado' ? 'mensagem_manual_preparada' : 'link_enviado',
+            'descricao' => $message->status === 'manual_preparado'
+                ? 'Mensagem de cobranca preparada para envio manual pelo WhatsApp.'
                 : 'Mensagem de cobranca enviada pelo WhatsApp.',
             'ocorrido_em' => now(),
         ]);
@@ -116,10 +124,15 @@ class BillingService
         return $charge->refresh();
     }
 
-    public function registerPayment(Cobranca $charge, ?float $amount = null, string $method = 'PIX'): Cobranca
+    public function registerPayment(Cobranca $charge, ?float $amount = null, string $method = 'PIX', Carbon|string|null $paymentDate = null): Cobranca
     {
-        return DB::transaction(function () use ($charge, $amount, $method) {
-            $paidAt = now();
+        return DB::transaction(function () use ($charge, $amount, $method, $paymentDate) {
+            $charge = Cobranca::query()->lockForUpdate()->findOrFail($charge->id);
+            if ($charge->status === 'pago') {
+                return $charge;
+            }
+            abort_unless(in_array($charge->status, ['pendente', 'atrasado'], true), 422, 'Esta cobranca nao pode receber pagamento.');
+            $paidAt = $paymentDate ? Carbon::parse($paymentDate) : now();
 
             $charge->pagamento()->create([
                 'valor' => $amount ?? $charge->valor,
@@ -140,10 +153,24 @@ class BillingService
             ]);
 
             $subscription = $charge->assinatura;
-            if ($subscription?->auto_renovacao) {
-                $nextDueDate = $charge->vencimento->copy()->addMonthNoOverflow();
-                $subscription->update(['proximo_vencimento' => $nextDueDate]);
-                $this->generateCharge($subscription, $nextDueDate);
+            if ($subscription) {
+                $next = $subscription->cobrancas()->whereIn('status', ['pendente', 'atrasado'])->orderBy('vencimento')->first()?->vencimento;
+                if (! $next && $subscription->auto_renovacao && $subscription->status === 'ativa') {
+                    $months = match ($subscription->plano->ciclo) {
+                        'mensal' => 1, 'trimestral' => 3, 'semestral' => 6, 'anual' => 12, default => null,
+                    };
+                    if ($months) {
+                        $anchor = $subscription->recorrencia_inicio ?? $charge->vencimento;
+                        $offset = 0;
+                        do {
+                            $offset += $months;
+                            $next = $anchor->copy()->addMonthsNoOverflow($offset);
+                        } while ($next->lte($charge->vencimento));
+                    }
+                }
+                if ($next) {
+                    $subscription->update(['proximo_vencimento' => $next]);
+                }
             }
 
             return $charge->refresh();

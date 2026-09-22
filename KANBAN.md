@@ -4,6 +4,24 @@ Este quadro organiza as proximas features por prioridade e reduz ambiguidade ant
 
 ## Prioridades
 
+## Direcao do MVP — 21/09/2026
+
+- Financeiro como centro da operacao: previsibilidade, recebimentos e acompanhamento de cobrancas.
+- Comunicacao assistida pelo gestor: revisar texto, copiar/abrir WhatsApp e confirmar envio no historico.
+- Twilio e disparos automaticos ficam fora do MVP. A integracao existente permanece inativa no modo manual padrao.
+- Direcao revisada: Financeiro abre diretamente a visao mensal de Resultados, sem abas e sem a tela Cobrar e acompanhar. Filtros por mes, aluno e situacao; mensagem manual e baixa por cobranca.
+- Revisao de competencias antigas e datas de vigencia permanece acessivel no financeiro do perfil do aluno.
+- Acoes no financeiro do aluno: popup de mensagem com template configurado, revisao, copia, abertura explicita do WhatsApp Web e confirmacao manual de envio; popup de baixa com escolha obrigatoria entre PIX, credito, debito, dinheiro, transferencia e boleto. Forma efetiva persistida no pagamento e na cobranca.
+- Telefone ausente/invalido: mensagem clara com cadastro do numero no proprio popup, salvando no aluno e continuando a preparacao manual; mesmo fluxo na central financeira.
+- Resultados usa periodo mensal: recebido por data de pagamento, decompondo mensalidades do mes, recuperacao de meses anteriores e antecipacoes. Aberto/vencido nessa area usa vencimento no mes.
+- Recorrencia independente de pagamento, com ancora de vencimento sem deriva em fevereiro e ciclos mensal/trimestral/semestral/anual. Gera ate o fim do mes ou proximos 7 dias, o que for maior; respeita status, auto-renovacao e datas de pausa/encerramento. Nao recria competencias existentes, inclusive canceladas.
+- Assinaturas antigas exigem revisao explicita da vigencia e valores antes de reconstruir competencias faltantes; previa com total e verificacao contra mudancas antes da confirmacao. Dados existentes preservados.
+- Perfil do aluno e central compartilham cobrancas, pagamentos e historico de contato. Baixa repetida nao duplica recebimentos.
+- Proxima evolucao: pagamentos parciais dentro de uma competencia, historico de multiplos intervalos de pausa/retomada, valores historicos de plano e retorno combinado de contato.
+- Validacao automatizada: testes de recorrencia, migracao assistida, cobranca conjunta, baixa seletiva/duplicada, isolamento de dados e resultados por periodo, alem da suite existente e build.
+
+As prioridades abaixo registram o planejamento anterior; itens de automacao/Twilio nao fazem parte do MVP atual.
+
 - P0: estabilidade, bugs bloqueantes e fluxos essenciais quebrados.
 - P1: features centrais para operacao diaria do studio.
 - P2: melhorias importantes, mas que podem esperar uma entrega principal.

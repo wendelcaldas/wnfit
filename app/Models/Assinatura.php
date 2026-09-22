@@ -17,6 +17,9 @@ class Assinatura extends Model
         'proximo_vencimento',
         'auto_renovacao',
         'metodo_pagamento',
+        'recorrencia_inicio',
+        'encerramento_em',
+        'pausa_em',
     ];
 
     protected function casts(): array
@@ -25,6 +28,9 @@ class Assinatura extends Model
             'inicio_em' => 'date',
             'proximo_vencimento' => 'date',
             'auto_renovacao' => 'boolean',
+            'recorrencia_inicio' => 'date',
+            'encerramento_em' => 'date',
+            'pausa_em' => 'date',
         ];
     }
 

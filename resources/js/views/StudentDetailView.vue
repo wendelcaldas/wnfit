@@ -161,10 +161,93 @@
 
         <div v-if="workoutPickerOpen" class="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4" @click.self="workoutPickerOpen = false"><section class="flex max-h-[82vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"><header class="flex items-start justify-between border-b border-[var(--wn-line)] p-5"><div><h2 class="text-xl font-semibold">Escolher modelo de treino</h2><p class="mt-1 text-sm text-[var(--wn-muted)]">O modelo selecionado passara a ser o treino atual do aluno.</p></div><button class="icon-button" @click="workoutPickerOpen = false"><X class="h-4 w-4" /></button></header><div class="overflow-y-auto p-5"><div v-if="workoutTemplates.length" class="grid gap-3 sm:grid-cols-2"><button v-for="workout in workoutTemplates" :key="workout.id" class="rounded-xl border p-4 text-left transition hover:border-[var(--wn-primary-strong)] hover:bg-[var(--wn-primary-soft)]" :class="workout.selected ? 'border-[var(--wn-primary-strong)] bg-[var(--wn-primary-soft)]' : 'border-[var(--wn-line)]'" :disabled="assigningWorkout" @click="assignWorkout(workout)"><div class="flex items-center justify-between gap-3"><span class="font-semibold">{{ workout.name }}</span><span v-if="workout.selected" class="badge-success">Atual</span></div><p class="mt-2 text-sm text-[var(--wn-muted)]">{{ workout.objective }} · {{ workout.sessionsPerWeek }}x/semana</p><p class="mt-3 text-xs text-[var(--wn-muted)]">{{ workout.daysCount }} dias · {{ workout.durationWeeks }} semanas</p></button></div><p v-else class="p-8 text-center text-sm text-[var(--wn-muted)]">Nenhum modelo ativo disponivel.</p></div></section></div>
 
+        <section v-if="student && activeTab === 'communications'" class="mt-5 grid gap-5 xl:grid-cols-[1fr_360px]">
+            <section class="panel-card p-0">
+                <div class="flex flex-col gap-4 border-b border-[var(--wn-line)] p-5 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Comunicações</h2>
+                        <p class="mt-1 text-sm text-[var(--wn-muted)]">Mensagens preparadas para WhatsApp e historico de envio.</p>
+                    </div>
+                    <span class="badge-success">WhatsApp manual</span>
+                </div>
+
+                <div v-if="student.communications?.length" class="divide-y divide-[var(--wn-line)]">
+                    <article v-for="message in student.communications" :key="message.id" class="grid gap-4 p-5 lg:grid-cols-[190px_1fr_auto]">
+                        <div>
+                            <span :class="messageStatusClass(message.status)">{{ message.statusLabel }}</span>
+                            <p class="mt-3 text-sm font-semibold text-[var(--wn-ink)]">{{ message.typeLabel }}</p>
+                            <p class="mt-1 text-xs text-[var(--wn-muted)]">{{ message.createdAt }}</p>
+                            <p v-if="message.sentAt" class="mt-1 text-xs text-[var(--wn-muted)]">Enviada em {{ message.sentAt }}</p>
+                        </div>
+
+                        <div>
+                            <p class="rounded-lg border border-[var(--wn-line)] bg-[var(--wn-surface-soft)] p-4 text-sm leading-6 text-[var(--wn-ink)]">{{ message.content }}</p>
+                            <p v-if="message.error && message.provider !== 'whatsapp_link'" class="mt-2 text-xs text-[var(--wn-danger)]">{{ message.error }}</p>
+                            <p class="mt-2 text-xs text-[var(--wn-muted)]">Destino: {{ message.recipient }}</p>
+                        </div>
+
+                        <div class="flex flex-wrap items-start justify-end gap-2">
+                            <button class="icon-button" title="Copiar texto" @click="copyMessage(message)">
+                                <Copy class="h-4 w-4" />
+                            </button>
+                            <button v-if="message.manualUrl" class="btn-secondary gap-2" @click="openManualMessage(message)">
+                                <ExternalLink class="h-4 w-4" />
+                                Abrir WhatsApp
+                            </button>
+                            <button v-if="canMarkSent(message)" class="btn-primary gap-2" :disabled="messageActionId === message.id" @click="markMessageSent(message)">
+                                <Send class="h-4 w-4" />
+                                Marcar enviada
+                            </button>
+                        </div>
+                    </article>
+                </div>
+
+                <div v-else class="grid place-items-center px-5 py-16 text-center">
+                    <div>
+                        <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[var(--wn-primary-soft)] text-[var(--wn-primary-strong)]">
+                            <MessageCircle class="h-6 w-6" />
+                        </div>
+                        <h3 class="mt-4 text-lg font-semibold text-[var(--wn-ink)]">Nenhuma mensagem ainda</h3>
+                        <p class="mx-auto mt-2 max-w-sm text-sm text-[var(--wn-muted)]">As boas-vindas e cobrancas preparadas para WhatsApp aparecem aqui.</p>
+                    </div>
+                </div>
+
+                <div class="px-5 pb-5">
+                    <FormMessage :text="formMessage" />
+                </div>
+            </section>
+
+            <aside class="space-y-5">
+                <section class="panel-card">
+                    <h2 class="text-lg font-semibold text-[var(--wn-ink)]">Fila manual</h2>
+                    <div class="mt-5 space-y-4 text-sm">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-[var(--wn-muted)]">Prontas para envio</span>
+                            <strong>{{ communicationCount(['manual_preparado']) }}</strong>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-[var(--wn-muted)]">WhatsApp aberto</span>
+                            <strong>{{ communicationCount(['manual_aberto']) }}</strong>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-[var(--wn-muted)]">Enviadas manualmente</span>
+                            <strong>{{ communicationCount(['manual_enviado']) }}</strong>
+                        </div>
+                    </div>
+                </section>
+                <section class="panel-card">
+                    <h2 class="text-lg font-semibold text-[var(--wn-ink)]">Mensagem inicial</h2>
+                    <p class="mt-3 text-sm leading-6 text-[var(--wn-muted)]">{{ student.communications?.find((message) => message.type === 'boas_vindas')?.content ?? 'A proxima matricula criada vai gerar uma mensagem de boas-vindas pronta para WhatsApp.' }}</p>
+                </section>
+            </aside>
+        </section>
+
         <section v-if="student && activeTab === 'financial'" class="mt-5 grid gap-5 xl:grid-cols-[1fr_420px]">
             <div class="space-y-5">
                 <section class="panel-card">
                     <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Resumo financeiro</h2>
+                    <p v-if="formMessage" role="status" class="mt-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{{ formMessage }}</p>
+                    <SubscriptionRecurrence :student-id="student.id" @updated="loadStudent" />
                     <div class="mt-5 grid gap-4 md:grid-cols-5">
                         <MiniKpi label="Status financeiro" :value="student.financial.status" caption="Nenhuma pendência" />
                         <MiniKpi label="Valor mensal" :value="money(student.financial.monthlyValue)" :caption="student.plan" />
@@ -209,8 +292,8 @@
                                     <td class="px-5 py-4 text-sm text-[var(--wn-muted)]">{{ charge.paidAt }}</td>
                                     <td class="px-5 py-4">
                                         <div class="flex justify-end gap-2">
-                                            <button class="icon-button" title="Enviar cobrança" @click="sendCharge(charge.id)"><MessageCircle class="h-4 w-4" /></button>
-                                            <button class="icon-button" title="Registrar pagamento" @click="payCharge(charge.id)"><ReceiptText class="h-4 w-4" /></button>
+                                            <button class="icon-button" title="Enviar mensagem" aria-label="Enviar mensagem" :disabled="!['pendente', 'atrasado'].includes(charge.status)" @click="chargeDialog = { charge, action: 'message' }"><MessageCircle class="h-4 w-4" /></button>
+                                            <button class="icon-button" title="Registrar pagamento" aria-label="Registrar pagamento" :disabled="!['pendente', 'atrasado'].includes(charge.status)" @click="chargeDialog = { charge, action: 'payment' }"><ReceiptText class="h-4 w-4" /></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -254,15 +337,18 @@
                 </section>
             </aside>
         </section>
+        <ChargeActionDialog v-if="chargeDialog" :charge="chargeDialog.charge" :action="chargeDialog.action" @close="chargeDialog = null" @updated="onChargeUpdated" />
     </AppShell>
 </template>
 
 <script setup>
 import { defineComponent, h, onMounted, reactive, ref } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
-import { ArrowLeft, CheckCircle2, Dumbbell, Library, Mail, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Plus, ReceiptText, X } from 'lucide-vue-next';
+import { ArrowLeft, CheckCircle2, Copy, Dumbbell, ExternalLink, Library, Mail, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Plus, ReceiptText, Send, X } from 'lucide-vue-next';
 
 import AppShell from '../components/AppShell.vue';
+import ChargeActionDialog from '../components/ChargeActionDialog.vue';
+import SubscriptionRecurrence from '../components/SubscriptionRecurrence.vue';
 
 const MiniKpi = defineComponent({
     props: { label: String, value: [String, Number], caption: String },
@@ -345,6 +431,7 @@ const workoutTemplates = ref([]);
 const workoutsLoading = ref(false);
 const workoutPickerOpen = ref(false);
 const assigningWorkout = ref(false);
+const messageActionId = ref(null);
 const tabs = [
     { key: 'overview', label: 'Visão geral' },
     { key: 'profile', label: 'Dados pessoais' },
@@ -360,6 +447,17 @@ const tabs = [
 
 const money = (value) => Number(value ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const labelStatus = (status) => ({ pago: 'Pago', pendente: 'Pendente', atrasado: 'Atrasado', cancelado: 'Cancelado' }[status] ?? status);
+const canMarkSent = (message) => ['manual_preparado', 'manual_aberto'].includes(message.status);
+const communicationCount = (statuses) => student.value?.communications?.filter((message) => statuses.includes(message.status)).length ?? 0;
+const messageStatusClass = (status) => ({
+    manual_preparado: 'badge-warning',
+    manual_aberto: 'badge-muted',
+    manual_enviado: 'badge-success',
+    falhou: 'badge-danger',
+    failed: 'badge-danger',
+    entregue: 'badge-success',
+    delivered: 'badge-success',
+}[status] ?? 'badge-muted');
 
 const loadStudent = async () => {
     const { data } = await window.axios.get(`/api/students/${route.params.id}`);
@@ -420,13 +518,41 @@ const generateCharge = async () => {
     await loadStudent();
 };
 
-const sendCharge = async (id) => {
-    await window.axios.post(`/api/charges/${id}/send`);
-    await loadStudent();
+const chargeDialog = ref(null);
+
+const openManualUrl = (url) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
 };
 
-const payCharge = async (id) => {
-    await window.axios.post(`/api/charges/${id}/pay`);
+const openManualMessage = async (message) => {
+    openManualUrl(message.manualUrl);
+    messageActionId.value = message.id;
+    try {
+        await window.axios.post(`/api/messages/${message.id}/opened`);
+        await loadStudent();
+    } finally {
+        messageActionId.value = null;
+    }
+};
+
+const markMessageSent = async (message) => {
+    messageActionId.value = message.id;
+    try {
+        await window.axios.post(`/api/messages/${message.id}/sent`);
+        formMessage.value = 'Mensagem marcada como enviada.';
+        await loadStudent();
+    } finally {
+        messageActionId.value = null;
+    }
+};
+
+const copyMessage = async (message) => {
+    await navigator.clipboard.writeText(message.content);
+    formMessage.value = 'Texto da mensagem copiado.';
+};
+
+const onChargeUpdated = async (message) => {
+    formMessage.value = message;
     await loadStudent();
 };
 

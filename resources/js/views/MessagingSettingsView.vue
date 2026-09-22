@@ -2,15 +2,15 @@
     <AppShell
         eyebrow="Configuracoes > Mensagens"
         title="Mensagens e cobrancas"
-        description="Configure o numero WhatsApp do studio e os textos enviados aos alunos."
+        description="Configure os textos que serao preparados para envio manual pelo WhatsApp."
         search-placeholder="Buscar configuracoes..."
     >
         <div class="grid gap-5 xl:grid-cols-[1fr_390px]">
             <form class="panel-card" @submit.prevent="saveSettings">
                 <div class="flex flex-col gap-4 border-b border-[var(--wn-line)] pb-5 md:flex-row md:items-start md:justify-between">
                     <div>
-                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Configuracao do WhatsApp</h2>
-                        <p class="mt-1 text-sm text-[var(--wn-muted)]">Use o numero aprovado no Twilio para este studio.</p>
+                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Mensagens manuais no WhatsApp</h2>
+                        <p class="mt-1 text-sm text-[var(--wn-muted)]">O WNFit abre o WhatsApp Web com a mensagem pronta e registra o acompanhamento no aluno.</p>
                     </div>
                     <button class="btn-primary justify-center" :disabled="saving">
                         {{ saving ? 'Salvando...' : 'Salvar configuracao' }}
@@ -18,36 +18,6 @@
                 </div>
 
                 <div class="mt-6 grid gap-5">
-                    <label class="block space-y-2">
-                        <span class="text-sm font-medium text-[var(--wn-muted)]">Numero WhatsApp remetente</span>
-                        <input
-                            v-model.trim="form.whatsapp_from"
-                            class="form-control"
-                            placeholder="+5571999990000"
-                            maxlength="40"
-                        />
-                    </label>
-
-                    <label class="block space-y-2">
-                        <span class="text-sm font-medium text-[var(--wn-muted)]">Content Template SID de cobranca aprovado no Twilio</span>
-                        <input
-                            v-model.trim="form.charge_template_sid"
-                            class="form-control"
-                            placeholder="Opcional durante testes no sandbox"
-                            maxlength="120"
-                        />
-                    </label>
-
-                    <label class="block space-y-2">
-                        <span class="text-sm font-medium text-[var(--wn-muted)]">Content Template SID de boas-vindas aprovado no Twilio</span>
-                        <input
-                            v-model.trim="form.welcome_template_sid"
-                            class="form-control"
-                            placeholder="Opcional durante testes no sandbox"
-                            maxlength="120"
-                        />
-                    </label>
-
                     <label class="block space-y-2">
                         <span class="text-sm font-medium text-[var(--wn-muted)]">Mensagem de boas-vindas ao novo aluno</span>
                         <textarea
@@ -73,8 +43,8 @@
                     <label class="flex items-center gap-3 rounded-lg border border-[var(--wn-line)] bg-white p-4">
                         <input v-model="form.ativo" type="checkbox" class="h-4 w-4" />
                         <span>
-                            <span class="block text-sm font-semibold text-[var(--wn-ink)]">Envio de mensagens ativo</span>
-                            <span class="mt-1 block text-sm text-[var(--wn-muted)]">Quando ativo, as cobrancas podem ser enviadas pelo WhatsApp.</span>
+                            <span class="block text-sm font-semibold text-[var(--wn-ink)]">Preparar mensagens automaticamente</span>
+                            <span class="mt-1 block text-sm text-[var(--wn-muted)]">Quando ativo, cadastro de aluno e cobrancas geram mensagens prontas para WhatsApp.</span>
                         </span>
                     </label>
 
@@ -86,28 +56,19 @@
 
             <aside class="space-y-5">
                 <section class="panel-card">
-                    <div class="flex items-center gap-3">
-                        <div class="grid h-11 w-11 place-items-center rounded-full bg-[var(--wn-primary-soft)] text-[var(--wn-primary-strong)]">
-                            <ShieldCheck class="h-5 w-5" />
+                    <h2 class="text-lg font-semibold">Fluxo operacional</h2>
+                    <div class="mt-4 space-y-3 text-sm text-[var(--wn-muted)]">
+                        <div class="flex items-center gap-3">
+                            <CheckCircle2 class="h-4 w-4 shrink-0 text-[var(--wn-primary-strong)]" />
+                            <span>Aluno novo gera boas-vindas pronta para envio.</span>
                         </div>
-                        <div>
-                            <h2 class="text-lg font-semibold">Producao</h2>
-                            <p class="text-sm text-[var(--wn-muted)]">{{ readiness.ready ? 'Pronto para envio real.' : 'Itens pendentes para envio real.' }}</p>
+                        <div class="flex items-center gap-3">
+                            <CheckCircle2 class="h-4 w-4 shrink-0 text-[var(--wn-primary-strong)]" />
+                            <span>Cobranca abre WhatsApp Web com texto e link preenchidos.</span>
                         </div>
-                    </div>
-                    <div class="mt-4 grid gap-2">
-                        <div
-                            v-for="check in readiness.checks"
-                            :key="check.key"
-                            class="rounded-lg border px-3 py-2 text-sm"
-                            :class="check.ok ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'"
-                        >
-                            <div class="flex items-center justify-between gap-3">
-                                <span class="font-semibold">{{ check.label }}</span>
-                                <CheckCircle2 v-if="check.ok" class="h-4 w-4 shrink-0" />
-                                <AlertTriangle v-else class="h-4 w-4 shrink-0" />
-                            </div>
-                            <p v-if="!check.ok" class="mt-1 text-xs">{{ check.hint }}</p>
+                        <div class="flex items-center gap-3">
+                            <CheckCircle2 class="h-4 w-4 shrink-0 text-[var(--wn-primary-strong)]" />
+                            <span>A aba Comunicacoes guarda status, conteudo e marcacao de envio.</span>
                         </div>
                     </div>
                 </section>
@@ -161,7 +122,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue';
-import { AlertTriangle, CheckCircle2, MessageSquareText, ShieldCheck } from 'lucide-vue-next';
+import { CheckCircle2, MessageSquareText } from 'lucide-vue-next';
 import AppShell from '../components/AppShell.vue';
 
 const loading = ref(true);
@@ -171,7 +132,6 @@ const messageType = ref('success');
 const activeTemplate = ref('welcome');
 const variables = ref([]);
 const serverPreviews = reactive({ charge: '', welcome: '' });
-const readiness = reactive({ ready: false, checks: [] });
 const form = reactive({
     whatsapp_from: '',
     charge_template_sid: '',
@@ -211,7 +171,6 @@ const loadSettings = async () => {
     });
     variables.value = data.variables;
     Object.assign(serverPreviews, data.previews ?? { charge: data.preview, welcome: '' });
-    Object.assign(readiness, data.readiness ?? { ready: false, checks: [] });
 };
 
 const saveSettings = async () => {
@@ -228,7 +187,6 @@ const saveSettings = async () => {
             ativo: data.settings.active,
         });
         Object.assign(serverPreviews, data.previews ?? { charge: data.preview, welcome: '' });
-        Object.assign(readiness, data.readiness ?? { ready: false, checks: [] });
         messageType.value = 'success';
         message.value = 'Configuracao salva com sucesso.';
     } catch (exception) {

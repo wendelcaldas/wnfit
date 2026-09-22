@@ -6,7 +6,6 @@ use App\Models\Mensagem;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\URL;
 
 class TwilioWebhookController extends Controller
 {
@@ -30,9 +29,11 @@ class TwilioWebhookController extends Controller
         }
 
         $status = $this->statusFromTwilio($data['MessageStatus']);
+        $failed = in_array($status, ['falhou'], true);
+
         $message->update([
             'status' => $status,
-            'erro' => $data['ErrorMessage'] ?? $data['ErrorCode'] ?? $message->erro,
+            'erro' => $failed ? ($data['ErrorMessage'] ?? $data['ErrorCode'] ?? $message->erro) : null,
             'entregue_em' => in_array($status, ['entregue', 'lido'], true) ? now() : $message->entregue_em,
             'payload' => [
                 ...($message->payload ?? []),
@@ -50,6 +51,7 @@ class TwilioWebhookController extends Controller
             'delivered' => 'entregue',
             'read' => 'lido',
             'failed', 'undelivered' => 'falhou',
+            'queued', 'accepted', 'sending' => 'queued',
             default => $status,
         };
     }
@@ -67,7 +69,7 @@ class TwilioWebhookController extends Controller
             throw new AuthorizationException('Assinatura Twilio ausente.');
         }
 
-        $url = URL::to($request->getRequestUri());
+        $url = $this->signatureUrl($request);
         $data = $request->post();
         ksort($data);
 
@@ -81,5 +83,16 @@ class TwilioWebhookController extends Controller
         if (! hash_equals($expected, $signature)) {
             throw new AuthorizationException('Assinatura Twilio invalida.');
         }
+    }
+
+    private function signatureUrl(Request $request): string
+    {
+        $configuredUrl = (string) config('services.twilio.whatsapp.status_callback_url');
+
+        if ($configuredUrl) {
+            return $configuredUrl;
+        }
+
+        return $request->fullUrl();
     }
 }

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
 import DashboardView from '../views/DashboardView.vue';
+import FinanceView from '../views/FinanceView.vue';
 import LoginView from '../views/LoginView.vue';
 import MessagingSettingsView from '../views/MessagingSettingsView.vue';
 import RegisterView from '../views/RegisterView.vue';
@@ -16,6 +17,9 @@ import { useAuthStore } from '../stores/auth';
 export const router = createRouter({
     history: createWebHistory(),
     routes: [
+        { path: '/evento/:slug', component: () => import('../views/PublicEventView.vue'), meta: { public: true } },
+        { path: '/eventos', component: () => import('../views/EventsView.vue'), meta: { requiresAuth: true } },
+        { path: '/financeiro', name: 'financeiro', component: FinanceView, meta: { requiresAuth: true } },
         {
             path: '/',
             redirect: '/entrar',
@@ -112,6 +116,7 @@ export const router = createRouter({
 });
 
 router.beforeEach(async (to) => {
+    if (to.meta.public) return true;
     const auth = useAuthStore();
 
     if (!auth.loaded) {
