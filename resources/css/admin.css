@@ -17,7 +17,7 @@
     border: 0;
     color: white;
 }
-.admin-redesign .dashboard-sidebar > div { padding: 28px 20px; }
+.admin-redesign .dashboard-sidebar > div { width: 100%; min-width: 0; padding: 28px 20px; }
 .admin-redesign .dashboard-sidebar .brand-emblem {
     background: var(--wn-primary);
     color: var(--wn-ink);
@@ -31,10 +31,13 @@
 .admin-redesign .sidebar-item-active,
 .admin-redesign .sidebar-item-active:hover { background: var(--wn-primary); color: var(--wn-ink); }
 .admin-redesign .sidebar-item-active::before { display: none; }
-.admin-redesign .sidebar-account > div { background: #ffffff08; border-color: #ffffff18; padding: 12px; border-radius: 12px; }
-.admin-redesign .sidebar-account p:first-child { color: white; }
+.admin-redesign .sidebar-account { min-width: 0; }
+.admin-redesign .sidebar-account > div { background: #ffffff08; border-color: #ffffff18; padding: 10px; border-radius: 12px; gap: 10px; }
+.admin-redesign .sidebar-account > div > div:first-child { width: 36px; height: 36px; flex-shrink: 0; font-size: 13px; }
+.admin-redesign .sidebar-account > div > div:last-child { flex: 1; min-width: 0; }
+.admin-redesign .sidebar-account p:first-child { color: white; font-size: 12px; }
 .admin-redesign .sidebar-account p:last-child { color: #b7beb1; font-size: 12px; }
-.admin-redesign .sidebar-account .btn-secondary { background: transparent; color: #d7dbd3; border-color: #ffffff25; }
+.admin-redesign .sidebar-account .btn-secondary { background: transparent; color: #d7dbd3; border-color: #ffffff25; min-height: 40px; padding: 8px 12px; font-size: 12px; margin-top: 12px; }
 .admin-redesign .dashboard-topbar { background: #f5f6f4f5; border: 0; }
 .admin-redesign .dashboard-topbar .dashboard-container { padding-top: 28px; padding-bottom: 12px; }
 .admin-redesign .dashboard-topbar h1 { font-family: var(--font-display); font-size: 32px; letter-spacing: -0.045em; line-height: 1.2; }
