@@ -1,41 +1,43 @@
 <template>
-    <div class="auth-page">
-        <main class="auth-layout">
-            <AuthShowcase />
+    <div class="student-login-page teacher-portal-login auth-login-ui">
+            <section class="student-login-story">
+                <div class="flex items-center gap-3">
+                    <span class="brand-emblem">W</span>
+                    <strong class="font-display text-2xl">WNFit</strong>
+                </div>
+                <div class="student-login-message">
+                    <span class="student-overline">SEU ESPAÇO DE GESTÃO</span>
+                    <h2 class="mt-5 font-display font-bold leading-tight">Mais tempo para transformar <span class="student-brand-accent">resultados.</span></h2>
+                    <p class="mt-6 max-w-sm text-base leading-7 text-white/70">Organize seus alunos.<br />Acompanhe cada evolução.</p>
+                </div>
+                <p class="student-login-caption flex items-center gap-3 text-sm text-white/70">
+                    <Dumbbell :size="20" /> Cada aluno. Um novo resultado.
+                </p>
+            </section>
 
-            <section class="auth-form-panel">
-                <div class="auth-form-card auth-form-card-login">
-                    <div class="auth-wordmark">
-                        <div class="flex items-center justify-center gap-3">
-                            <div class="brand-emblem">
-                                <span>W</span>
-                            </div>
-                            <p>WN<span>Fit</span></p>
-                        </div>
-                    </div>
+            <main class="student-login-form">
+                        <span class="student-overline">PORTAL DO PROFESSOR</span>
+                        <h1 class="auth-login-title mt-3 font-display font-bold">Entrar na sua conta</h1>
+                        <p class="mt-3 text-sm leading-6 text-[var(--wn-muted)]">Bem-vindo de volta! Faça login para continuar.</p>
 
-                    <div class="space-y-2">
-                        <h1 class="text-2xl font-bold text-[var(--wn-ink)]">Entrar na sua conta</h1>
-                        <p class="text-sm leading-6 text-[var(--wn-muted)]">Bem-vindo de volta! Faca login para continuar.</p>
-                    </div>
-
-                    <form class="space-y-4" @submit.prevent="submit">
-                        <label class="block space-y-2">
-                            <span class="text-sm font-medium text-[var(--wn-ink)]">E-mail</span>
+                    <form class="auth-login-form mt-8 space-y-4" :aria-busy="loading" @submit.prevent="submit">
+                        <div class="auth-login-field">
+                            <label for="teacher-email">E-mail</label>
                             <div class="input-shell">
                                 <Mail class="h-5 w-5 text-[var(--wn-muted)]" />
-                                <input v-model="form.email" type="email" placeholder="Digite seu e-mail" class="auth-input" autocomplete="email" required />
+                                <input id="teacher-email" v-model="form.email" type="email" placeholder="Digite seu e-mail" class="auth-input" autocomplete="username" autocapitalize="none" spellcheck="false" required />
                             </div>
-                        </label>
+                        </div>
 
-                        <label class="block space-y-2">
-                            <span class="text-sm font-medium text-[var(--wn-ink)]">Senha</span>
+                        <div class="auth-login-field">
+                            <label for="teacher-password">Senha</label>
                             <div class="input-shell">
                                 <LockKeyhole class="h-5 w-5 text-[var(--wn-muted)]" />
-                                <input v-model="form.password" :type="showPassword ? 'text' : 'password'" placeholder="Digite sua senha" class="auth-input" autocomplete="current-password" required />
+                                <input id="teacher-password" v-model="form.password" :type="showPassword ? 'text' : 'password'" placeholder="Digite sua senha" class="auth-input" autocomplete="current-password" required />
                                 <button
                                     type="button"
-                                    class="text-[var(--wn-muted)] transition hover:text-[var(--wn-ink)]"
+                                    class="auth-password-toggle"
+                                    :aria-pressed="showPassword"
                                     :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
                                     :title="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
                                     @click="showPassword = !showPassword"
@@ -44,7 +46,7 @@
                                     <Eye v-else class="h-5 w-5" />
                                 </button>
                             </div>
-                        </label>
+                        </div>
 
                         <div class="flex items-center text-sm text-[var(--wn-muted)]">
                             <label class="flex items-center gap-2">
@@ -53,15 +55,15 @@
                             </label>
                         </div>
 
-                        <p v-if="error" class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">
+                        <p v-if="error" role="alert" class="auth-login-error">
                             {{ error }}
                         </p>
 
                         <button type="submit" class="btn-primary w-full justify-center" :disabled="loading">
-                            {{ loading ? 'Entrando...' : 'Entrar' }}
+                            {{ loading ? 'Entrando…' : 'Entrar' }}<ArrowRight :size="18" />
                         </button>
 
-                        <div class="flex items-center gap-4 py-1">
+                        <div class="teacher-login-divider flex items-center gap-4 py-1">
                             <div class="h-px flex-1 bg-[var(--wn-line)]"></div>
                             <span class="text-sm font-medium text-[var(--wn-muted)]">ou</span>
                             <div class="h-px flex-1 bg-[var(--wn-line)]"></div>
@@ -73,29 +75,18 @@
                         </RouterLink>
                     </form>
 
-                    <RouterLink to="/aluno/entrar" class="text-center text-sm font-semibold text-[var(--wn-primary-strong)]">Sou aluno — acessar meus treinos</RouterLink>
-                    <p class="text-center text-sm text-[var(--wn-muted)]">
-                        Ainda nao tem uma conta?
-                        <RouterLink to="/cadastro" class="font-medium text-[var(--wn-green)] transition hover:brightness-90">
-                            Criar conta
-                        </RouterLink>
+                    <p class="mt-10 border-t border-[var(--wn-line)] pt-6 text-xs text-[var(--wn-muted)]">
+                        <RouterLink to="/aluno/entrar" class="auth-support-link">Sou aluno — acessar meus treinos</RouterLink>
                     </p>
-                </div>
-            </section>
-
-            <footer class="auth-footer">
-                <span>WNFit</span> &copy; 2026 &bull; Todos os direitos reservados.
-            </footer>
-        </main>
+            </main>
     </div>
 </template>
 
 <script setup>
 import { RouterLink, useRouter } from 'vue-router';
 import { reactive, ref } from 'vue';
-import { Eye, EyeOff, LockKeyhole, Mail, UserPlus } from 'lucide-vue-next';
+import { ArrowRight, Dumbbell, Eye, EyeOff, LockKeyhole, Mail, UserPlus } from 'lucide-vue-next';
 
-import AuthShowcase from '../components/AuthShowcase.vue';
 import { useAuthStore } from '../stores/auth';
 
 const router = useRouter();
@@ -121,7 +112,7 @@ const submit = async () => {
         const errors = exception.response?.data?.errors;
         error.value = errors
             ? Object.values(errors).flat()[0]
-            : 'Nao foi possivel entrar. Confira os dados e tente novamente.';
+            : 'Não foi possível entrar. Confira os dados e tente novamente.';
     } finally {
         loading.value = false;
     }

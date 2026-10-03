@@ -289,6 +289,29 @@ body {
     font-size: 0.78rem;
 }
 
+.auth-support-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: #365314;
+    text-align: center;
+    text-decoration: none;
+    text-underline-offset: 3px;
+}
+.auth-support-link:hover {
+    text-decoration: underline;
+}
+.auth-support-link:focus-visible {
+    outline: 2px solid #365314;
+    outline-offset: 3px;
+    border-radius: 6px;
+}
+
 .input-shell {
     display: flex;
     align-items: center;
@@ -387,6 +410,150 @@ textarea.form-control {
 .btn-secondary:hover {
     border-color: rgba(106, 168, 15, 0.28);
     background: #fbfdf9;
+}
+
+/* Shared form controls for the student and teacher login screens. */
+.auth-login-ui {
+    --wn-primary: #a3e635;
+    --wn-primary-strong: #365314;
+    --wn-primary-soft: #eef8de;
+    --wn-ink: #151715;
+    --wn-muted: #62685f;
+    --wn-line: #e3e7df;
+}
+.auth-login-ui .auth-login-title {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.045em;
+}
+.auth-login-ui .auth-login-field {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+}
+.auth-login-field > label {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--wn-ink);
+}
+.auth-login-ui .input-shell {
+    min-height: 48px;
+    padding: 0 12px;
+    border-radius: 12px;
+    border: 1px solid var(--wn-line);
+    background: white;
+    gap: 12px;
+}
+.auth-login-ui .input-shell > svg {
+    flex-shrink: 0;
+}
+.auth-login-ui .auth-input {
+    width: 100%;
+    min-width: 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--wn-ink);
+}
+.auth-login-ui .input-shell:focus-within {
+    border-color: var(--wn-primary-strong);
+    box-shadow: 0 0 0 3px rgb(163 230 53 / 0.2);
+}
+.auth-login-ui .auth-password-toggle {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    margin-right: -10px;
+    border-radius: 10px;
+    color: var(--wn-muted);
+}
+.auth-login-ui .btn-primary {
+    min-height: 52px;
+    padding: 12px 20px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: var(--wn-primary);
+    color: var(--wn-ink);
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: none;
+}
+.auth-login-ui .btn-primary:hover {
+    background: #b2ee51;
+    filter: none;
+    transform: none;
+}
+.auth-login-ui .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.auth-login-ui .btn-secondary {
+    border-radius: 12px;
+    box-shadow: none;
+}
+.auth-login-ui :is(a, button, input[type='checkbox']):focus-visible {
+    outline: 2px solid var(--wn-primary-strong);
+    outline-offset: 3px;
+}
+.auth-login-ui .auth-login-error {
+    border: 1px solid #fecdd3;
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: #fff1f2;
+    color: #9f1239;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+.auth-login-ui .auth-login-form > :not(:last-child) {
+    margin-bottom: 0;
+}
+.auth-login-ui .auth-login-form > :not(:first-child) {
+    margin-top: 16px;
+}
+@media (min-width: 1024px) {
+    .student-login-page .student-login-form {
+        min-height: min(720px, 100dvh);
+    }
+    .student-login-page .student-login-form form {
+        margin-top: 24px;
+    }
+    .student-login-page .student-login-form > p:last-child {
+        margin-top: 24px;
+        padding-top: 16px;
+    }
+}
+@media (max-width: 1024px) {
+    .auth-login-ui .auth-login-title {
+        font-size: 28px;
+    }
+}
+@media (max-width: 1023px) {
+    .teacher-portal-login .teacher-login-divider {
+        display: none;
+    }
+    .teacher-portal-login .auth-login-form > :not(:first-child) {
+        margin-top: 10px;
+    }
+}
+@media (max-height: 640px) {
+    .auth-login-ui .auth-login-title {
+        font-size: 26px;
+    }
+    .auth-login-ui .auth-login-form > :not(:first-child) {
+        margin-top: 10px;
+    }
+    .teacher-portal-login .teacher-login-divider {
+        display: none;
+    }
+    .teacher-portal-login .student-login-form > p:last-child {
+        margin-top: 8px;
+        padding-top: 4px;
+    }
 }
 
 .icon-button {

@@ -1,5 +1,5 @@
 <template>
-    <div class="student-login-page">
+    <div class="student-login-page auth-login-ui">
         <section class="student-login-story">
             <div class="flex items-center gap-3">
                 <span class="brand-emblem">W</span
@@ -21,34 +21,44 @@
         </section>
         <main class="student-login-form">
             <span class="student-overline">PORTAL DO ALUNO</span>
-            <h2 class="mt-3 font-display text-3xl font-bold">Vamos treinar?</h2>
+            <h2 class="auth-login-title mt-3 font-display text-3xl font-bold">Vamos treinar?</h2>
             <p class="mt-3 text-sm leading-6 text-[var(--wn-muted)]">
                 Entre com o acesso enviado pelo seu professor.
             </p>
-            <form class="mt-8 space-y-5" @submit.prevent="submit">
-                <label class="student-field"
-                    >Usuário<input
+            <form class="auth-login-form mt-8 space-y-5" :aria-busy="busy" @submit.prevent="submit">
+                <div class="auth-login-field">
+                    <label for="student-username">Usuário</label>
+                    <div class="input-shell">
+                        <UserRound :size="20" class="text-[var(--wn-muted)]" />
+                        <input
+                        id="student-username"
                         v-model="form.username"
-                        class="form-control"
+                        class="auth-input"
                         autocomplete="username"
                         autocapitalize="none"
                         spellcheck="false"
-                        placeholder="Ex.: wendel"
+                        placeholder="Digite seu usuário"
                         required
                         maxlength="60"
-                /></label>
-                <label class="student-field"
-                    >Senha
-                    <div class="relative">
+                        />
+                    </div>
+                </div>
+                <div class="auth-login-field">
+                    <label for="student-password">Senha</label>
+                    <div class="input-shell">
+                        <LockKeyhole :size="20" class="text-[var(--wn-muted)]" />
                         <input
                             v-model="form.password"
                             :type="show ? 'text' : 'password'"
-                            class="form-control !pr-12"
+                            id="student-password"
+                            class="auth-input"
+                            placeholder="Digite sua senha"
                             autocomplete="current-password"
                             required
                         /><button
-                            class="student-password-toggle"
+                            class="auth-password-toggle"
                             type="button"
+                            :aria-pressed="show"
                             :aria-label="
                                 show ? 'Ocultar senha' : 'Mostrar senha'
                             "
@@ -58,9 +68,10 @@
                                 v-else
                                 :size="20"
                             />
-                        </button></div
-                ></label>
-                <p v-if="error" role="alert" class="student-error">
+                        </button>
+                    </div>
+                </div>
+                <p v-if="error" role="alert" class="auth-login-error">
                     {{ error }}
                 </p>
                 <button
@@ -71,11 +82,12 @@
                     }}<ArrowRight :size="18" />
                 </button>
             </form>
-            <button class="student-login-help" @click="help = !help">
+            <button class="student-login-help auth-support-link" type="button" :aria-expanded="help" aria-controls="student-login-help-content" @click="help = !help">
                 Preciso de ajuda para entrar
             </button>
             <p
                 v-if="help"
+                id="student-login-help-content"
                 class="mt-3 rounded-xl bg-[var(--wn-primary-soft)] p-4 text-sm leading-6"
             >
                 Peça ao professor ou à recepção uma nova senha provisória. Você
@@ -84,7 +96,7 @@
             <p
                 class="mt-10 border-t border-[var(--wn-line)] pt-6 text-xs text-[var(--wn-muted)]"
             >
-                <RouterLink to="/entrar" class="student-staff-link"
+                <RouterLink to="/entrar" class="student-staff-link auth-support-link"
                     ><UserRound :size="18" />Acesso do professor</RouterLink
                 >
             </p>
@@ -94,7 +106,7 @@
 <script setup>
 import { reactive, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
-import { ArrowRight, Dumbbell, Eye, EyeOff, UserRound } from "lucide-vue-next";
+import { ArrowRight, Dumbbell, Eye, EyeOff, LockKeyhole, UserRound } from "lucide-vue-next";
 import { useStudentAuthStore } from "../stores/studentAuth";
 import { useAuthStore } from "../stores/auth";
 import { useStudentCredentialsStore } from "../stores/studentCredentials";

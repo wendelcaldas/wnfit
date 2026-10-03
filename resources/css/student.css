@@ -583,7 +583,7 @@
     margin-block: auto;
     padding-block: 64px;
 }
-.student-login-message h1 {
+.student-login-message :is(h1, h2) {
     max-width: 580px;
     font-size: clamp(40px, 4.5vw, 64px);
 }
@@ -606,22 +606,10 @@
     border-radius: 8px;
 }
 .student-login-help {
-    display: block;
-    min-height: 44px;
     margin: 16px auto 0;
-    color: var(--wn-primary-strong);
-    font-size: 13px;
-    text-decoration: underline;
-    text-underline-offset: 3px;
 }
 .student-staff-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     gap: 10px;
-    min-height: 44px;
-    font-size: 13px;
-    color: var(--wn-primary-strong);
 }
 @media (max-width: 1023px) {
     .student-login-page {
@@ -643,7 +631,7 @@
     .student-login-caption {
         display: none;
     }
-    .student-login-message h1 {
+    .student-login-message :is(h1, h2) {
         max-width: 480px;
         margin-top: 0;
         font-size: 36px;
@@ -679,7 +667,7 @@
     .student-hero h2 {
         font-size: 28px;
     }
-    .student-login-message h1 {
+    .student-login-message :is(h1, h2) {
         font-size: 34px;
     }
     .student-set-heading,
@@ -745,7 +733,7 @@
     .student-login-message {
         padding-top: 16px;
     }
-    .student-login-message h1 {
+    .student-login-message :is(h1, h2) {
         font-size: clamp(26px, 4dvh, 34px);
     }
     .student-login-message p {
