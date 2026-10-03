@@ -1,6 +1,11 @@
 <template>
-    <StudentShell :hide-nav="auth.student?.mustChangePassword">
-        <section class="student-card mx-auto max-w-md !p-7">
+    <StudentShell
+        class="student-password-page"
+        :hide-nav="auth.student?.mustChangePassword"
+    >
+        <section
+            class="student-card student-password-card mx-auto max-w-md !p-7"
+        >
             <div class="student-icon"><KeyRound :size="24" /></div>
             <h1 class="mt-5 font-display text-2xl font-bold">
                 {{

@@ -5,35 +5,25 @@
                 <span class="brand-emblem">W</span
                 ><strong class="font-display text-2xl">WNFit</strong>
             </div>
-            <div class="my-auto py-16">
-                <span class="student-overline !text-lime-300"
-                    >SEU ESPAÇO DE TREINO</span
-                >
-                <h1 class="mt-5 font-display text-5xl font-bold leading-tight">
-                    Um treino de cada vez.<br /><span class="text-lime-300"
-                        >Uma versão melhor de você.</span
-                    >
+            <div class="student-login-message">
+                <span class="student-overline">SEU ESPAÇO DE TREINO</span>
+                <h1 class="mt-5 font-display font-bold leading-tight">
+                    Seu próximo passo começa
+                    <span class="student-brand-accent">aqui.</span>
                 </h1>
-                <p class="mt-6 max-w-sm text-base leading-7 text-slate-300">
-                    Sua ficha, as orientações do professor e cada conquista.
-                    Tudo no seu ritmo.
+                <p class="mt-6 max-w-sm text-base leading-7 text-white/70">
+                    Disciplina hoje.<br />Resultados amanhã.
                 </p>
             </div>
-            <div class="flex gap-3 text-sm text-slate-300">
-                <Dumbbell :size="20" /> Seu próximo passo começa aqui.
+            <div class="student-login-caption flex gap-3 text-sm text-white/70">
+                <Dumbbell :size="20" /> Um treino de cada vez. No seu ritmo.
             </div>
         </section>
         <main class="student-login-form">
-            <div class="mb-10 flex items-center gap-3 lg:hidden">
-                <span class="brand-emblem">W</span
-                ><strong class="font-display text-2xl">WNFit</strong>
-            </div>
             <span class="student-overline">PORTAL DO ALUNO</span>
-            <h2 class="mt-3 font-display text-3xl font-bold">
-                Bom ter você aqui.
-            </h2>
+            <h2 class="mt-3 font-display text-3xl font-bold">Vamos treinar?</h2>
             <p class="mt-3 text-sm leading-6 text-[var(--wn-muted)]">
-                Entre com o usuário e a senha que sua academia entregou.
+                Entre com o acesso enviado pelo seu professor.
             </p>
             <form class="mt-8 space-y-5" @submit.prevent="submit">
                 <label class="student-field"
@@ -57,7 +47,7 @@
                             autocomplete="current-password"
                             required
                         /><button
-                            class="absolute right-3 top-3"
+                            class="student-password-toggle"
                             type="button"
                             :aria-label="
                                 show ? 'Ocultar senha' : 'Mostrar senha'
@@ -81,11 +71,8 @@
                     }}<ArrowRight :size="18" />
                 </button>
             </form>
-            <button
-                class="mt-6 text-sm font-semibold text-[var(--wn-primary-strong)]"
-                @click="help = !help"
-            >
-                Esqueci meu usuário ou senha
+            <button class="student-login-help" @click="help = !help">
+                Preciso de ajuda para entrar
             </button>
             <p
                 v-if="help"
@@ -97,11 +84,8 @@
             <p
                 class="mt-10 border-t border-[var(--wn-line)] pt-6 text-xs text-[var(--wn-muted)]"
             >
-                Faz parte da equipe?
-                <RouterLink
-                    to="/entrar"
-                    class="font-semibold text-[var(--wn-ink)]"
-                    >Acessar gestão</RouterLink
+                <RouterLink to="/entrar" class="student-staff-link"
+                    ><UserRound :size="18" />Acesso do professor</RouterLink
                 >
             </p>
         </main>
@@ -110,7 +94,7 @@
 <script setup>
 import { reactive, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
-import { ArrowRight, Dumbbell, Eye, EyeOff } from "lucide-vue-next";
+import { ArrowRight, Dumbbell, Eye, EyeOff, UserRound } from "lucide-vue-next";
 import { useStudentAuthStore } from "../stores/studentAuth";
 import { useAuthStore } from "../stores/auth";
 import { useStudentCredentialsStore } from "../stores/studentCredentials";

@@ -4,39 +4,43 @@ namespace Database\Seeders;
 
 use App\Models\Exercicio;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class ExerciseSeeder extends Seeder
 {
     public function run(): void
     {
-        $exercises = [
-            ['Agachamento livre', 'Quadriceps', 'Gluteos', 'Barra'], ['Leg press 45', 'Quadriceps', 'Gluteos', 'Maquina'],
-            ['Cadeira extensora', 'Quadriceps', null, 'Maquina'], ['Mesa flexora', 'Posteriores de coxa', null, 'Maquina'],
-            ['Levantamento terra romeno', 'Posteriores de coxa', 'Gluteos', 'Barra'], ['Elevacao pelvica', 'Gluteos', 'Posteriores de coxa', 'Barra'],
-            ['Panturrilha em pe', 'Panturrilhas', null, 'Maquina'], ['Supino reto', 'Peitoral', 'Triceps', 'Barra'],
-            ['Supino inclinado com halteres', 'Peitoral', 'Ombros', 'Halteres'], ['Crucifixo com halteres', 'Peitoral', null, 'Halteres'],
-            ['Remada curvada', 'Costas', 'Biceps', 'Barra'], ['Puxada frontal', 'Costas', 'Biceps', 'Polia'],
-            ['Remada baixa', 'Costas', 'Biceps', 'Polia'], ['Desenvolvimento com halteres', 'Ombros', 'Triceps', 'Halteres'],
-            ['Elevacao lateral', 'Ombros', null, 'Halteres'], ['Rosca direta', 'Biceps', null, 'Barra'],
-            ['Rosca martelo', 'Biceps', 'Antebracos', 'Halteres'], ['Triceps na polia', 'Triceps', null, 'Polia'],
-            ['Triceps frances', 'Triceps', null, 'Halteres'], ['Prancha abdominal', 'Core', null, 'Peso corporal'],
-            ['Abdominal supra', 'Core', null, 'Peso corporal'], ['Flexao de bracos', 'Peitoral', 'Triceps', 'Peso corporal'],
-            ['Afundo', 'Quadriceps', 'Gluteos', 'Peso corporal'], ['Burpee', 'Corpo inteiro', null, 'Peso corporal'],
-        ];
+        $exercises = require database_path('data/exercises.php');
 
-        foreach ($exercises as [$name, $muscle, $secondary, $equipment]) {
-            Exercicio::query()->updateOrCreate(
+        foreach ($exercises as [$name, $muscle, $secondary, $equipment, $category, $level, $instructions]) {
+            $imagePath = '/media/exercises/v1/'.Str::slug($name).'.webp';
+            $imageUrl = is_file(public_path(ltrim($imagePath, '/'))) ? $imagePath : null;
+            $exercise = Exercicio::query()->firstOrCreate(
                 ['organizacao_id' => null, 'nome' => $name],
                 [
                     'grupo_muscular' => $muscle,
                     'grupo_secundario' => $secondary,
                     'equipamento' => $equipment,
-                    'categoria' => 'musculacao',
-                    'nivel' => 'todos',
+                    'categoria' => $category,
+                    'nivel' => $level,
+                    'instrucoes' => $instructions,
+                    'imagem_url' => $imageUrl,
+                    'cuidados' => 'Use a carga, a amplitude e os apoios definidos pelo professor. Se sentir dor, interrompa e peça orientação.',
                     'origem' => 'wnfit',
                     'ativo' => true,
                 ],
             );
+            // Rerunning a seed must not overwrite reviewed metadata or reactivate an exercise.
+            $missing = [];
+            if (blank($exercise->instrucoes)) {
+                $missing['instrucoes'] = $instructions;
+            }
+            if (blank($exercise->imagem_url) && $imageUrl) {
+                $missing['imagem_url'] = $imageUrl;
+            }
+            if ($missing) {
+                $exercise->update($missing);
+            }
         }
     }
 }

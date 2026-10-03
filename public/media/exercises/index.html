@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>WNFit · Biblioteca de exercícios</title>
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+            body {
+                margin: 0;
+                background: #f5f6f4;
+                color: #151715;
+                font:
+                    15px system-ui,
+                    sans-serif;
+            }
+            main {
+                max-width: 1440px;
+                margin: auto;
+                padding: 28px;
+            }
+            header {
+                display: flex;
+                gap: 20px;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+            }
+            h1 {
+                font-size: 28px;
+                letter-spacing: -1px;
+                margin: 0 0 8px;
+            }
+            p {
+                color: #62685f;
+                margin: 0;
+            }
+            input {
+                width: min(100%, 360px);
+                min-height: 44px;
+                padding: 12px;
+                border: 1px solid #dbe0d6;
+                border-radius: 12px;
+                font: inherit;
+            }
+            #grid {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 16px;
+                margin: 24px 0;
+            }
+            .card {
+                background: white;
+                border: 1px solid #e3e7df;
+                border-radius: 16px;
+                padding: 12px;
+                text-align: left;
+                color: inherit;
+                cursor: pointer;
+                min-width: 0;
+            }
+            .card img {
+                width: 100%;
+                height: auto;
+                display: block;
+                aspect-ratio: 3/2;
+                object-fit: contain;
+            }
+            .card strong {
+                display: block;
+                margin-top: 10px;
+                font-size: 14px;
+                overflow-wrap: anywhere;
+            }
+            .card span {
+                display: block;
+                margin-top: 5px;
+                font-size: 12px;
+                color: #62685f;
+            }
+            nav {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 16px;
+            }
+            nav button {
+                min-height: 44px;
+                border: 0;
+                background: #a3e635;
+                padding: 12px 20px;
+                border-radius: 12px;
+                font-weight: 700;
+                cursor: pointer;
+            }
+            button:disabled {
+                opacity: 0.4;
+                cursor: default;
+            }
+            dialog {
+                width: min(100% - 32px, 1200px);
+                max-height: 95dvh;
+                padding: 16px;
+                border: 1px solid #e3e7df;
+                border-radius: 16px;
+            }
+            dialog::backdrop {
+                background: #151715b0;
+            }
+            dialog img {
+                display: block;
+                width: 100%;
+                height: auto;
+            }
+            dialog button {
+                min-height: 44px;
+                padding: 10px 20px;
+                float: right;
+                border: 0;
+                border-radius: 10px;
+                background: #eef8de;
+                cursor: pointer;
+            }
+            #status {
+                margin-top: 20px;
+            }
+            a {
+                color: #365314;
+            }
+            @media (max-width: 800px) {
+                #grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+                main {
+                    padding: 20px;
+                }
+            }
+            @media (max-width: 400px) {
+                #grid {
+                    grid-template-columns: minmax(0, 1fr);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <header>
+                <div>
+                    <h1>WNFit · Biblioteca de exercícios</h1>
+                    <p id="count">Carregando biblioteca…</p>
+                </div>
+                <input
+                    id="search"
+                    type="search"
+                    placeholder="Buscar exercício ou grupo"
+                    aria-label="Buscar exercício ou grupo"
+                />
+            </header>
+            <p id="status" role="status"></p>
+            <section
+                id="grid"
+                aria-label="Demonstrações de exercícios"
+            ></section>
+            <nav aria-label="Páginas da biblioteca">
+                <button id="prev">Anteriores</button><span id="page"></span
+                ><button id="next">Próximos</button>
+            </nav>
+        </main>
+        <dialog id="detail">
+            <button id="close">Fechar imagem</button><img id="large" alt="" />
+        </dialog>
+        <script>
+            let items = [],
+                page = 0;
+            const size = 8;
+            const grid = document.getElementById("grid");
+            const search = document.getElementById("search");
+            const dialog = document.getElementById("detail");
+            function render() {
+                const q = search.value
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .toLowerCase();
+                const filtered = items.filter((e) =>
+                    (e.name + " " + e.muscle)
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .toLowerCase()
+                        .includes(q),
+                );
+                const pages = Math.max(1, Math.ceil(filtered.length / size));
+                page = Math.min(page, pages - 1);
+                grid.replaceChildren();
+                for (const e of filtered.slice(
+                    page * size,
+                    page * size + size,
+                )) {
+                    const card = document.createElement("button");
+                    card.className = "card";
+                    card.setAttribute("aria-label", "Ampliar " + e.name);
+                    const image = document.createElement("img");
+                    image.src = e.url;
+                    image.alt = e.alt;
+                    image.width = e.width;
+                    image.height = e.height;
+                    image.loading = "lazy";
+                    const name = document.createElement("strong");
+                    name.textContent = e.name;
+                    const muscle = document.createElement("span");
+                    muscle.textContent = e.muscle;
+                    card.append(image, name, muscle);
+                    card.onclick = () => {
+                        const large = document.getElementById("large");
+                        large.src = e.url;
+                        large.alt = e.alt;
+                        dialog.showModal();
+                    };
+                    grid.append(card);
+                }
+                document.getElementById("count").textContent =
+                    items.length +
+                    " exercícios · posições e músculos em destaque";
+                document.getElementById("page").textContent =
+                    page + 1 + " / " + pages;
+                document.getElementById("prev").disabled = page === 0;
+                document.getElementById("next").disabled = page === pages - 1;
+                document.getElementById("status").textContent = filtered.length
+                    ? "Clique em uma imagem para ampliar."
+                    : "Nenhum exercício encontrado.";
+            }
+            document.getElementById("prev").onclick = () => {
+                page--;
+                render();
+            };
+            document.getElementById("next").onclick = () => {
+                page++;
+                render();
+            };
+            search.oninput = () => {
+                page = 0;
+                render();
+            };
+            document.getElementById("close").onclick = () => dialog.close();
+            dialog.onclick = (e) => {
+                if (e.target === dialog) dialog.close();
+            };
+            fetch("./library.json")
+                .then((r) => {
+                    if (!r.ok) throw new Error();
+                    return r.json();
+                })
+                .then((data) => {
+                    items = Object.values(data);
+                    render();
+                })
+                .catch(
+                    () =>
+                        (document.getElementById("status").textContent =
+                            "Não foi possível carregar a biblioteca. Atualize a página."),
+                );
+        </script>
+    </body>
+</html>

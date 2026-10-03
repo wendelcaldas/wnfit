@@ -39,7 +39,7 @@
                     </p>
                 </div>
                 <div
-                    class="mt-5 flex gap-2 overflow-x-auto pb-2"
+                    class="student-day-grid mt-5"
                     role="tablist"
                     aria-label="Divisões do treino"
                 >

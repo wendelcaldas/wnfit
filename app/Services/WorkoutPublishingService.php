@@ -27,6 +27,7 @@ class WorkoutPublishingService
                     'load' => $item->carga, 'restSeconds' => $item->descanso_segundos, 'notes' => $item->observacoes,
                     'instructions' => $item->exercicio?->instrucoes, 'safetyNotes' => $item->exercicio?->cuidados,
                     'imageUrl' => $item->exercicio?->imagem_url, 'videoUrl' => $item->exercicio?->video_url,
+                    'custom' => $item->exercicio ? $item->exercicio->organizacao_id !== null : false,
                 ])->values()->all(),
             ])->values()->all(),
         ];
