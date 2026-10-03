@@ -30,6 +30,7 @@
 .admin-redesign .sidebar-item:hover { background: #ffffff0d; color: white; }
 .admin-redesign .sidebar-item-active,
 .admin-redesign .sidebar-item-active:hover { background: var(--wn-primary); color: var(--wn-ink); }
+.admin-redesign .dashboard-sidebar .sidebar-item-active { width: 114%; }
 .admin-redesign .sidebar-item-active::before { display: none; }
 .admin-redesign .sidebar-account { min-width: 0; }
 .admin-redesign .sidebar-account > div { background: #ffffff08; border-color: #ffffff18; padding: 10px; border-radius: 12px; gap: 10px; }
