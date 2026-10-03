@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { useStudentCredentialsStore } from './studentCredentials';
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
@@ -55,6 +56,7 @@ export const useAuthStore = defineStore('auth', {
             this.user = null;
             this.organization = null;
             this.loaded = true;
+            useStudentCredentialsStore().clear();
         },
         async refreshCsrf() {
             const { data } = await window.axios.get('/api/me');

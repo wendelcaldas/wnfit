@@ -22,6 +22,7 @@
                         <Field label="Telefone *" v-model="form.telefone" required />
                         <Field label="E-mail" v-model="form.email" type="email" />
                         <Field label="Data de nascimento" v-model="form.data_nascimento" type="date" />
+                        <div class="rounded-xl bg-[var(--wn-primary-soft)] p-4"><label class="block text-sm font-medium">Usuário do portal<input v-model="form.username" class="form-control mt-2" placeholder="Sugerido pelo nome" minlength="3" maxlength="60" pattern="[a-z0-9][a-z0-9._\-]+" @input="usernameEdited = true" /></label><p class="mt-2 text-xs leading-5 text-[var(--wn-muted)]">A senha provisória será gerada ao salvar. O aluno vai escolher uma nova senha no primeiro acesso.</p></div>
                     </div>
                 </section>
 
@@ -54,10 +55,12 @@
 </template>
 
 <script setup>
-import { computed, defineComponent, h, onMounted, reactive, ref } from 'vue';
+import { computed, defineComponent, h, onMounted, reactive, ref, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { CalendarDays, Sparkles, UserRound } from 'lucide-vue-next';
 import AppShell from '../components/AppShell.vue';
+import { useStudentCredentialsStore } from '../stores/studentCredentials';
+const usernameEdited = ref(false);
 
 const Field = defineComponent({
     props: { label: String, modelValue: [String, Number], type: { type: String, default: 'text' }, required: Boolean },
@@ -91,6 +94,8 @@ nextMonth.setMonth(today.getMonth() + 1);
 const toInputDate = (date) => date.toISOString().slice(0, 10);
 const form = reactive({ nome: '', telefone: '', email: '', data_nascimento: '', plano: 'Plano Mensal', data_inicio: toInputDate(today), data_vencimento: toInputDate(nextMonth), treinador: '', unidade: '', status: 'ativo', objetivo: 'Saude', auto_renovacao: true, metodo_pagamento: 'PIX' });
 const planNames = computed(() => options.plans.length ? options.plans.map((plan) => plan.nome) : ['Plano Mensal']);
+let usernameTimer; let suggestionRequest = 0;
+watch(() => form.nome, () => { clearTimeout(usernameTimer); const request = ++suggestionRequest; if (usernameEdited.value || !form.nome.trim()) return; usernameTimer = setTimeout(async () => { try { const { data } = await window.axios.get('/api/student-access/suggest', { params: { name: form.nome } }); if (request === suggestionRequest && !usernameEdited.value) form.username = data.username; } catch { /* Server also generates a unique username on save. */ } }, 300); });
 
 onMounted(async () => {
     const { data } = await window.axios.get('/api/students/options');
@@ -103,7 +108,8 @@ const submit = async () => {
     try {
         const selectedPlan = options.plans.find((plan) => plan.nome === form.plano);
         const { data } = await window.axios.post('/api/students', { ...form, valor_mensal: selectedPlan?.valor_mensal ?? 120 });
-        router.push({ path: `/alunos/${data.student.id}`, query: intent.value === 'complete' ? { tab: 'profile', edit: '1' } : {} });
+        useStudentCredentialsStore().set(data.student.id, data.credentials);
+        router.push({ path: `/alunos/${data.student.id}`, query: intent.value === 'complete' ? { tab: 'profile', edit: '1' } : { tab: 'access' } });
     } catch (exception) {
         const errors = exception.response?.data?.errors;
         error.value = errors ? Object.values(errors).flat()[0] : 'Nao foi possivel salvar o aluno.';

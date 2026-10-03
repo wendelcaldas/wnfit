@@ -41,12 +41,12 @@
                 </div>
             </div>
             <div v-else class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
-                <RouterLink v-for="workout in workouts" :key="workout.id" :to="`/treinos/${workout.id}/editar`" class="rounded-xl border border-[var(--wn-line)] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-md">
+                <article v-for="workout in workouts" :key="workout.id" class="rounded-xl border border-[var(--wn-line)] bg-white p-5 transition hover:shadow-md">
                     <div class="flex items-start justify-between gap-3">
                         <div class="grid h-11 w-11 place-items-center rounded-xl bg-[var(--wn-primary-soft)] text-[var(--wn-primary-strong)]"><Dumbbell class="h-5 w-5" /></div>
                         <span :class="statusClass(workout.status)">{{ statusLabel(workout.status) }}</span>
                     </div>
-                    <h2 class="mt-4 text-lg font-semibold">{{ workout.name }}</h2>
+                    <RouterLink :to="`/treinos/${workout.id}/editar`"><h2 class="mt-4 text-lg font-semibold hover:text-[var(--wn-primary-strong)]">{{ workout.name }}</h2></RouterLink>
                     <p class="mt-1 text-sm text-[var(--wn-primary-strong)]">{{ workout.objective }}</p>
                     <p class="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-[var(--wn-muted)]">{{ workout.description || 'Sem descricao cadastrada.' }}</p>
                     <div class="mt-4 grid grid-cols-3 gap-2 border-y border-[var(--wn-line)] py-4 text-center text-xs">
@@ -55,19 +55,28 @@
                         <div><p class="font-bold capitalize text-[var(--wn-ink)]">{{ workout.level }}</p><p class="mt-1 text-[var(--wn-muted)]">nivel</p></div>
                     </div>
                     <div class="mt-4 flex items-center justify-between text-xs text-[var(--wn-muted)]"><span>Por {{ workout.author }}</span><span>{{ workout.updatedAt }}</span></div>
-                </RouterLink>
+                    <div class="mt-5 flex flex-wrap gap-3 border-t border-[var(--wn-line)] pt-4 text-xs font-semibold"><RouterLink :to="`/treinos/${workout.id}/editar`" class="text-[var(--wn-primary-strong)]">Editar</RouterLink><button :disabled="busy" @click="duplicate(workout)">Duplicar</button><button v-if="workout.status === 'ativo'" :disabled="busy" @click="openAssignment(workout)">Atribuir ao aluno</button><button class="ml-auto text-[var(--wn-muted)]" :disabled="busy" @click="changeStatus(workout)">{{ workout.status === 'arquivado' ? 'Restaurar rascunho' : 'Arquivar' }}</button></div>
+                </article>
             </div>
         </section>
+        <p v-if="error" class="student-error mt-4" role="alert">{{ error }}</p>
+        <div v-if="assignmentWorkout" class="student-modal-backdrop" @click.self="assignmentWorkout = null"><section class="student-card w-full max-w-md" role="dialog" aria-modal="true" aria-labelledby="assign-title"><h2 id="assign-title" class="text-xl font-bold">Entregar ficha ao aluno</h2><p class="mt-3 text-sm text-[var(--wn-muted)]">{{ assignmentWorkout.name }} · {{ assignmentWorkout.durationWeeks }} semanas</p><label class="student-field mt-5">Aluno<select v-model="assignmentStudent" class="form-control mt-2"><option value="">Escolha um aluno</option><option v-for="student in assignmentStudents" :key="student.id" :value="student.id">{{ student.name }}</option></select></label><p class="mt-3 text-xs leading-5 text-[var(--wn-muted)]">Esta ficha substituirá a vigente. As versões anteriores e as sessões serão preservadas.</p><p v-if="error" class="student-error mt-3">{{ error }}</p><div class="mt-5 flex gap-3"><button class="btn-primary" :disabled="busy || !assignmentStudent" @click="assign">Publicar ficha</button><button class="btn-secondary" :disabled="busy" @click="assignmentWorkout = null">Cancelar</button></div></section></div>
     </AppShell>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue';
 import { Archive, CircleCheck, Dumbbell, FilePenLine, Plus, Search, SlidersHorizontal } from 'lucide-vue-next';
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import AppShell from '../components/AppShell.vue';
 
 const loading = ref(true);
+const router = useRouter(); const error = ref(''); const busy = ref(false);
+const assignmentWorkout = ref(null); const assignmentStudent = ref(''); const assignmentStudents = ref([]);
+async function duplicate(workout) { busy.value = true; error.value = ''; try { const { data } = await window.axios.post(`/api/workouts/${workout.id}/duplicate`); router.push(`/treinos/${data.workout.id}/editar`); } catch { error.value = 'Não foi possível duplicar o treino.'; } finally { busy.value = false; } }
+async function changeStatus(workout) { if (workout.status !== 'arquivado' && !window.confirm('Arquivar este modelo? As fichas já entregues aos alunos serão preservadas.')) return; busy.value = true; error.value = ''; try { await window.axios.patch(`/api/workouts/${workout.id}/status`, { status: workout.status === 'arquivado' ? 'rascunho' : 'arquivado' }); await loadWorkouts(); } catch { error.value = 'Não foi possível alterar o status.'; } finally { busy.value = false; } }
+async function openAssignment(workout) { error.value = ''; busy.value = true; try { assignmentStudents.value = (await window.axios.get('/api/students')).data.students; assignmentStudent.value = ''; assignmentWorkout.value = workout; } catch { error.value = 'Não foi possível carregar os alunos.'; } finally { busy.value = false; } }
+async function assign() { busy.value = true; error.value = ''; try { await window.axios.post(`/api/students/${assignmentStudent.value}/workouts/${assignmentWorkout.value.id}`); router.push(`/alunos/${assignmentStudent.value}?tab=workouts`); } catch (e) { error.value = e.response?.data?.message ?? 'Não foi possível publicar a ficha.'; } finally { busy.value = false; } }
 const workouts = ref([]);
 const objectives = ref([]);
 const summary = reactive({ total: 0, active: 0, drafts: 0, archived: 0 });
@@ -91,7 +100,7 @@ const loadWorkouts = async () => {
         workouts.value = data.workouts;
         objectives.value = data.filters.objectives;
         Object.assign(summary, data.summary);
-    } finally { loading.value = false; }
+    } catch { error.value = 'Não foi possível carregar a biblioteca. Tente novamente.'; } finally { loading.value = false; }
 };
 const scheduleLoad = () => { clearTimeout(debounce); debounce = setTimeout(loadWorkouts, 250); };
 const resetFilters = () => { Object.assign(filters, { q: '', objective: 'todos', status: 'todos' }); loadWorkouts(); };

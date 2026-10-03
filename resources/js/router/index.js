@@ -13,10 +13,17 @@ import WorkoutsView from '../views/WorkoutsView.vue';
 import WorkoutBuilderView from '../views/WorkoutBuilderView.vue';
 import ScheduleView from '../views/ScheduleView.vue';
 import { useAuthStore } from '../stores/auth';
+import { useStudentAuthStore } from '../stores/studentAuth';
 
 export const router = createRouter({
     history: createWebHistory(),
     routes: [
+        { path: '/aluno', redirect: '/aluno/inicio' },
+        { path: '/aluno/entrar', component: () => import('../views/StudentLoginView.vue'), meta: { studentPortal: true, studentGuest: true } },
+        { path: '/aluno/senha', component: () => import('../views/StudentPasswordView.vue'), meta: { studentPortal: true, password: true } },
+        { path: '/aluno/inicio', component: () => import('../views/StudentHomeView.vue'), meta: { studentPortal: true } },
+        { path: '/aluno/treinos', component: () => import('../views/StudentWorkoutsView.vue'), meta: { studentPortal: true } },
+        { path: '/aluno/sessao/:id', component: () => import('../views/StudentSessionView.vue'), meta: { studentPortal: true } },
         { path: '/evento/:slug', component: () => import('../views/PublicEventView.vue'), meta: { public: true } },
         { path: '/eventos', component: () => import('../views/EventsView.vue'), meta: { requiresAuth: true } },
         { path: '/financeiro', name: 'financeiro', component: FinanceView, meta: { requiresAuth: true } },
@@ -117,11 +124,16 @@ export const router = createRouter({
 
 router.beforeEach(async (to) => {
     if (to.meta.public) return true;
+    if (to.meta.studentPortal) {
+        const studentAuth = useStudentAuthStore();
+        try { await studentAuth.fetch(); } catch { if (!studentAuth.loaded) studentAuth.apply({ student: null }); }
+        if (!studentAuth.student) return to.meta.studentGuest ? true : '/aluno/entrar';
+        if (studentAuth.student.mustChangePassword) return to.meta.password ? true : '/aluno/senha';
+        return to.meta.studentGuest ? '/aluno/inicio' : true;
+    }
     const auth = useAuthStore();
 
-    if (!auth.loaded) {
-        await auth.fetchUser();
-    }
+    await auth.fetchUser();
 
     if (to.meta.requiresAuth && !auth.isAuthenticated) {
         return '/entrar';

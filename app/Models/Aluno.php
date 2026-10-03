@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Aluno extends Model
 {
@@ -79,6 +79,11 @@ class Aluno extends Model
     public function treinos(): BelongsToMany
     {
         return $this->belongsToMany(Treino::class, 'aluno_treino')->withPivot('ativo')->withTimestamps();
+    }
+
+    public function completedWorkoutSessions(): HasMany
+    {
+        return $this->hasMany(StudentWorkoutSession::class, 'aluno_id')->where('status', 'completed');
     }
 
     public function agendamentos(): BelongsToMany

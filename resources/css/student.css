@@ -1,0 +1,284 @@
+/* Student portal: comfortable touch targets and a focused mobile reading width. */
+.student-app {
+    min-height: 100dvh;
+    background: #f5f7f3;
+}
+.student-header {
+    max-width: 760px;
+    margin: auto;
+    padding: 22px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.student-avatar {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--wn-line);
+    border-radius: 50%;
+    background: white;
+    font-size: 13px;
+    font-weight: 700;
+}
+.student-content {
+    max-width: 760px;
+    margin: auto;
+    padding: 16px 24px 120px;
+}
+.student-card {
+    padding: 22px;
+    border: 1px solid var(--wn-line);
+    border-radius: 20px;
+    background: white;
+}
+.student-overline {
+    color: var(--wn-muted);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+}
+.student-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 16px;
+    background: var(--wn-primary-soft);
+    color: var(--wn-primary-strong);
+}
+.student-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 30px;
+    border-radius: 24px;
+    background: #122219;
+    color: white;
+}
+.student-hero > :not(.student-hero-decoration) {
+    position: relative;
+    z-index: 1;
+}
+.student-hero-decoration {
+    position: absolute;
+    right: -20px;
+    bottom: -16px;
+    transform: rotate(-20deg);
+    color: #b1e05d;
+    opacity: 0.12;
+}
+.student-bottom-nav {
+    position: fixed;
+    z-index: 20;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    width: min(100%, 760px);
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--wn-line);
+    background: rgb(255 255 255 / 0.96);
+    backdrop-filter: blur(12px);
+}
+.student-bottom-nav a {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 48px;
+    border-radius: 14px;
+    color: var(--wn-muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+.student-bottom-nav a.selected {
+    color: #3d7100;
+    background: var(--wn-primary-soft);
+}
+.student-day-tab {
+    min-width: 130px;
+    padding: 14px 18px;
+    border: 1px solid var(--wn-line);
+    border-radius: 16px;
+    background: white;
+    text-align: left;
+    font-weight: 700;
+}
+.student-day-tab span {
+    display: block;
+    margin-top: 5px;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--wn-muted);
+}
+.student-day-tab.active {
+    background: #122219;
+    border-color: #122219;
+    color: white;
+}
+.student-day-tab.active span {
+    color: #c4d8c7;
+}
+.student-exercise-number {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: var(--wn-primary-soft);
+    color: #3d7100;
+    font-size: 12px;
+    font-weight: 800;
+}
+.student-prescription {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 12px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--wn-line);
+}
+.student-prescription span {
+    font-size: 10px;
+    color: var(--wn-muted);
+}
+.student-prescription strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: var(--wn-ink);
+}
+.student-field {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+}
+.student-field > input,
+.student-field > div {
+    margin-top: 8px;
+}
+.student-error {
+    padding: 14px 16px;
+    border: 1px solid #fecdd3;
+    border-radius: 12px;
+    background: #fff1f2;
+    color: #9f1239;
+    font-size: 13px;
+    line-height: 1.6;
+}
+.student-login-page {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100dvh;
+    background: white;
+}
+.student-login-story {
+    display: flex;
+    flex-direction: column;
+    padding: 50px clamp(30px, 6vw, 100px);
+    background:
+        radial-gradient(ellipse at bottom left, #2c4720, transparent 70%),
+        #122219;
+    color: white;
+}
+.student-login-form {
+    width: 100%;
+    max-width: 500px;
+    margin: auto;
+    padding: 48px;
+}
+.student-session-progress {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin: 24px -2px 0;
+    padding: 16px 2px;
+    background: #f5f7f3;
+}
+.student-set-heading,
+.student-set-row {
+    display: grid;
+    grid-template-columns: 34px 1fr 1fr 44px;
+    align-items: center;
+    gap: 8px;
+}
+.student-set-heading {
+    margin-top: 20px;
+    margin-bottom: 8px;
+    font-size: 10px;
+    color: var(--wn-muted);
+}
+.student-set-row {
+    padding: 6px 0;
+}
+.student-set-row .form-control {
+    min-width: 0;
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 13px;
+}
+.student-set-check {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--wn-line);
+    border-radius: 12px;
+    color: #879180;
+}
+.student-set-row.done .student-set-check {
+    background: #5aa400;
+    color: white;
+    border-color: #5aa400;
+}
+.student-set-row.done input {
+    background: #f3fae9;
+}
+.student-rest {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 16px 18px;
+    background: #122219;
+    color: #d4edb8;
+    border-radius: 16px;
+}
+.student-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgb(15 23 42 / 0.55);
+}
+@media (max-width: 1023px) {
+    .student-login-page {
+        display: block;
+        background: #f5f7f3;
+    }
+    .student-login-story {
+        display: none;
+    }
+    .student-login-form {
+        padding: 40px 24px;
+    }
+}
+@media (max-width: 480px) {
+    .student-header {
+        padding: 18px 20px;
+    }
+    .student-content {
+        padding: 12px 20px 110px;
+    }
+    .student-card {
+        padding: 18px;
+        border-radius: 18px;
+    }
+    .student-hero {
+        padding: 25px;
+    }
+}

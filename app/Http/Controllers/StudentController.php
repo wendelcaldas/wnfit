@@ -5,9 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Aluno;
 use App\Models\Cobranca;
 use App\Models\Plano;
+use App\Models\StudentWorkoutPlan;
+use App\Models\StudentWorkoutSession;
 use App\Models\Treino;
 use App\Services\BillingService;
 use App\Services\Messaging\MessagingService;
+use App\Services\StudentAccessService;
+use App\Services\WorkoutPublishingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -18,9 +22,7 @@ class StudentController extends Controller
     public function __construct(
         private readonly BillingService $billing,
         private readonly MessagingService $messaging,
-    )
-    {
-    }
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -29,6 +31,7 @@ class StudentController extends Controller
 
         $query = Aluno::query()
             ->with(['assinatura.plano', 'cobrancas'])
+            ->withMax('completedWorkoutSessions', 'finished_at')
             ->where('organizacao_id', $organization->id);
 
         if ($request->filled('q')) {
@@ -89,7 +92,8 @@ class StudentController extends Controller
         $data = $request->validate($this->validationRules());
         $this->messaging->normalizeBrazilianPhone($data['telefone']);
 
-        $student = DB::transaction(function () use ($data, $organization) {
+        $credentials = null;
+        $student = DB::transaction(function () use ($data, $organization, &$credentials) {
             $plan = Plano::query()->firstOrCreate(
                 ['organizacao_id' => $organization->id, 'nome' => $data['plano']],
                 [
@@ -116,12 +120,14 @@ class StudentController extends Controller
                 $data['metodo_pagamento'] ?? 'PIX',
             );
 
+            $credentials = app(StudentAccessService::class)->issue($student, $data['username'] ?? null);
+
             return $student;
         });
 
         $this->messaging->sendWelcomeMessage($student->fresh(['organizacao', 'assinatura.plano']));
 
-        return response()->json(['student' => $this->studentDetailPayload($student->fresh(['assinatura.plano', 'cobrancas.eventos', 'cobrancas.mensagens', 'mensagens']))], 201);
+        return response()->json(['credentials' => $credentials, 'student' => $this->studentDetailPayload($student->fresh(['assinatura.plano', 'cobrancas.eventos', 'cobrancas.mensagens', 'mensagens']))], 201)->header('Cache-Control', 'no-store');
     }
 
     public function show(Request $request, Aluno $student): JsonResponse
@@ -177,17 +183,20 @@ class StudentController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
         abort_unless($student->organizacao_id === $organization->id, 404);
 
-        $current = $student->treinos()->wherePivot('ativo', true)->with('dias.exercicios')->latest('aluno_treino.updated_at')->first();
+        $publishing = app(WorkoutPublishingService::class);
+        $current = $publishing->current($student->id);
         $templates = Treino::query()->where('organizacao_id', $organization->id)->where('status', 'ativo')
             ->withCount('dias')->latest('updated_at')->get();
 
         return response()->json([
-            'current' => $current ? $this->studentWorkoutPayload($current) : null,
+            'current' => $current ? $publishing->payload($current) : null,
+            'history' => StudentWorkoutPlan::where('aluno_id', $student->id)->latest('id')->get()->map(fn ($plan) => $publishing->payload($plan)),
+            'sessions' => StudentWorkoutSession::where('aluno_id', $student->id)->latest('id')->limit(30)->get(),
             'templates' => $templates->map(fn (Treino $workout) => [
                 'id' => $workout->id, 'name' => $workout->nome, 'objective' => $workout->objetivo,
                 'level' => $workout->nivel, 'sessionsPerWeek' => $workout->sessoes_semana,
                 'durationWeeks' => $workout->duracao_semanas, 'daysCount' => $workout->dias_count,
-                'selected' => $current?->id === $workout->id,
+                'selected' => $current?->treino_id === $workout->id,
             ])->values(),
         ]);
     }
@@ -197,26 +206,11 @@ class StudentController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
         abort_unless($student->organizacao_id === $organization->id && $workout->organizacao_id === $organization->id, 404);
 
-        DB::transaction(function () use ($student, $workout) {
-            $student->treinos()->updateExistingPivot($student->treinos()->pluck('treinos.id'), ['ativo' => false]);
-            $student->treinos()->syncWithoutDetaching([$workout->id => ['ativo' => true]]);
-            $student->treinos()->updateExistingPivot($workout->id, ['ativo' => true]);
-        });
+        $data = $request->validate(['endsOn' => ['nullable', 'date', 'after_or_equal:today']]);
+        $publishing = app(WorkoutPublishingService::class);
+        $plan = $publishing->publish($student, $workout, $request->user()->id, $data['endsOn'] ?? null);
 
-        return response()->json(['workout' => $this->studentWorkoutPayload($workout->load('dias.exercicios'))]);
-    }
-
-    private function studentWorkoutPayload(Treino $workout): array
-    {
-        return [
-            'id' => $workout->id, 'name' => $workout->nome, 'objective' => $workout->objetivo,
-            'level' => $workout->nivel, 'sessionsPerWeek' => $workout->sessoes_semana,
-            'durationWeeks' => $workout->duracao_semanas, 'description' => $workout->descricao,
-            'days' => $workout->dias->map(fn ($day) => [
-                'id' => $day->id, 'name' => $day->nome, 'focus' => $day->foco,
-                'exercisesCount' => $day->exercicios->count(),
-            ])->values(),
-        ];
+        return response()->json(['workout' => $publishing->payload($plan)]);
     }
 
     public function generateCharge(Request $request, Aluno $student): JsonResponse
@@ -241,6 +235,7 @@ class StudentController extends Controller
             $phone = $this->messaging->normalizeBrazilianPhone($data['telefone']);
             $charge->aluno->update(['telefone' => $phone]);
         }
+
         return response()->json(['charge' => $this->chargePayload($this->billing->sendCharge($charge, $request->boolean('manual'))->load(['eventos', 'mensagens']))]);
     }
 
@@ -257,6 +252,7 @@ class StudentController extends Controller
     private function validationRules(): array
     {
         return [
+            'username' => ['nullable', 'string', 'min:3', 'max:60', 'regex:/^[a-z0-9][a-z0-9._-]+$/', 'unique:student_accounts,username'],
             'nome' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'telefone' => ['required', 'string', 'max:20'],
@@ -364,7 +360,7 @@ class StudentController extends Controller
             'status' => $status,
             'statusClass' => $overdue ? 'badge-danger' : ($expiring ? 'badge-warning' : 'badge-success'),
             'dueDate' => optional($student->vencimento)->format('d/m/Y') ?: '-',
-            'lastWorkout' => $student->updated_at?->diffForHumans() ?? '-',
+            'lastWorkout' => $student->completed_workout_sessions_max_finished_at ? Carbon::parse($student->completed_workout_sessions_max_finished_at)->format('d/m/Y H:i') : 'Ainda não treinou',
         ];
     }
 

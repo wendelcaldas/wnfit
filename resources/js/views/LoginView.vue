@@ -73,6 +73,7 @@
                         </RouterLink>
                     </form>
 
+                    <RouterLink to="/aluno/entrar" class="text-center text-sm font-semibold text-[var(--wn-primary-strong)]">Sou aluno — acessar meus treinos</RouterLink>
                     <p class="text-center text-sm text-[var(--wn-muted)]">
                         Ainda nao tem uma conta?
                         <RouterLink to="/cadastro" class="font-medium text-[var(--wn-green)] transition hover:brightness-90">

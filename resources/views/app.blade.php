@@ -17,7 +17,7 @@
             href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
             rel="stylesheet"
         >
-        @unless(request()->is('evento/*'))
+        @unless(request()->is('evento/*', 'aluno', 'aluno/*'))
         <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
         @endunless
 

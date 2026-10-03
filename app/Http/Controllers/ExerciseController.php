@@ -20,11 +20,16 @@ class ExerciseController extends Controller
             $term = '%'.$request->string('q')->trim()->toString().'%';
             $query->where(fn ($builder) => $builder->where('nome', 'like', $term)->orWhere('grupo_muscular', 'like', $term)->orWhere('equipamento', 'like', $term));
         }
-        if ($request->filled('muscle') && $request->muscle !== 'todos') $query->where('grupo_muscular', $request->muscle);
-        if ($request->filled('equipment') && $request->equipment !== 'todos') $query->where('equipamento', $request->equipment);
+        if ($request->filled('muscle') && $request->muscle !== 'todos') {
+            $query->where('grupo_muscular', $request->muscle);
+        }
+        if ($request->filled('equipment') && $request->equipment !== 'todos') {
+            $query->where('equipamento', $request->equipment);
+        }
 
         return response()->json([
-            'exercises' => $query->orderBy('nome')->limit(100)->get()->map(fn (Exercicio $exercise) => $this->payload($exercise)),
+            'exercises' => $query->orderBy('nome')->paginate(40)->through(fn (Exercicio $exercise) => $this->payload($exercise))->items(),
+            'pagination' => ['page' => $request->integer('page', 1), 'total' => (clone $query)->count(), 'perPage' => 40],
             'filters' => [
                 'muscles' => Exercicio::query()->where('ativo', true)->where(fn ($q) => $q->whereNull('organizacao_id')->orWhere('organizacao_id', $organization->id))->distinct()->orderBy('grupo_muscular')->pluck('grupo_muscular'),
                 'equipment' => Exercicio::query()->where('ativo', true)->where(fn ($q) => $q->whereNull('organizacao_id')->orWhere('organizacao_id', $organization->id))->whereNotNull('equipamento')->distinct()->orderBy('equipamento')->pluck('equipamento'),

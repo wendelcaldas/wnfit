@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\StudentAccount;
 use App\Models\User;
 
 return [
@@ -38,6 +39,7 @@ return [
     */
 
     'guards' => [
+        'student' => ['driver' => 'session', 'provider' => 'students'],
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
@@ -62,6 +64,7 @@ return [
     */
 
     'providers' => [
+        'students' => ['driver' => 'eloquent', 'model' => StudentAccount::class],
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),

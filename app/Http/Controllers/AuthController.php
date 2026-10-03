@@ -64,6 +64,8 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
+        Auth::guard('student')->logout();
+
         return response()->json($this->sessionPayload($request->user()));
     }
 
@@ -129,6 +131,7 @@ class AuthController extends Controller
         });
 
         Auth::login($user);
+        Auth::guard('student')->logout();
         $request->session()->regenerate();
 
         return response()->json($this->sessionPayload($user), 201);

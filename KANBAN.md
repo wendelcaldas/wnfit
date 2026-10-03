@@ -4,6 +4,18 @@ Este quadro organiza as proximas features por prioridade e reduz ambiguidade ant
 
 ## Prioridades
 
+## Entrega para validação — portal do aluno e treinos — 02/10/2026
+
+- Conta criada junto com o aluno: usuário sugerido/editável, senha provisória aleatória e troca obrigatória no primeiro acesso.
+- Alunos existentes: criar acesso e redefinir senha pelo perfil; sessões antigas são invalidadas na redefinição.
+- Portal com login próprio, início, ficha vigente, divisões do programa, execução por séries, descanso, retomada e histórico.
+- Montador com prescrição compacta, reordenação de exercícios/dias, duplicação de dias, busca paginada, rascunho incompleto, prévia do aluno e publicação explícita.
+- Biblioteca: duplicar, atribuir ficha, arquivar e restaurar rascunho.
+- Fichas publicadas guardam cópias da prescrição e vigência; personalização cria uma nova versão sem mudar o histórico.
+- Professor acompanha fichas e sessões no perfil do aluno. Dados antigos são preservados pela migração.
+- Roteiro e ambiente de demonstração: `docs/VALIDACAO_PORTAL_ALUNO.md` e `scripts/start-student-preview.ps1`.
+- Próximo passo: validação do usuário no celular e na gestão antes de integrar a entrega à `main`.
+
 ## Direcao do MVP — 21/09/2026
 
 - Financeiro como centro da operacao: previsibilidade, recebimentos e acompanhamento de cobrancas.
@@ -126,7 +138,7 @@ As prioridades abaixo registram o planejamento anterior; itens de automacao/Twil
 
 - Integracoes externas de pagamento.
 - Disparo automatico por WhatsApp/email.
-- App do aluno.
+- App nativo do aluno; o portal web de treinos já está em validação.
 - Multiunidade avancado.
 
 ## Proximo Plano Sugerido
