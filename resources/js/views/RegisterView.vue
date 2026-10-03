@@ -1,10 +1,10 @@
 <template>
-    <div class="auth-page">
-        <main class="auth-layout">
+    <div class="student-login-page auth-login-ui auth-register-page">
+
             <AuthShowcase />
 
-            <section class="auth-form-panel">
-                <div class="auth-form-card auth-form-card-register">
+            <main class="student-login-form">
+                <div class="auth-register-card">
                     <div class="flex items-center justify-between gap-4">
                         <div class="auth-wordmark auth-wordmark-small">
                             <div class="flex items-center gap-3">
@@ -15,12 +15,12 @@
                             </div>
                         </div>
                         <RouterLink to="/entrar" class="hidden text-sm font-medium text-[var(--wn-green)] transition hover:brightness-90 sm:inline-flex">
-                            Ja tenho conta
+                            Já tenho conta
                         </RouterLink>
                     </div>
 
                     <div class="space-y-1">
-                        <h1 class="text-xl font-bold tracking-tight text-[var(--wn-ink)]">Criar conta</h1>
+                        <h1 class="auth-login-title">Criar conta</h1>
                         <p class="text-sm leading-6 text-[var(--wn-muted)]">
                             Preencha os dados iniciais para montar sua base WNFit.
                         </p>
@@ -44,10 +44,10 @@
                         </label>
 
                         <label class="block space-y-1.5">
-                            <span class="text-sm font-medium text-[var(--wn-ink)]">Empresa ou studio</span>
+                            <span class="text-sm font-medium text-[var(--wn-ink)]">Empresa ou estúdio</span>
                             <div class="input-shell">
                                 <Building2 class="h-5 w-5 text-[var(--wn-muted)]" />
-                                <input v-model="form.company" type="text" placeholder="Organizacao" class="auth-input" autocomplete="organization" required />
+                                <input v-model="form.company" type="text" placeholder="Organização" class="auth-input" autocomplete="organization" required />
                             </div>
                         </label>
 
@@ -114,12 +114,7 @@
                         </div>
                     </form>
                 </div>
-            </section>
-
-            <footer class="auth-footer">
-                <span>WNFit</span> &copy; 2026 &bull; Todos os direitos reservados.
-            </footer>
-        </main>
+            </main>
     </div>
 </template>
 

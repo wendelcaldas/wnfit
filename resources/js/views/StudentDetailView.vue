@@ -6,7 +6,7 @@
         search-placeholder="Buscar alunos, treinos, planos..."
     >
         <StudentAccessPanel v-if="student && (activeTab === 'access' || (accessCredentials.studentId === student.id && accessCredentials.credentials))" class="mb-5" :student-id="student.id" :name="student.name" />
-        <section v-if="student" class="panel-card p-0">
+        <section v-if="student" class="panel-card !p-0">
             <div class="p-6">
                 <RouterLink to="/alunos" class="inline-flex items-center gap-2 text-sm font-medium text-[var(--wn-muted)]">
                     <ArrowLeft class="h-4 w-4" />
@@ -14,7 +14,7 @@
                 </RouterLink>
 
                 <div class="mt-5 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                    <div class="flex items-center gap-5">
+                    <div class="admin-student-identity flex items-center gap-5">
                         <div class="grid h-24 w-24 place-items-center rounded-full bg-[var(--wn-neutral-soft)] text-2xl font-bold text-[var(--wn-neutral-strong)]">
                             {{ student.initials }}
                         </div>
@@ -50,7 +50,7 @@
                 <div class="mt-2 h-2 overflow-hidden rounded-full bg-[var(--wn-neutral-soft)]"><div class="h-full rounded-full bg-[var(--wn-primary-strong)]" :style="{ width: `${student.profileCompletion}%` }"></div></div>
             </div>
 
-            <nav class="flex gap-2 overflow-x-auto border-t border-[var(--wn-line)] px-6">
+            <nav class="admin-profile-tabs border-t border-[var(--wn-line)] px-6" aria-label="Ficha do aluno">
                 <button
                     v-for="tab in tabs"
                     :key="tab.key"
@@ -152,7 +152,7 @@
             </div>
 
             <div v-if="workoutsLoading" class="panel-card p-10 text-center text-sm text-[var(--wn-muted)]">Carregando treino...</div>
-            <section v-else-if="currentWorkout" class="panel-card p-0 overflow-hidden">
+            <section v-else-if="currentWorkout" class="panel-card !p-0 overflow-hidden">
                 <div class="flex flex-col gap-5 border-b border-[var(--wn-line)] bg-[var(--wn-primary-soft)] p-6 md:flex-row md:items-start md:justify-between"><div><div class="flex items-center gap-3"><span class="badge-success">Treino atual</span><span class="text-sm font-medium capitalize text-[var(--wn-muted)]">{{ currentWorkout.level }}</span></div><h3 class="mt-3 text-2xl font-bold">{{ currentWorkout.name }}</h3><p class="mt-2 text-sm text-[var(--wn-muted)]">{{ currentWorkout.objective }}<span v-if="currentWorkout.description"> · {{ currentWorkout.description }}</span></p><p class="mt-3 text-xs text-[var(--wn-muted)]">Vigência: {{ currentWorkout.startsOn }} até {{ currentWorkout.endsOn || 'sem prazo' }}. Esta versão é preservada ao editar a biblioteca.</p></div><button class="btn-secondary shrink-0" :disabled="assigningWorkout" @click="personalizeWorkout"><Pencil class="h-4 w-4" />Personalizar nova versão</button></div>
                 <div class="grid gap-4 border-b border-[var(--wn-line)] p-5 sm:grid-cols-3"><MiniKpi label="Frequencia" :value="`${currentWorkout.sessionsPerWeek}x por semana`" caption="Sessoes planejadas" /><MiniKpi label="Duracao" :value="`${currentWorkout.durationWeeks} semanas`" caption="Ciclo do programa" /><MiniKpi label="Divisao" :value="`${currentWorkout.days.length} dias`" caption="Rotinas cadastradas" /></div>
                 <div class="p-5"><h3 class="font-semibold">Dias do treino</h3><div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><article v-for="(day, index) in currentWorkout.days" :key="day.id" class="rounded-xl border border-[var(--wn-line)] bg-[var(--wn-surface-soft)] p-4"><div class="flex items-center justify-between"><span class="grid h-8 w-8 place-items-center rounded-lg bg-white text-sm font-bold">{{ index + 1 }}</span><span class="text-xs text-[var(--wn-muted)]">{{ day.exercisesCount }} exercicios</span></div><p class="mt-3 font-semibold">{{ day.name }}</p><p class="mt-1 text-sm text-[var(--wn-muted)]">{{ day.focus || 'Foco geral' }}</p></article></div></div>
@@ -164,7 +164,7 @@
         <div v-if="workoutPickerOpen" class="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4" @click.self="workoutPickerOpen = false"><section class="flex max-h-[82vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"><header class="flex items-start justify-between border-b border-[var(--wn-line)] p-5"><div><h2 class="text-xl font-semibold">Escolher modelo de treino</h2><p class="mt-1 text-sm text-[var(--wn-muted)]">O modelo selecionado passara a ser o treino atual do aluno.</p></div><button class="icon-button" @click="workoutPickerOpen = false"><X class="h-4 w-4" /></button></header><div class="overflow-y-auto p-5"><div v-if="workoutTemplates.length" class="grid gap-3 sm:grid-cols-2"><button v-for="workout in workoutTemplates" :key="workout.id" class="rounded-xl border p-4 text-left transition hover:border-[var(--wn-primary-strong)] hover:bg-[var(--wn-primary-soft)]" :class="workout.selected ? 'border-[var(--wn-primary-strong)] bg-[var(--wn-primary-soft)]' : 'border-[var(--wn-line)]'" :disabled="assigningWorkout" @click="assignWorkout(workout)"><div class="flex items-center justify-between gap-3"><span class="font-semibold">{{ workout.name }}</span><span v-if="workout.selected" class="badge-success">Atual</span></div><p class="mt-2 text-sm text-[var(--wn-muted)]">{{ workout.objective }} · {{ workout.sessionsPerWeek }}x/semana</p><p class="mt-3 text-xs text-[var(--wn-muted)]">{{ workout.daysCount }} dias · {{ workout.durationWeeks }} semanas</p></button></div><p v-else class="p-8 text-center text-sm text-[var(--wn-muted)]">Nenhum modelo ativo disponivel.</p></div></section></div>
 
         <section v-if="student && activeTab === 'communications'" class="mt-5 grid gap-5 xl:grid-cols-[1fr_360px]">
-            <section class="panel-card p-0">
+            <section class="panel-card !p-0">
                 <div class="flex flex-col gap-4 border-b border-[var(--wn-line)] p-5 md:flex-row md:items-center md:justify-between">
                     <div>
                         <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Comunicações</h2>
@@ -259,7 +259,7 @@
                     </div>
                 </section>
 
-                <section class="panel-card p-0">
+                <section class="panel-card !p-0">
                     <div class="flex flex-col gap-4 border-b border-[var(--wn-line)] p-5 md:flex-row md:items-center md:justify-between">
                         <div class="flex flex-wrap items-center gap-3">
                             <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Cobranças</h2>
@@ -271,7 +271,7 @@
                         <button class="btn-secondary gap-2" @click="generateCharge"><Plus class="h-5 w-5" />Gerar cobrança</button>
                     </div>
 
-                    <div class="overflow-x-auto">
+                    <div class="admin-profile-charges overflow-x-auto">
                         <table class="min-w-full divide-y divide-[var(--wn-line)]">
                             <thead>
                                 <tr class="text-left text-sm font-semibold text-[var(--wn-muted)]">
@@ -286,12 +286,12 @@
                             </thead>
                             <tbody class="divide-y divide-[var(--wn-line)]">
                                 <tr v-for="charge in student.financial.charges" :key="charge.id">
-                                    <td class="px-5 py-4 text-sm">{{ charge.competence }}</td>
-                                    <td class="px-5 py-4 text-sm">{{ charge.dueDate }}</td>
-                                    <td class="px-5 py-4 text-sm">{{ money(charge.value) }}</td>
-                                    <td class="px-5 py-4"><span :class="charge.statusClass">{{ labelStatus(charge.status) }}</span></td>
-                                    <td class="px-5 py-4 text-sm">{{ charge.paymentMethod }}</td>
-                                    <td class="px-5 py-4 text-sm text-[var(--wn-muted)]">{{ charge.paidAt }}</td>
+                                    <td data-label="Competência" class="px-5 py-4 text-sm">{{ charge.competence }}</td>
+                                    <td data-label="Vencimento" class="px-5 py-4 text-sm">{{ charge.dueDate }}</td>
+                                    <td data-label="Valor" class="px-5 py-4 text-sm">{{ money(charge.value) }}</td>
+                                    <td data-label="Situação" class="px-5 py-4"><span :class="charge.statusClass">{{ labelStatus(charge.status) }}</span></td>
+                                    <td data-label="Forma de pagamento" class="px-5 py-4 text-sm">{{ charge.paymentMethod }}</td>
+                                    <td data-label="Pagamento" class="px-5 py-4 text-sm text-[var(--wn-muted)]">{{ charge.paidAt }}</td>
                                     <td class="px-5 py-4">
                                         <div class="flex justify-end gap-2">
                                             <button class="icon-button" title="Enviar mensagem" aria-label="Enviar mensagem" :disabled="!['pendente', 'atrasado'].includes(charge.status)" @click="chargeDialog = { charge, action: 'message' }"><MessageCircle class="h-4 w-4" /></button>

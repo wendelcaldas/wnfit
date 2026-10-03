@@ -20,7 +20,7 @@ import AppLogo from './AppLogo.vue';
 import { appNavigation } from '../data/appNavigation';
 import { useAuthStore } from '../stores/auth';
 
-defineProps({ eyebrow: { type: String, default: 'Painel' }, title: { type: String, required: true }, description: { type: String, default: '' }, searchPlaceholder: { type: String, default: '' }, visualRefresh: { type: Boolean, default: false } });
+defineProps({ eyebrow: { type: String, default: 'Painel' }, title: { type: String, required: true }, description: { type: String, default: '' }, searchPlaceholder: { type: String, default: '' }, visualRefresh: { type: Boolean, default: true } });
 const route = useRoute(); const router = useRouter(); const auth = useAuthStore();
 const currentPath = computed(() => route.path);
 const mobileNavigation = computed(() => appNavigation.filter((item) => ['Painel', 'Alunos', 'Financeiro', 'Treinos', 'Agenda'].includes(item.label)));

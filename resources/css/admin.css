@@ -1,4 +1,4 @@
-/* Experimental identity, enabled only by the four selected AppShell views. */
+/* Shared WNFit identity for all management screens. */
 .dashboard-shell.admin-redesign {
     --wn-primary: #a3e635;
     --wn-primary-strong: #365314;
@@ -98,6 +98,28 @@
 .admin-redesign .admin-exercise-thumb { width: 76px; height: 64px; object-fit: contain; flex-shrink: 0; border: 1px solid var(--wn-line); border-radius: 10px; background: white; }
 .admin-redesign .admin-builder-toolbar { border-radius: 14px; box-shadow: none; position: relative; z-index: auto; }
 .admin-redesign .admin-mobile-card { display: none; }
+.admin-redesign .admin-profile-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 4px; padding-block: 8px; }
+.admin-redesign .admin-profile-tabs button { border: 0; border-radius: 10px; padding: 12px 8px; }
+.admin-redesign .admin-profile-tabs button[class*='border-[var(--wn-primary)]'] { background: #151715; color: var(--wn-primary); }
+.admin-redesign :is(.agenda-day-card, .agenda-week-card, .agenda-modal, .event-panel) { border-radius: 14px; box-shadow: none; border-color: var(--wn-line); }
+.admin-redesign :is(.agenda-filter, .agenda-student-search, .event-panel input, .event-panel select, .event-panel textarea) { min-height: 48px; border-radius: 12px; border-color: var(--wn-line); color: var(--wn-ink); }
+.admin-redesign .event-panel :is(input, select, textarea):focus { outline: 2px solid var(--wn-primary-strong); outline-offset: 2px; }
+.admin-redesign :is(.agenda-event-card, .agenda-week-event) { border-radius: 10px; background: var(--wn-primary-soft); color: var(--wn-primary-strong); border-color: var(--wn-line); border-left: 3px solid var(--wn-primary-strong); }
+.admin-redesign .agenda-view-active { background: #151715; color: var(--wn-primary); }
+.admin-redesign .event-choice.chosen { background: var(--wn-primary-soft); border-color: var(--wn-primary-strong); }
+.admin-redesign .event-link { color: var(--wn-primary-strong); }
+.auth-register-page .auth-register-card { display: grid; gap: 24px; }
+.auth-register-page .auth-wordmark { display: none; }
+.auth-register-page .student-login-form { max-width: 660px; }
+.auth-register-page .student-login-form :is(input, select) { min-width: 0; }
+.auth-register-page label > span { font-size: 13px; font-weight: 600; }
+.event-public .event-wordmark { display: flex; align-items: center; gap: 12px; }
+.event-public .brand-emblem { background: #a3e635; color: #151715; border-radius: 10px; box-shadow: none; }
+.event-public :is(h1, h2, h3, .event-brand strong) { font-family: var(--font-display); letter-spacing: -0.035em; }
+.event-public .event-hero::after { content: ''; position: absolute; inset: 0 0 0 65%; background: repeating-linear-gradient(115deg, transparent 0 55px, #a3e63522 56px 57px, transparent 58px 100px); pointer-events: none; }
+.event-public .event-hero > * { position: relative; z-index: 1; }
+.event-public .event-primary { min-height: 52px; }
+.event-public :is(button, a, input, select, textarea):focus-visible { outline: 2px solid #365314; outline-offset: 3px; }
 @media (min-width: 1024px) { .admin-redesign .dashboard-main { padding-left: 240px; } }
 @media (max-width: 1023px) {
     .admin-redesign .dashboard-content { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
@@ -110,8 +132,28 @@
     .admin-redesign .admin-mobile-card { display: grid; gap: 12px; padding: 16px; border-bottom: 1px solid var(--wn-line); }
     .admin-redesign .admin-mobile-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; font-size: 13px; }
     .admin-redesign .admin-mobile-details dt { color: var(--wn-muted); font-size: 11px; margin-bottom: 4px; }
+    .admin-redesign .agenda-week-card { grid-template-columns: 1fr; overflow: visible; }
+    .admin-redesign .agenda-week-column { min-width: 0; border-right: 0; border-bottom: 1px solid var(--wn-line); }
+    .admin-redesign .agenda-week-column > header { display: flex; align-items: center; gap: 12px; }
 }
 @media (max-width: 640px) {
+    .admin-redesign .admin-student-identity { align-items: flex-start; flex-direction: column; }
+    .admin-redesign .admin-student-identity > div:first-child { width: 64px; height: 64px; }
+    .admin-redesign .admin-student-identity > div:last-child { min-width: 0; width: 100%; overflow-wrap: anywhere; }
+    .admin-redesign .admin-profile-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 12px; }
+    .admin-redesign .admin-profile-charges { overflow: visible; }
+    .admin-redesign .admin-profile-charges :is(table, tbody, tr, td) { display: block; }
+    .admin-redesign .admin-profile-charges thead { display: none; }
+    .admin-redesign .admin-profile-charges tr { padding: 16px; border-bottom: 1px solid var(--wn-line); }
+    .admin-redesign .admin-profile-charges td { padding: 6px 0; }
+    .admin-redesign .admin-profile-charges td::before { content: attr(data-label); display: block; font-size: 11px; color: var(--wn-muted); margin-bottom: 4px; }
+    .admin-redesign .admin-profile-charges td:last-child > div { justify-content: flex-start; }
+    .auth-register-page .auth-register-card { gap: 20px; }
+    .auth-register-page .student-login-message { display: none; }
+    .admin-redesign .event-panel :is(input, textarea, select) { font-size: 16px; }
+    .admin-redesign .event-heading { flex-wrap: wrap; }
+    .admin-redesign .event-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .admin-redesign .event-metrics > div { min-width: 0; }
     .admin-redesign .admin-stat-grid { gap: 10px; }
     .admin-redesign .admin-stat-grid .stat-card { padding: 14px; min-width: 0; }
     .admin-redesign .admin-stat-grid .stat-card > div { flex-wrap: wrap; gap: 8px; }

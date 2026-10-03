@@ -5,7 +5,7 @@
         description="Crie, organize e reutilize programas de treino para seus alunos."
         search-placeholder="Buscar alunos, treinos, planos..."
     >
-        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section class="admin-stat-grid grid grid-cols-2 gap-4 xl:grid-cols-4">
             <article v-for="card in summaryCards" :key="card.label" class="stat-card">
                 <div class="flex items-center gap-4">
                     <div class="grid h-12 w-12 place-items-center rounded-xl" :class="card.wrap"><component :is="card.icon" class="h-5 w-5" :class="card.color" /></div>
@@ -14,8 +14,8 @@
             </article>
         </section>
 
-        <section class="panel-card mt-5 p-0">
-            <div class="grid gap-4 border-b border-[var(--wn-line)] p-5 lg:grid-cols-[1fr_200px_190px_auto_auto]">
+        <section class="panel-card mt-5 !p-0">
+            <div class="grid gap-4 border-b border-[var(--wn-line)] p-5 2xl:grid-cols-[minmax(0,1fr)_200px_190px_auto_auto]">
                 <label class="input-shell">
                     <Search class="h-5 w-5 text-[var(--wn-muted)]" />
                     <input v-model="filters.q" class="auth-input" placeholder="Buscar por nome ou objetivo..." @input="scheduleLoad" />

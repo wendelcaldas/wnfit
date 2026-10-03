@@ -6,7 +6,7 @@
         search-placeholder="Buscar configuracoes..."
     >
         <div class="grid gap-5 xl:grid-cols-[1fr_390px]">
-            <section class="panel-card p-0 overflow-hidden">
+            <section class="panel-card !p-0 overflow-hidden">
                 <div class="flex items-center justify-between gap-4 border-b border-[var(--wn-line)] p-5">
                     <div>
                         <h2 class="text-lg font-semibold">Equipe cadastrada</h2>
