@@ -4,7 +4,14 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>{{ config('app.name', 'WNFIT') }}</title>
+        <title>WNFit</title>
+        <meta name="application-name" content="WNFit">
+        <meta name="apple-mobile-web-app-title" content="WNFit">
+        <meta name="theme-color" content="#151715">
+        <link rel="icon" type="image/svg+xml" href="{{ asset('icons/wnfit.svg') }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('icons/wnfit-32.png') }}">
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('icons/wnfit-180.png') }}">
+        <link rel="manifest" href="{{ asset('site.webmanifest') }}">
         <meta
             name="description"
             content="WNFIT e a plataforma SaaS para gestao inteligente de academias, studios e personal trainers."

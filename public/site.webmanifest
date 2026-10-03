@@ -1,0 +1,14 @@
+{
+    "name": "WNFit",
+    "short_name": "WNFit",
+    "lang": "pt-BR",
+    "start_url": "/aluno/entrar",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#151715",
+    "icons": [
+        { "src": "/icons/wnfit-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "/icons/wnfit-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    ]
+}
