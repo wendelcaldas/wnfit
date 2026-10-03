@@ -6,8 +6,8 @@
         </div>
         <p v-if="error" role="alert" class="mb-4 rounded-xl bg-rose-50 p-4 text-rose-700">{{ error }} <button class="underline" @click="load(page)">Tentar novamente</button></p>
         <p v-if="notice" role="status" class="mb-4 rounded-xl bg-emerald-50 p-4 text-emerald-800">{{ notice }}</p>
-        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" :aria-busy="loading">
-            <article v-for="card in cards" :key="card.label" class="stat-card">
+        <section class="admin-stat-grid grid grid-cols-2 gap-4 xl:grid-cols-4" :aria-busy="loading">
+            <article v-for="card in cards" :key="card.label" class="finance-summary stat-card">
                 <div class="flex items-center justify-between gap-2"><p class="text-sm text-[var(--wn-muted)]">{{ card.label }}</p><component :is="card.icon" class="h-5 w-5" :class="card.color" /></div>
                 <p class="mt-3 text-2xl font-bold" :class="card.color">{{ loading ? '…' : money(card.value) }}</p>
                 <p class="mt-2 text-xs text-[var(--wn-muted)]">{{ card.caption }}</p>
@@ -33,7 +33,7 @@
                     <button class="btn-secondary self-end justify-center" :disabled="loading">Buscar</button>
                 </form>
             </div>
-            <div class="overflow-x-auto">
+            <div class="admin-desktop-table overflow-x-auto">
                 <table class="min-w-full text-left text-sm">
                     <thead class="bg-[var(--wn-surface-soft)] text-[var(--wn-muted)]"><tr><th class="p-4">Aluno / plano</th><th class="p-4">Vencimento</th><th class="p-4">Valor</th><th class="p-4">Situação</th><th class="p-4">Último envio registrado</th><th class="p-4 text-right">Ações</th></tr></thead>
                     <tbody class="divide-y divide-[var(--wn-line)]">
@@ -49,6 +49,27 @@
                     </tbody>
                 </table>
             </div>
+            <div v-if="loading" class="admin-mobile-card text-sm text-[var(--wn-muted)]">Carregando financeiro…</div>
+            <div v-else-if="!charges.length" class="admin-mobile-card text-sm">Nenhuma cobrança neste filtro. Escolha outro mês ou situação.</div>
+            <template v-else>
+                <article v-for="charge in charges" :key="`mobile-${charge.id}`" class="admin-mobile-card">
+                    <div class="flex items-center justify-between gap-3">
+                        <RouterLink :to="`/alunos/${charge.studentId}?tab=financial`" class="font-semibold">{{ charge.student }}</RouterLink>
+                        <span :class="charge.status === 'pago' ? 'badge-success' : charge.status === 'atrasado' ? 'badge-danger' : 'badge-warning'">{{ labels[charge.status] ?? charge.status }}</span>
+                    </div>
+                    <dl class="admin-mobile-details">
+                        <div><dt>Plano</dt><dd>{{ charge.plan }}</dd></div>
+                        <div><dt>Valor</dt><dd class="font-semibold">{{ money(charge.value) }}</dd></div>
+                        <div><dt>Vencimento</dt><dd>{{ charge.dueDate }}</dd></div>
+                        <div><dt>Último envio</dt><dd>{{ charge.sentAt || 'Nenhum envio confirmado' }}</dd></div>
+                    </dl>
+                    <div v-if="['pendente', 'atrasado'].includes(charge.status)" class="grid grid-cols-2 gap-2">
+                        <button class="btn-secondary justify-center" :disabled="busy" @click="prepare(charge)">Preparar mensagem</button>
+                        <button class="btn-primary justify-center" :disabled="busy" @click="payment = charge">Dar baixa</button>
+                    </div>
+                    <p v-else class="text-xs text-[var(--wn-muted)]">{{ charge.paidAt ? `Pago em ${charge.paidAt}` : '—' }}</p>
+                </article>
+            </template>
             <div class="flex items-center justify-between gap-3 border-t border-[var(--wn-line)] p-4 text-sm"><span>{{ total }} cobranças · página {{ page }} de {{ lastPage }}</span><div class="flex gap-2"><button class="btn-secondary" :disabled="loading || page <= 1" @click="load(page - 1)">Anterior</button><button class="btn-secondary" :disabled="loading || page >= lastPage" @click="load(page + 1)">Próxima</button></div></div>
         </section>
 

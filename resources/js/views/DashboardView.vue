@@ -1,14 +1,18 @@
 <template>
     <AppShell
-        eyebrow="Dashboard principal"
-        :title="`Ola, ${auth.firstName}`"
+        visual-refresh
+        eyebrow="Visão geral"
+        :title="`Olá, ${auth.firstName}`"
         :description="`Bem-vindo(a) de volta ao painel operacional ${auth.organization?.name ? `da ${auth.organization.name}` : 'do WNFit'}.`"
         search-placeholder="Buscar alunos, treinos ou aulas..."
     >
-        <section class="grid gap-4 xl:grid-cols-4">
+        <AdminHero title="Seu estúdio em movimento" description="Mais pessoas, mais progresso, todos os dias.">
+            <RouterLink to="/agenda" class="btn-primary">Ver agenda <ArrowRight :size="18" /></RouterLink>
+        </AdminHero>
+        <section class="admin-stat-grid grid grid-cols-2 gap-4 xl:grid-cols-4">
             <article v-for="stat in stats" :key="stat.label" class="stat-card">
                 <div class="flex items-center gap-4">
-                    <div class="grid h-12 w-12 shrink-0 place-items-center rounded-xl" :class="stat.iconWrapClass">
+                    <div class="admin-stats-icon grid h-10 w-10 shrink-0 place-items-center rounded-xl">
                         <component :is="stat.icon" class="h-6 w-6" :class="stat.iconClass" />
                     </div>
                     <div class="min-w-0">
@@ -24,8 +28,8 @@
             <article class="panel-card">
                 <div class="flex items-center justify-between gap-4">
                     <div>
-                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Check-ins ultimos 7 dias</h2>
-                        <p class="mt-2 text-sm text-[var(--wn-muted)]">Visao de atividade e frequencia recente dos alunos.</p>
+                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Frequência dos alunos</h2>
+                        <p class="mt-2 text-sm text-[var(--wn-muted)]">Visão de atividade e frequência recente dos alunos.</p>
                     </div>
                     <button class="btn-secondary">7 dias</button>
                 </div>
@@ -58,13 +62,14 @@
             <article class="panel-card">
                 <div class="flex items-center justify-between gap-4">
                     <div>
-                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Proximas aulas</h2>
-                        <p class="mt-2 text-sm text-[var(--wn-muted)]">Agenda resumida do dia para a operacao.</p>
+                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Próximas aulas</h2>
+                        <p class="mt-2 text-sm text-[var(--wn-muted)]">Agenda resumida do dia para a operação.</p>
                     </div>
                     <RouterLink to="/agenda" class="text-sm font-semibold text-[var(--wn-neutral-strong)]">Ver agenda</RouterLink>
                 </div>
 
                 <div class="mt-8 space-y-4">
+                    <p v-if="!classes.length" class="rounded-xl bg-[var(--wn-surface-soft)] p-5 text-sm text-[var(--wn-muted)]">Nenhuma aula programada para hoje. Consulte a agenda para planejar os próximos dias.</p>
                     <div v-for="classItem in classes" :key="classItem.time" class="flex items-center gap-4 rounded-[1.25rem] border border-[var(--wn-line)] bg-[var(--wn-surface-soft)] px-4 py-4">
                         <div class="w-14 shrink-0 text-sm font-semibold text-[var(--wn-muted)]">{{ classItem.time }}</div>
                         <div class="h-3 w-3 rounded-full" :class="classItem.dot"></div>
@@ -84,13 +89,13 @@
             <article class="panel-card">
                 <div class="flex items-center justify-between gap-4">
                     <div>
-                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Clientes recentes</h2>
+                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Alunos recentes</h2>
                         <p class="mt-2 text-sm text-[var(--wn-muted)]">Resumo dos alunos mais recentes e status atual.</p>
                     </div>
-                    <a href="#" class="text-sm font-semibold text-[var(--wn-neutral-strong)]">Ver todos</a>
+                    <RouterLink to="/alunos" class="text-sm font-semibold text-[var(--wn-primary-strong)]">Ver todos</RouterLink>
                 </div>
 
-                <div class="mt-8 overflow-x-auto rounded-[1.4rem] border border-[var(--wn-line)]">
+                <div class="admin-desktop-table mt-8 overflow-x-auto rounded-[1.4rem] border border-[var(--wn-line)]">
                     <table class="min-w-full divide-y divide-[var(--wn-line)]">
                         <thead class="bg-[var(--wn-surface-soft)]">
                             <tr class="text-left text-sm font-semibold text-[var(--wn-muted)]">
@@ -124,13 +129,17 @@
                         </tbody>
                     </table>
                 </div>
+                <article v-for="client in clients" :key="`mobile-${client.name}`" class="admin-mobile-card">
+                    <div class="flex justify-between gap-3"><strong>{{ client.name }}</strong><span class="badge-success">{{ client.status }}</span></div>
+                    <dl class="admin-mobile-details"><div><dt>Plano</dt><dd>{{ client.plan }}</dd></div><div><dt>Vencimento</dt><dd>{{ client.dueDate }}</dd></div></dl>
+                </article>
             </article>
 
             <article class="panel-card">
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Receitas</h2>
-                        <p class="mt-2 text-sm text-[var(--wn-muted)]">Evolucao dos ultimos 6 meses.</p>
+                        <p class="mt-2 text-sm text-[var(--wn-muted)]">Evolução dos últimos 6 meses.</p>
                     </div>
                     <button class="btn-secondary">6 meses</button>
                 </div>
@@ -150,6 +159,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import {
+    ArrowRight,
     CircleDollarSign,
     ClipboardList,
     Dumbbell,
@@ -157,6 +167,7 @@ import {
 } from 'lucide-vue-next';
 
 import AppShell from '../components/AppShell.vue';
+import AdminHero from '../components/AdminHero.vue';
 import { useAuthStore } from '../stores/auth';
 
 const auth = useAuthStore();

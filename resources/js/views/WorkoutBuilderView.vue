@@ -1,11 +1,12 @@
 <template>
     <AppShell
+        visual-refresh
         eyebrow="Treinos / Montador"
         :title="workoutId ? 'Editar programa' : 'Montar novo treino'"
         description="Prescreva com clareza e revise como o aluno vai receber a ficha."
     >
         <div
-            class="sticky top-0 z-20 mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--wn-line)] bg-white p-4 shadow-sm"
+            class="admin-builder-toolbar sticky top-0 z-20 mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--wn-line)] bg-white p-4"
         >
             <div class="flex items-center gap-3">
                 <RouterLink
@@ -141,7 +142,7 @@
                             <Plus :size="16" />Adicionar dia
                         </button>
                     </div>
-                    <div class="mt-4 flex gap-2 overflow-x-auto pb-2">
+                    <div class="admin-days">
                         <button
                             v-for="(day, i) in form.days"
                             :key="day.key"
@@ -220,10 +221,11 @@
                             :key="e.key"
                             class="p-5"
                         >
-                            <div class="flex items-center gap-3">
+                            <div class="admin-exercise-heading flex items-center gap-3">
                                 <span class="student-exercise-number">{{
                                     i + 1
                                 }}</span>
+                                <img v-if="exerciseImage(e)" :src="exerciseImage(e)" :alt="`Demonstração de ${e.name}`" class="admin-exercise-thumb" loading="lazy" decoding="async" @error="$event.target.hidden = true" />
                                 <div class="min-w-0 flex-1">
                                     <h3 class="font-semibold">{{ e.name }}</h3>
                                     <p
@@ -574,6 +576,16 @@ import {
 } from "lucide-vue-next";
 import AppShell from "../components/AppShell.vue";
 import WorkoutExerciseInfo from "../components/WorkoutExerciseInfo.vue";
+import illustrations from "../data/exerciseIllustrations.json";
+function exerciseImage(exercise) {
+    const name = (exercise.name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const value = exercise.imageUrl || (!exercise.custom && illustrations[name]?.url);
+    if (!value) return null;
+    try {
+        const url = new URL(value, window.location.origin);
+        return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+    } catch { return null; }
+}
 const Field = defineComponent({
     props: {
         label: String,
@@ -708,6 +720,8 @@ function selectExercise(e) {
         instructions: e.instructions,
         safetyNotes: e.safetyNotes,
         videoUrl: e.videoUrl,
+        imageUrl: e.imageUrl,
+        custom: e.custom,
     });
 }
 function openPicker() {

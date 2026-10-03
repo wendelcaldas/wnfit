@@ -1,37 +1,40 @@
 <template>
     <AppShell
+        visual-refresh
         eyebrow="Alunos"
-        title="Gestao de alunos"
-        description="Veja, filtre e gerencie todos os alunos do seu studio."
+        title="Alunos"
+        description="Acompanhe cada pessoa. Valorize cada evolução."
         search-placeholder="Buscar alunos, planos, status..."
     >
-        <div class="mb-4 flex justify-end">
+        <template #page-actions>
             <RouterLink to="/alunos/novo" class="btn-primary justify-center gap-2">
                 <Plus class="h-5 w-5" />
                 Novo aluno
             </RouterLink>
-        </div>
+        </template>
 
-        <section class="grid gap-4 xl:grid-cols-4">
+        <AdminHero :title="`${summary.find(item => item.type === 'active')?.value ?? '—'} alunos ativos`" :description="`${summary[0]?.value ?? '—'} alunos cadastrados no seu estúdio`" />
+
+        <section class="admin-stat-grid grid grid-cols-2 gap-4 xl:grid-cols-4">
             <article v-for="item in summary" :key="item.label" class="stat-card">
                 <div class="flex items-center gap-4">
-                    <div class="grid h-14 w-14 place-items-center rounded-2xl" :class="item.iconWrapClass">
+                    <div class="admin-stats-icon grid h-10 w-10 place-items-center rounded-xl">
                         <component :is="item.icon" class="h-6 w-6" :class="item.iconClass" />
                     </div>
                     <div>
                         <p class="text-sm text-[var(--wn-muted)]">{{ item.label }}</p>
                         <p class="mt-1 text-3xl font-bold text-[var(--wn-ink)]">{{ item.value }}</p>
-                        <p class="mt-1 text-sm text-[var(--wn-muted)]">{{ item.caption }}</p>
+                        <p class="mt-1 text-sm text-[var(--wn-muted)]">{{ item.type === 'active' ? 'Com cadastro ativo' : item.caption }}</p>
                     </div>
                 </div>
             </article>
         </section>
 
-        <section class="panel-card mt-6 p-0">
-            <div class="grid gap-4 border-b border-[var(--wn-line)] p-5 xl:grid-cols-[1.6fr_repeat(3,0.9fr)_auto]">
-                <label class="input-shell">
+        <section class="panel-card mt-6 !p-0">
+            <div class="admin-student-filters grid gap-4 border-b border-[var(--wn-line)] p-5 xl:grid-cols-[1.6fr_repeat(3,0.9fr)_auto]">
+                <label class="input-shell self-end">
                     <Search class="h-5 w-5 text-[var(--wn-muted)]" />
-                    <input v-model="filters.q" type="text" class="auth-input" placeholder="Buscar por nome, e-mail ou telefone..." @input="loadStudents" />
+                    <input v-model="filters.q" type="text" class="auth-input" aria-label="Buscar aluno" placeholder="Buscar por nome, e-mail ou telefone..." @input="loadStudents" />
                 </label>
 
                 <label class="space-y-1">
@@ -39,7 +42,7 @@
                     <select v-model="filters.status" class="form-control" @change="loadStudents">
                         <option value="todos">Todos</option>
                         <option value="ativo">Ativo</option>
-                        <option value="avaliacao">Em avaliacao</option>
+                        <option value="avaliacao">Em avaliação</option>
                         <option value="pausado">Pausado</option>
                     </select>
                 </label>
@@ -62,11 +65,11 @@
 
                 <button class="btn-secondary self-end gap-2" @click="resetFilters">
                     <SlidersHorizontal class="h-5 w-5" />
-                    Filtros
+                    Limpar filtros
                 </button>
             </div>
 
-            <div class="overflow-x-auto">
+            <div class="admin-desktop-table overflow-x-auto">
                 <table class="min-w-full divide-y divide-[var(--wn-line)]">
                     <thead class="bg-white">
                         <tr class="text-left text-sm font-semibold text-[var(--wn-muted)]">
@@ -76,8 +79,8 @@
                             <th class="px-5 py-4">Professor</th>
                             <th class="px-5 py-4">Status</th>
                             <th class="px-5 py-4">Vencimento</th>
-                            <th class="px-5 py-4">Ultimo treino</th>
-                            <th class="px-5 py-4 text-right">Acoes</th>
+                            <th class="px-5 py-4">Último treino</th>
+                            <th class="px-5 py-4 text-right">Ações</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-[var(--wn-line)] bg-white">
@@ -111,6 +114,20 @@
                 </table>
             </div>
 
+            <article v-for="student in students" :key="`mobile-${student.id}`" class="admin-mobile-card">
+                <div class="flex items-center justify-between gap-3">
+                    <RouterLink :to="`/alunos/${student.id}`" class="min-w-0 font-semibold">{{ student.name }}</RouterLink>
+                    <span :class="student.statusClass">{{ student.status }}</span>
+                </div>
+                <dl class="admin-mobile-details">
+                    <div><dt>Plano</dt><dd>{{ student.plan }}</dd></div>
+                    <div><dt>Professor</dt><dd>{{ student.teacher }}</dd></div>
+                    <div><dt>Vencimento</dt><dd>{{ student.dueDate }}</dd></div>
+                    <div><dt>Último treino</dt><dd>{{ student.lastWorkout }}</dd></div>
+                </dl>
+                <RouterLink :to="`/alunos/${student.id}`" class="btn-secondary justify-center">Ver aluno <ArrowRight :size="16" /></RouterLink>
+            </article>
+
             <div class="flex items-center justify-between border-t border-[var(--wn-line)] px-5 py-4 text-sm text-[var(--wn-muted)]">
                 <span>Mostrando 1 a {{ students.length }} de {{ summary[0]?.value ?? 0 }} alunos</span>
                 <div class="flex gap-2">
@@ -126,9 +143,10 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
 import { RouterLink } from 'vue-router';
-import { AlertTriangle, Hourglass, MoreVertical, Plus, Search, SlidersHorizontal, UserCheck, Users } from 'lucide-vue-next';
+import { ArrowRight, AlertTriangle, Hourglass, MoreVertical, Plus, Search, SlidersHorizontal, UserCheck, Users } from 'lucide-vue-next';
 
 import AppShell from '../components/AppShell.vue';
+import AdminHero from '../components/AdminHero.vue';
 
 const summaryMeta = {
     students: { icon: Users, iconWrapClass: 'bg-[var(--wn-primary-soft)]', iconClass: 'text-[var(--wn-primary-strong)]' },
