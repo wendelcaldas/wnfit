@@ -100,4 +100,5 @@ Route::prefix('api')->group(function () {
     });
 });
 
+Route::view('/', 'landing')->name('home');
 Route::view('/{any?}', 'app')->where('any', '.*');
