@@ -26,7 +26,8 @@ Referências: [clareza da página inicial, Nielsen Norman Group](https://www.nng
 
 ## Implementação
 
-- `/` entrega `resources/views/landing.blade.php`, com conteúdo HTML servido pelo Laravel, independente do aplicativo Vue e do JavaScript.
+- `/` redireciona temporariamente para `/entrar` durante os testes com o estúdio. A landing permanece em `/site`.
+- `/site` entrega `resources/views/landing.blade.php`, com conteúdo HTML servido pelo Laravel, independente do aplicativo Vue e do JavaScript.
 - `resources/css/landing.css` é uma entrada própria do Vite, sem carregar o bundle de gestão na landing.
 - Title, description, canonical e Open Graph estão no HTML. Canonical e URL de compartilhamento usam o domínio recebido pelo Laravel.
 - FAQ usa `details/summary` nativo. Há link para pular ao conteúdo, foco visível, títulos hierárquicos e navegação sem JavaScript.

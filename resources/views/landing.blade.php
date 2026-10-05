@@ -6,13 +6,13 @@
     <title>WNFit — Gestão que aproxima. Treino que move.</title>
     <meta name="description" content="Organize alunos, treinos, agenda e mensalidades com o WNFit. Uma gestão conectada à experiência do aluno, para personal trainers, estúdios e academias.">
     <meta name="theme-color" content="#151715">
-    <link rel="canonical" href="{{ url('/') }}">
+    <link rel="canonical" href="{{ route('site') }}">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="pt_BR">
     <meta property="og:site_name" content="WNFit">
     <meta property="og:title" content="WNFit — Gestão que aproxima. Treino que move.">
     <meta property="og:description" content="Seu espaço de gestão. O treino do seu aluno. Tudo mais perto.">
-    <meta property="og:url" content="{{ url('/') }}">
+    <meta property="og:url" content="{{ route('site') }}">
     <link rel="icon" type="image/svg+xml" href="{{ asset('icons/wnfit.svg') }}">
     <link rel="apple-touch-icon" href="{{ asset('icons/wnfit-180.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +23,7 @@
 <body class="wn-landing">
 <a class="lp-skip" href="#conteudo">Ir para o conteúdo</a>
 <header class="lp-header lp-container">
-    <a class="lp-logo" href="{{ url('/') }}" aria-label="WNFit, início"><span>W</span><strong>WNFit</strong></a>
+    <a class="lp-logo" href="{{ route('site') }}" aria-label="WNFit, início"><span>W</span><strong>WNFit</strong></a>
     <nav class="lp-nav" aria-label="Navegação principal">
         <a href="#recursos">Recursos</a><a href="#como-funciona">Como funciona</a><a href="#duvidas">Dúvidas</a>
     </nav>
@@ -100,6 +100,6 @@
 
     <section class="lp-final lp-container"><p class="lp-eyebrow">Cada aluno. Um novo resultado.</p><h2>Seu espaço de gestão.<br>Seu próximo movimento.</h2><p>Comece a organizar sua rotina com o WNFit.</p><a class="lp-button lp-dark-button" href="/cadastro">Criar minha conta <span aria-hidden="true">↗</span></a></section>
 </main>
-<footer class="lp-footer lp-container"><div><a class="lp-logo" href="{{ url('/') }}"><span>W</span><strong>WNFit</strong></a><p>Gestão que aproxima. Treino que move.</p></div><nav aria-label="Acessos WNFit"><a href="/entrar">Acesso do professor</a><a href="/aluno/entrar">Acesso do aluno</a><a href="/cadastro">Criar conta</a></nav><small>© {{ now()->year }} WNFit</small></footer>
+<footer class="lp-footer lp-container"><div><a class="lp-logo" href="{{ route('site') }}"><span>W</span><strong>WNFit</strong></a><p>Gestão que aproxima. Treino que move.</p></div><nav aria-label="Acessos WNFit"><a href="/entrar">Acesso do professor</a><a href="/aluno/entrar">Acesso do aluno</a><a href="/cadastro">Criar conta</a></nav><small>© {{ now()->year }} WNFit</small></footer>
 </body>
 </html>
