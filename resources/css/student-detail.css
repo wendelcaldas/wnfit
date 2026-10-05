@@ -1,0 +1,35 @@
+.student-detail-layout { display:grid; gap:24px; align-items:start; margin-top:20px; }
+.student-context,.student-workspace { min-width:0; }
+.student-context { display:grid; gap:16px; }
+.student-identity-heading { display:flex; align-items:center; gap:14px; }
+.student-avatar { display:grid; place-items:center; flex-shrink:0; width:48px; height:48px; border-radius:16px; background:var(--wn-neutral-soft); font-weight:700; }
+.student-identity h2 { font-size:20px; font-weight:700; line-height:1.3; overflow-wrap:anywhere; margin-bottom:6px; }
+.student-plan { font-size:13px; font-weight:600; margin:18px 0 6px; }
+.student-edit { display:flex; justify-content:space-between; width:100%; font-size:13px; margin:16px 0; color:var(--wn-muted); }
+.student-context-menu { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; border-top:1px solid var(--wn-line); padding-top:18px; }
+.student-context-menu button { min-height:44px; border-radius:10px; background:var(--wn-surface-soft); font-size:12px; font-weight:600; }
+.student-context-menu button.selected { background:var(--wn-ink); color:var(--wn-primary); }
+.student-context-menu button:focus-visible,.student-edit:focus-visible { outline:2px solid var(--wn-primary-strong); outline-offset:3px; }
+.student-context-widget summary { display:flex; align-items:center; justify-content:space-between; gap:12px; cursor:pointer; font-weight:600; font-size:14px; list-style:none; }
+.student-context-widget summary::-webkit-details-marker { display:none; }
+.student-context-widget:not([open]) summary::after { content:'+'; }
+.student-week { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; margin-top:20px; text-align:center; }
+.student-week>div { display:grid; justify-items:center; gap:8px; font-size:11px; color:var(--wn-muted); }
+.student-day { width:30px; height:34px; display:grid; place-items:center; border-radius:9px; background:var(--wn-neutral-soft); font-size:16px; }
+.student-day.trained { background:var(--wn-primary); color:var(--wn-ink); font-weight:700; }
+.student-widget-caption { margin-top:16px; font-size:11px; line-height:1.6; color:var(--wn-muted); }
+.student-detail-link { font-size:12px; color:var(--wn-primary-strong); }
+.student-month { display:flex; justify-content:space-between; gap:12px; padding:15px 0; border-bottom:1px solid var(--wn-line); }
+.student-month:last-child { border-bottom:0; padding-bottom:0; }
+.student-month>div { display:grid; gap:4px; font-size:12px; }
+.student-month span { font-size:11px; color:var(--wn-muted); }
+.student-month-value { text-align:right; }
+.student-workspace { display:grid; gap:20px; container-type:inline-size; }
+.student-workspace>section,.student-workspace>div { margin-top:0; }
+.student-workspace>section.grid { grid-template-columns:minmax(0,1fr); }
+.student-ficha-menu { display:flex; gap:8px; flex-wrap:wrap; }
+.student-ficha-menu button { padding:10px 14px; border:1px solid var(--wn-line); border-radius:10px; font-size:13px; }
+.student-ficha-menu button.selected { background:var(--wn-ink); color:var(--wn-primary); }
+@media(min-width:1100px) { .student-detail-layout { grid-template-columns: minmax(300px, .85fr) minmax(0,1.65fr); } .student-context { position:sticky; top:24px; } }
+@container(max-width:600px) { .grid { grid-template-columns:minmax(0,1fr); } .grid>div { grid-column:auto; } .panel-card { padding:20px; } .student-workspace form>div:first-child { flex-wrap:wrap; } }
+@media(max-width:380px) { .student-context-menu { gap:5px; } .student-context-menu button { font-size:11px; } .student-day { width:26px; } }

@@ -370,6 +370,10 @@ class StudentController extends Controller
         $charges = $student->cobrancas()->with(['eventos', 'mensagens'])->orderByDesc('vencimento')->get();
         $paid = (float) $charges->where('status', 'pago')->sum('valor');
         $open = (float) $charges->whereIn('status', ['pendente', 'atrasado'])->sum('valor');
+        $completedByDay = StudentWorkoutSession::where('aluno_id', $student->id)
+            ->where('status', 'completed')
+            ->whereBetween('finished_at', [today()->subDays(6)->startOfDay(), today()->endOfDay()])
+            ->get(['finished_at'])->groupBy(fn ($session) => $session->finished_at->toDateString());
 
         return [
             'id' => $student->id,
@@ -379,6 +383,12 @@ class StudentController extends Controller
             'email' => $student->email,
             'phone' => $student->telefone,
             'profileCompletion' => $this->profileCompletion($student),
+            'recentActivity' => collect(range(6, 0))->map(function ($offset) use ($completedByDay) {
+                $day = today()->subDays($offset);
+                $count = $completedByDay->get($day->toDateString(), collect())->count();
+
+                return ['date' => $day->toDateString(), 'completedSessions' => $count];
+            })->values(),
             'birthDate' => optional($student->data_nascimento)->format('d/m/Y'),
             'city' => $student->cidade,
             'state' => $student->estado,

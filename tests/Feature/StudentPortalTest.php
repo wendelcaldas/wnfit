@@ -139,6 +139,15 @@ class StudentPortalTest extends TestCase
         $this->getJson('/api/student/home')->assertJsonPath('weekCompleted', 1)->assertJsonPath('activeSession', null)->assertJsonCount(1, 'history');
         $this->postJson('/api/student/sessions', ['dayIndex' => 0])->assertOk();
         $this->assertDatabaseCount('student_workout_sessions', 2);
+        $activity = $this->actingAs($owner)->getJson("/api/students/{$student->id}")
+            ->assertOk()->assertJsonCount(7, 'student.recentActivity')
+            ->assertJsonPath('student.recentActivity.6.date', today()->toDateString())
+            ->assertJsonPath('student.recentActivity.6.completedSessions', 1)
+            ->json('student.recentActivity');
+        $this->assertSame(1, array_sum(array_column($activity, 'completedSessions')));
+        StudentWorkoutSession::findOrFail($id)->update(['finished_at' => now()->subDays(7)]);
+        $this->actingAs($owner)->getJson("/api/students/{$student->id}")
+            ->assertJsonPath('student.recentActivity.6.completedSessions', 0);
         $this->actingAs($owner)->getJson('/api/students')->assertOk()->assertJsonPath('students.0.lastWorkout', StudentWorkoutSession::findOrFail($id)->finished_at->format('d/m/Y H:i'));
     }
 

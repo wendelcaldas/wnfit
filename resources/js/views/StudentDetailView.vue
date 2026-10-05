@@ -1,78 +1,32 @@
 <template>
     <AppShell
         eyebrow="Alunos > Detalhe"
-        :title="student?.name ?? 'Aluno'"
+        title="Ficha do aluno"
         description="Cadastro, evolução, comunicação e controle financeiro do aluno."
         search-placeholder="Buscar alunos, treinos, planos..."
     >
-        <StudentAccessPanel v-if="student && (activeTab === 'access' || (accessCredentials.studentId === student.id && accessCredentials.credentials))" class="mb-5" :student-id="student.id" :name="student.name" />
-        <section v-if="student" class="panel-card !p-0">
-            <div class="p-6">
-                <RouterLink to="/alunos" class="inline-flex items-center gap-2 text-sm font-medium text-[var(--wn-muted)]">
-                    <ArrowLeft class="h-4 w-4" />
-                    Voltar para alunos
-                </RouterLink>
-
-                <div class="mt-5 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                    <div class="admin-student-identity flex items-center gap-5">
-                        <div class="grid h-24 w-24 place-items-center rounded-full bg-[var(--wn-neutral-soft)] text-2xl font-bold text-[var(--wn-neutral-strong)]">
-                            {{ student.initials }}
-                        </div>
-                        <div>
-                            <div class="flex flex-wrap items-center gap-3">
-                                <h1 class="text-3xl font-bold text-[var(--wn-ink)]">{{ student.name }}</h1>
-                                <span class="badge-success">{{ student.status }}</span>
-                            </div>
-                            <div class="mt-4 flex flex-wrap gap-5 text-sm text-[var(--wn-muted)]">
-                                <span class="inline-flex items-center gap-2"><Mail class="h-4 w-4" />{{ student.email }}</span>
-                                <span class="inline-flex items-center gap-2"><Phone class="h-4 w-4" />{{ student.phone }}</span>
-                                <span class="inline-flex items-center gap-2"><MapPin class="h-4 w-4" />{{ student.city }}, {{ student.state }}</span>
-                            </div>
-                            <div class="mt-4 flex flex-wrap gap-3">
-                                <span class="rounded-lg bg-[var(--wn-surface-soft)] px-3 py-2 text-xs font-semibold text-[var(--wn-ink)]">{{ student.plan }}</span>
-                                <span class="rounded-lg bg-[var(--wn-surface-soft)] px-3 py-2 text-xs font-semibold text-[var(--wn-ink)]">{{ student.teacher }}</span>
-                                <span class="rounded-lg bg-[var(--wn-surface-soft)] px-3 py-2 text-xs font-semibold text-[var(--wn-ink)]">{{ student.unit }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex gap-3">
-                        <button class="btn-secondary gap-2" @click="openProfile"><Pencil class="h-5 w-5" />Editar aluno</button>
-                        <button class="icon-button"><MoreHorizontal class="h-5 w-5" /></button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="border-t border-[var(--wn-line)] px-6 py-4">
-                <div class="flex items-center justify-between gap-4 text-sm">
-                    <span class="font-medium">Perfil {{ student.profileCompletion }}% completo</span>
-                    <button class="font-semibold text-[var(--wn-primary-strong)]" @click="openProfile">Completar perfil</button>
-                </div>
-                <div class="mt-2 h-2 overflow-hidden rounded-full bg-[var(--wn-neutral-soft)]"><div class="h-full rounded-full bg-[var(--wn-primary-strong)]" :style="{ width: `${student.profileCompletion}%` }"></div></div>
-            </div>
-
-            <nav class="admin-profile-tabs border-t border-[var(--wn-line)] px-6" aria-label="Ficha do aluno">
-                <button
-                    v-for="tab in tabs"
-                    :key="tab.key"
-                    class="border-b-2 px-4 py-4 text-sm font-medium transition"
-                    :class="activeTab === tab.key ? 'border-[var(--wn-primary)] text-[var(--wn-primary-strong)]' : 'border-transparent text-[var(--wn-muted)] hover:text-[var(--wn-ink)]'"
-                    @click="activeTab = tab.key"
-                >
-                    {{ tab.label }}
-                </button>
-            </nav>
-        </section>
-
+        <RouterLink to="/alunos" class="inline-flex items-center gap-2 text-sm text-[var(--wn-muted)]"><ArrowLeft class="h-4 w-4" />Voltar para alunos</RouterLink>
+        <p v-if="studentError" class="panel-card mt-5" role="alert">{{ studentError }} <button class="student-detail-link" @click="loadStudent">Tentar novamente</button></p>
+        <div v-if="student" class="student-detail-layout">
+            <StudentContext :student="student" :tabs="tabs" :active-tab="activeTab" @select="selectTab" @edit="openProfile" />
+            <div class="student-workspace" aria-label="Conteúdo da ficha">
+        <StudentAccessPanel v-if="activeTab === 'access' || (accessCredentials.studentId === student.id && accessCredentials.credentials)" :student-id="student.id" :name="student.name" />
+        <div v-if="activeTab === 'profile'" class="student-ficha-menu">
+            <button :class="{ selected: profileSection === 'personal' }" :aria-pressed="profileSection === 'personal'" @click="profileSection = 'personal'">Dados pessoais</button>
+            <button :class="{ selected: profileSection === 'health' }" :aria-pressed="profileSection === 'health'" @click="profileSection = 'health'">Saúde e anamnese</button>
+        </div>
         <section v-if="student && activeTab === 'overview'" class="mt-5 grid gap-5 xl:grid-cols-[1fr_420px]">
             <div class="space-y-5">
                 <section class="panel-card">
                     <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Resumo do aluno</h2>
-                    <div class="mt-5 grid gap-4 md:grid-cols-4">
-                        <MiniKpi label="Check-ins este mês" value="16" caption="+14% vs mês anterior" />
-                        <MiniKpi label="Último treino" value="Hoje, 08:15" caption="Funcional - A" />
-                        <MiniKpi label="Frequência média" value="84%" caption="Ótima frequência" />
-                        <MiniKpi label="Dias ativo" value="28" caption="Nos últimos 30 dias" />
+                    <div class="mt-5 grid gap-4 md:grid-cols-2">
+                        <MiniKpi label="Dias com treino" :value="String(student.recentActivity.filter(day => day.completedSessions > 0).length)" caption="Nos últimos 7 dias" />
+                        <MiniKpi label="Perfil completo" :value="student.profileCompletion + '%'" caption="Dados cadastrados" />
                     </div>
+                    <p v-if="workoutsError" class="mt-4 text-sm" role="alert">{{ workoutsError }}</p>
+                    <p v-else class="mt-4 text-sm text-[var(--wn-muted)]">{{ workoutsLoading ? 'Carregando treino...' : currentWorkout ? 'Treino atual: ' + currentWorkout.name : 'Nenhuma ficha de treino ativa.' }}</p>
+                    <button class="btn-secondary mt-4" @click="selectTab('workouts')">Ver treinos</button>
+
                 </section>
 
                 <section class="panel-card">
@@ -104,7 +58,7 @@
             </aside>
         </section>
 
-        <section v-if="student && activeTab === 'profile'" class="mt-5 grid gap-5 xl:grid-cols-[1fr_320px]">
+        <section v-if="student && activeTab === 'profile' && profileSection === 'personal'" class="mt-5 grid gap-5 xl:grid-cols-[1fr_320px]">
             <form class="panel-card" @submit.prevent="saveProfile">
                 <div class="flex items-center justify-between gap-4">
                     <div><h2 class="text-xl font-semibold">Dados pessoais</h2><p class="mt-1 text-sm text-[var(--wn-muted)]">Contato, documentos e endereco do aluno.</p></div>
@@ -130,7 +84,7 @@
             </aside>
         </section>
 
-        <section v-if="student && activeTab === 'health'" class="mt-5">
+        <section v-if="student && activeTab === 'profile' && profileSection === 'health'" class="mt-5">
             <form class="panel-card" @submit.prevent="saveHealth">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div><h2 class="text-xl font-semibold">Saude e anamnese</h2><p class="mt-1 text-sm text-[var(--wn-muted)]">Informacoes para um acompanhamento mais seguro e individualizado.</p></div>
@@ -151,7 +105,8 @@
                 <div class="flex flex-wrap gap-3"><button class="btn-secondary" type="button" @click="workoutPickerOpen = true"><Library class="h-5 w-5" />Usar modelo existente</button><RouterLink :to="`/treinos/novo?student=${student.id}`" class="btn-primary"><Plus class="h-5 w-5" />Criar novo treino</RouterLink></div>
             </div>
 
-            <div v-if="workoutsLoading" class="panel-card p-10 text-center text-sm text-[var(--wn-muted)]">Carregando treino...</div>
+            <p v-if="workoutsError" class="panel-card" role="alert">{{ workoutsError }} <button class="student-detail-link" @click="loadWorkouts">Tentar novamente</button></p>
+            <div v-else-if="workoutsLoading" class="panel-card p-10 text-center text-sm text-[var(--wn-muted)]">Carregando treino...</div>
             <section v-else-if="currentWorkout" class="panel-card !p-0 overflow-hidden">
                 <div class="flex flex-col gap-5 border-b border-[var(--wn-line)] bg-[var(--wn-primary-soft)] p-6 md:flex-row md:items-start md:justify-between"><div><div class="flex items-center gap-3"><span class="badge-success">Treino atual</span><span class="text-sm font-medium capitalize text-[var(--wn-muted)]">{{ currentWorkout.level }}</span></div><h3 class="mt-3 text-2xl font-bold">{{ currentWorkout.name }}</h3><p class="mt-2 text-sm text-[var(--wn-muted)]">{{ currentWorkout.objective }}<span v-if="currentWorkout.description"> · {{ currentWorkout.description }}</span></p><p class="mt-3 text-xs text-[var(--wn-muted)]">Vigência: {{ currentWorkout.startsOn }} até {{ currentWorkout.endsOn || 'sem prazo' }}. Esta versão é preservada ao editar a biblioteca.</p></div><button class="btn-secondary shrink-0" :disabled="assigningWorkout" @click="personalizeWorkout"><Pencil class="h-4 w-4" />Personalizar nova versão</button></div>
                 <div class="grid gap-4 border-b border-[var(--wn-line)] p-5 sm:grid-cols-3"><MiniKpi label="Frequencia" :value="`${currentWorkout.sessionsPerWeek}x por semana`" caption="Sessoes planejadas" /><MiniKpi label="Duracao" :value="`${currentWorkout.durationWeeks} semanas`" caption="Ciclo do programa" /><MiniKpi label="Divisao" :value="`${currentWorkout.days.length} dias`" caption="Rotinas cadastradas" /></div>
@@ -339,6 +294,8 @@
                 </section>
             </aside>
         </section>
+            </div>
+        </div>
         <ChargeActionDialog v-if="chargeDialog" :charge="chargeDialog.charge" :action="chargeDialog.action" @close="chargeDialog = null" @updated="onChargeUpdated" />
     </AppShell>
 </template>
@@ -348,6 +305,8 @@ import { defineComponent, h, onMounted, reactive, ref } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { ArrowLeft, CheckCircle2, Copy, Dumbbell, ExternalLink, Library, Mail, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Plus, ReceiptText, Send, X } from 'lucide-vue-next';
 
+import StudentContext from '../components/StudentContext.vue';
+import '../../css/student-detail.css';
 import AppShell from '../components/AppShell.vue';
 import ChargeActionDialog from '../components/ChargeActionDialog.vue';
 import SubscriptionRecurrence from '../components/SubscriptionRecurrence.vue';
@@ -434,7 +393,11 @@ async function personalizeWorkout() {
     finally { assigningWorkout.value = false; }
 }
 const student = ref(null);
-const activeTab = ref(route.query.tab ?? 'overview');
+const activeTab = ref(['overview', 'profile', 'workouts', 'financial', 'communications', 'access'].includes(route.query.tab) ? route.query.tab : route.query.tab === 'health' ? 'profile' : 'overview');
+const profileSection = ref(route.query.tab === 'health' ? 'health' : 'personal');
+const studentError = ref('');
+const workoutsError = ref('');
+const selectTab = key => { activeTab.value = key; formMessage.value = ''; };
 const saving = ref(false);
 const formMessage = ref('');
 const profileForm = reactive({});
@@ -448,17 +411,12 @@ const workoutPickerOpen = ref(false);
 const assigningWorkout = ref(false);
 const messageActionId = ref(null);
 const tabs = [
-    { key: 'access', label: 'Acesso do aluno' },
-    { key: 'overview', label: 'Visão geral' },
-    { key: 'profile', label: 'Dados pessoais' },
-    { key: 'health', label: 'Saude e anamnese' },
+    { key: 'overview', label: 'Resumo' },
     { key: 'workouts', label: 'Treinos' },
-    { key: 'evaluations', label: 'Avaliações' },
-    { key: 'frequency', label: 'Frequência' },
+    { key: 'profile', label: 'Ficha' },
     { key: 'financial', label: 'Financeiro' },
-    { key: 'communications', label: 'Comunicações' },
-    { key: 'files', label: 'Arquivos' },
-    { key: 'history', label: 'Histórico' },
+    { key: 'communications', label: 'Mensagens' },
+    { key: 'access', label: 'Acesso' },
 ];
 
 const money = (value) => Number(value ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -476,6 +434,8 @@ const messageStatusClass = (status) => ({
 }[status] ?? 'badge-muted');
 
 const loadStudent = async () => {
+    studentError.value = '';
+    try {
     const { data } = await window.axios.get(`/api/students/${route.params.id}`);
     student.value = data.student;
     Object.assign(profileForm, {
@@ -491,6 +451,7 @@ const loadStudent = async () => {
         restricoes_medicas: data.student.health.medicalRestrictions, lesoes: data.student.health.injuries,
         medicamentos: data.student.health.medications, observacoes: data.student.health.notes,
     });
+    } catch { studentError.value = 'Não foi possível carregar a ficha do aluno.'; }
 };
 
 const saveChanges = async (payload) => {
@@ -508,17 +469,18 @@ const saveChanges = async (payload) => {
 
 const saveProfile = () => saveChanges(profileForm);
 const saveHealth = () => saveChanges(healthForm);
-const openProfile = () => { activeTab.value = 'profile'; formMessage.value = ''; };
+const openProfile = () => { profileSection.value = 'personal'; activeTab.value = 'profile'; formMessage.value = ''; };
 
 const loadWorkouts = async () => {
     workoutsLoading.value = true;
+    workoutsError.value = "";
     try {
         const { data } = await window.axios.get(`/api/students/${route.params.id}/workouts`);
         currentWorkout.value = data.current;
         workoutHistory.value = data.history;
         workoutSessions.value = data.sessions;
         workoutTemplates.value = data.templates;
-    } finally { workoutsLoading.value = false; }
+    } catch { workoutsError.value = 'Não foi possível carregar os treinos.'; } finally { workoutsLoading.value = false; }
 };
 
 const assignWorkout = async (workout) => {
