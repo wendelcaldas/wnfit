@@ -1,0 +1,102 @@
+erDiagram
+    direction LR
+    organizacoes["organizacoes"] { bigint id PK
+        string nome_fantasia
+        string slug UK
+        boolean ativa
+    }
+    users["users"] { bigint id PK
+        string email UK
+        string password
+    }
+    orgUsuario["organizacao_usuario"] { bigint id PK
+        bigint organizacao_id FK
+        bigint user_id FK
+        string papel
+        string status
+    }
+    alunos["alunos"] { bigint id PK
+        bigint organizacao_id FK
+        string nome
+        string status
+    }
+    planos["planos"] { bigint id PK
+        bigint organizacao_id FK
+        decimal valor_mensal
+        string ciclo
+    }
+    assinaturas["assinaturas"] { bigint id PK
+        bigint organizacao_id FK
+        bigint aluno_id FK
+        bigint plano_id FK
+        boolean auto_renovacao
+        date recorrencia_inicio
+        date encerramento_em
+        date pausa_em
+    }
+    cobrancas["cobrancas"] { bigint id PK
+        bigint organizacao_id FK
+        bigint aluno_id FK
+        bigint assinatura_id FK "nullable"
+        string competencia "unique com assinatura_id"
+        string status
+        decimal valor
+    }
+    pagamentos["pagamentos"] { bigint id PK
+        bigint cobranca_id FK "sem unique no banco"
+        decimal valor
+        string metodo
+        datetime pago_em
+    }
+    cobrancaEventos["cobranca_eventos"] { bigint id PK
+        bigint cobranca_id FK
+        string tipo
+        datetime ocorrido_em
+    }
+    mensagens["mensagens"] { bigint id PK
+        bigint organizacao_id FK
+        bigint aluno_id FK "nullable"
+        bigint cobranca_id FK "nullable"
+        string status
+        json payload
+    }
+    cobrancaMensagem["cobranca_mensagem"] { bigint cobranca_id PK,FK
+        bigint mensagem_id PK,FK
+    }
+    mensagemConfig["mensagem_configuracoes"] { bigint id PK
+        bigint organizacao_id FK,UK
+    }
+    receitas["receitas"] { bigint id PK
+        bigint organizacao_id FK
+        bigint aluno_id FK "nullable"
+    }
+    checkins["checkins"] { bigint id PK
+        bigint organizacao_id FK
+        bigint aluno_id FK "nullable"
+    }
+    aulas["aulas"] { bigint id PK
+        bigint organizacao_id FK
+    }
+    organizacoes ||--o{ orgUsuario : "equipe"
+    users ||--o{ orgUsuario : "vinculos"
+    organizacoes ||--o{ alunos : "alunos"
+    organizacoes ||--o{ planos : "catalogo comercial"
+    organizacoes ||--o{ assinaturas : "assinaturas"
+    alunos ||--o{ assinaturas : "historico de assinatura"
+    planos ||--o{ assinaturas : "plano contratado"
+    organizacoes ||--o{ cobrancas : "cobrancas"
+    alunos ||--o{ cobrancas : "devedor"
+    assinaturas o|--o{ cobrancas : "assinatura opcional"
+    cobrancas ||--o{ pagamentos : "FK fisica sem unique"
+    cobrancas ||--o{ cobrancaEventos : "auditoria financeira"
+    organizacoes ||--o{ mensagens : "mensagens"
+    alunos o|--o{ mensagens : "destinatario opcional"
+    cobrancas o|--o{ mensagens : "vinculo direto opcional"
+    cobrancas ||--o{ cobrancaMensagem : "agrupamento"
+    mensagens ||--o{ cobrancaMensagem : "multiplas cobrancas"
+    organizacoes ||--o| mensagemConfig : "configuracao por empresa"
+    organizacoes ||--o{ receitas : "receitas independentes"
+    alunos o|--o{ receitas : "aluno opcional"
+    organizacoes ||--o{ checkins : "frequencia"
+    alunos o|--o{ checkins : "aluno opcional"
+    organizacoes ||--o{ aulas : "aulas"

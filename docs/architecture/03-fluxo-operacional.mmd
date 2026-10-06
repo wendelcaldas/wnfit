@@ -1,0 +1,81 @@
+flowchart LR
+    root["Raiz / redireciona para /entrar"] --> staffLogin["Gestor: POST /api/login - guard web"]
+    site["Landing /site"] --> registration["Cadastro /cadastro - POST /api/register"]
+    registration --> tenantData[("users + organizacoes + organizacao_usuario")]
+    tenantData --> staffLogin
+    staffLogin --> tenantGate{"Vinculo ativo e organizacao ativa?"}
+    tenantGate -->|"Nao"| staffDenied["Acesso recusado"]
+    tenantGate -->|"Sim"| operations["Painel e APIs auth + staff; consultas por organizacao_id"]
+
+    subgraph enrollment["1 - Cadastro do aluno"]
+        createStudent["StudentController: cadastrar aluno em transacao"] --> studentData[("alunos + planos + assinaturas + cobrancas")]
+        studentData --> issue["StudentAccessService: usuario unico e senha inicial com hash"]
+        issue --> accountData[("student_accounts")]
+        issue --> welcome["Preparar ou enviar boas-vindas apos cadastro"]
+    end
+    operations --> createStudent
+
+    subgraph training["2 - Prescricao e execucao"]
+        builder["WorkoutController: rascunho, dias e exercicios"] --> library[("treinos + treino_dias + treino_exercicios + exercicios")]
+        library --> publish["Validar treino ativo e atribuir ao aluno"]
+        publish --> snapshot["WorkoutPublishingService: encerrar ficha anterior e preservar snapshot"]
+        snapshot --> prescription[("student_workout_plans + aluno_treino")]
+        studentLogin["Aluno: POST /api/student/login - guard student"] --> passwordGate{"must_change_password?"}
+        passwordGate -->|"Sim"| changePassword["/aluno/senha: trocar senha e atualizar credential_version"]
+        passwordGate -->|"Nao"| portal["EnsureStudentAccess: conta, empresa e versao da credencial"]
+        changePassword --> portal
+        accountData -.-> portal
+        portal --> eligible{"Ficha vigente com dia de treino?"}
+        prescription -.-> eligible
+        eligible -->|"Nao"| noPlan["Informar ausencia de ficha para iniciar sessao"]
+        eligible -->|"Sim"| startSession["StudentPortalController: criar ou retomar sessao"]
+        startSession --> sessionData[("student_workout_sessions: snapshot + progress + status")]
+        sessionData --> progress["Salvar series; validar revision e propriedade da sessao"]
+        progress --> finish["Concluir ou abandonar; guardar historico para aluno e professor"]
+    end
+    operations --> builder
+
+    subgraph billing["3 - Mensalidades e mensagens"]
+        sync["RecurringBillingService: sincronizar competencias"] --> openCharges[("cobrancas: pendente ou atrasado")]
+        openCharges --> reminder["MessagingService: lembrete individual ou agrupado"]
+        welcome --> reminderMode{"Modo de mensagem?"}
+        reminder --> reminderMode
+        reminderMode -->|"Manual"| manual["Preparar link WhatsApp; equipe abre e confirma envio"]
+        reminderMode -->|"Twilio configurado"| twilio["TwilioWhatsAppDriver: envio e webhook de status"]
+        manual --> messages[("mensagens + cobranca_mensagem + cobranca_eventos")]
+        twilio --> messages
+        openCharges --> payment["Gestor registra pagamento; BillingService em transacao"]
+        payment --> paidData[("pagamentos + cobranca paga + cobranca_eventos")]
+        scheduled["billing:sync - agendado diariamente"] --> sync
+    end
+    operations --> sync
+
+    subgraph agenda["4 - Agenda"]
+        schedule["ScheduleController: horarios, instrutor e recorrencia"] --> agendaData[("agendamentos + agendamento_aluno")]
+    end
+    operations --> schedule
+
+    subgraph eventsFlow["5 - Eventos publicos"]
+        eventSetup["EventController: preparar e publicar evento"] --> eventData[("events")]
+        eventData --> publicPage["Participante: /evento/slug - API public/events"]
+        publicPage --> signup["Inscricao publica independente do cadastro de aluno"]
+        signup --> eventSignup[("event_registrations: hashes de acesso e recuperacao")]
+        eventSignup --> attendance["Cookie individual ou recuperacao; check-in no periodo permitido"]
+        attendance --> closeEvent["Gestor encerra evento; bloqueia novas inscricoes e presencas"]
+        closeEvent --> feedback["Participante avalia apos encerramento"]
+        feedback --> eventSignup
+    end
+    operations --> eventSetup
+
+    subgraph supporting["6 - Estruturas de apoio"]
+        supportData[("aulas + checkins + receitas: registros distintos dos modulos novos")]
+        frameworkData[("Laravel: sessions, password_reset_tokens, cache, cache_locks, jobs, job_batches, failed_jobs")]
+    end
+    operations -.->|"Consultas de indicadores"| supportData
+    staffLogin -.->|"Sessao HTTP"| frameworkData
+    portal -.->|"Sessao HTTP compartilhada; guard separado"| frameworkData
+
+    classDef store fill:#eef8de,stroke:#365314,color:#151715
+    classDef entry fill:#151715,stroke:#151715,color:#ffffff
+    class tenantData,studentData,accountData,library,prescription,sessionData,openCharges,messages,paidData,agendaData,eventData,eventSignup,supportData,frameworkData store
+    class root,site,staffLogin,studentLogin,publicPage entry

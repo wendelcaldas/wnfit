@@ -1,0 +1,104 @@
+erDiagram
+    direction LR
+    organizacoes["organizacoes - referencia"] { bigint id PK }
+    users["users - referencia"] { bigint id PK }
+    alunos["alunos - referencia"] { bigint id PK }
+    studentAccounts["student_accounts"] { bigint id PK
+        bigint aluno_id FK,UK
+        string username UK
+        string password "hash"
+        boolean must_change_password
+        int credential_version
+    }
+    treinos["treinos"] { bigint id PK
+        bigint organizacao_id FK
+        bigint criado_por FK "nullable"
+        string status
+    }
+    treinoDias["treino_dias"] { bigint id PK
+        bigint treino_id FK
+        string nome
+        int ordem
+    }
+    exercicios["exercicios"] { bigint id PK
+        bigint organizacao_id FK "null para catalogo global"
+        string nome
+    }
+    treinoExercicios["treino_exercicios"] { bigint id PK
+        bigint treino_dia_id FK
+        bigint exercicio_id FK "nullable"
+        int series
+        string repeticoes
+        int descanso_segundos
+    }
+    alunoTreino["aluno_treino"] { bigint id PK
+        bigint aluno_id FK
+        bigint treino_id FK
+        boolean ativo
+    }
+    workoutPlans["student_workout_plans"] { bigint id PK
+        bigint aluno_id FK
+        bigint treino_id FK "nullable"
+        bigint published_by FK "nullable"
+        json snapshot "prescricao preservada"
+        string status
+        date starts_on
+        date ends_on
+    }
+    workoutSessions["student_workout_sessions"] { bigint id PK
+        bigint aluno_id FK
+        bigint student_workout_plan_id FK
+        int day_index
+        json snapshot "dia preservado"
+        json progress
+        string status
+        datetime finished_at
+    }
+    agendamentos["agendamentos"] { bigint id PK
+        bigint organizacao_id FK
+        bigint instrutor_id FK "nullable"
+        uuid serie_id "grupo de recorrencia sem FK"
+        datetime inicio_em
+        string status
+    }
+    agendaAluno["agendamento_aluno"] { bigint id PK
+        bigint agendamento_id FK
+        bigint aluno_id FK
+    }
+    events["events"] { bigint id PK
+        bigint organizacao_id FK
+        string slug UK
+        string status
+        datetime checkin_opens_at
+        datetime closed_at
+    }
+    eventRegistrations["event_registrations"] { bigint id PK
+        bigint event_id FK
+        string phone "unique com event_id"
+        string access_hash UK
+        string recovery_hash UK
+        bigint attendance_updated_by FK "nullable"
+        datetime checked_in_at
+        int rating
+    }
+    alunos ||--o| studentAccounts : "acesso individual opcional"
+    organizacoes ||--o{ treinos : "biblioteca"
+    users o|--o{ treinos : "criador opcional"
+    treinos ||--o{ treinoDias : "dias"
+    treinoDias ||--o{ treinoExercicios : "prescricao"
+    organizacoes o|--o{ exercicios : "global ou privado"
+    exercicios o|--o{ treinoExercicios : "referencia opcional"
+    alunos ||--o{ alunoTreino : "vinculo historico"
+    treinos ||--o{ alunoTreino : "alunos vinculados"
+    alunos ||--o{ workoutPlans : "versoes da ficha"
+    treinos o|--o{ workoutPlans : "origem opcional"
+    users o|--o{ workoutPlans : "publicado por"
+    alunos ||--o{ workoutSessions : "sessoes"
+    workoutPlans ||--o{ workoutSessions : "execucoes do snapshot"
+    organizacoes ||--o{ agendamentos : "agenda"
+    users o|--o{ agendamentos : "instrutor opcional"
+    agendamentos ||--o{ agendaAluno : "participantes"
+    alunos ||--o{ agendaAluno : "compromissos"
+    organizacoes ||--o{ events : "eventos publicos"
+    events ||--o{ eventRegistrations : "inscricoes independentes de alunos"
+    users o|--o{ eventRegistrations : "revisao de presenca"
