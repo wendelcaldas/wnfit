@@ -49,8 +49,8 @@ class ExerciseCatalogTest extends TestCase
         $this->seed(ExerciseSeeder::class);
         $this->seed(ExerciseSeeder::class);
 
-        $this->assertSame(80, Exercicio::whereNull('organizacao_id')->count());
-        $this->assertDatabaseCount('exercicios', 81);
+        $this->assertSame(200, Exercicio::whereNull('organizacao_id')->count());
+        $this->assertDatabaseCount('exercicios', 201);
         $this->assertFalse($reviewed->refresh()->ativo);
         $this->assertSame('Orientação revisada', $reviewed->instrucoes);
         $this->assertSame('/approved/squat.webp', $reviewed->imagem_url);
@@ -65,8 +65,11 @@ class ExerciseCatalogTest extends TestCase
         $this->seed(ExerciseSeeder::class);
 
         $this->actingAs($user)->getJson('/api/exercises')->assertOk()
-            ->assertJsonPath('pagination.total', 80)->assertJsonCount(40, 'exercises');
+            ->assertJsonPath('pagination.total', 200)->assertJsonCount(40, 'exercises');
         $this->getJson('/api/exercises?page=2')->assertOk()->assertJsonCount(40, 'exercises');
+        $this->getJson('/api/exercises?page=5')->assertOk()->assertJsonCount(40, 'exercises');
+        $this->getJson('/api/exercises?q=Adutor')->assertOk()->assertJsonPath('pagination.total', 5);
+        $this->getJson('/api/exercises?equipment=Elastico')->assertOk()->assertJsonPath('pagination.total', 15);
         $this->getJson('/api/exercises?equipment=Bicicleta')->assertOk()
             ->assertJsonCount(1, 'exercises')->assertJsonPath('exercises.0.name', 'Bicicleta ergometrica');
     }
@@ -75,7 +78,7 @@ class ExerciseCatalogTest extends TestCase
     {
         $this->seed(ExerciseSeeder::class);
         $manifest = json_decode(file_get_contents(resource_path('js/data/exerciseIllustrations.json')), true, flags: JSON_THROW_ON_ERROR);
-        $this->assertCount(80, $manifest);
+        $this->assertCount(200, $manifest);
         foreach (Exercicio::whereNull('organizacao_id')->get() as $exercise) {
             $this->assertStringStartsWith('/media/exercises/v1/', $exercise->imagem_url);
             $file = public_path(ltrim($exercise->imagem_url, '/'));

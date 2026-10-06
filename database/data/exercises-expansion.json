@@ -1,0 +1,1082 @@
+[
+  [
+    "Cadeira adutora",
+    "Adutores",
+    null,
+    "Maquina",
+    "musculacao",
+    "iniciante",
+    "Sentado com costas e pés apoiados, aproxime as pernas contra os apoios internos e retorne com controle."
+  ],
+  [
+    "Agachamento sumo com halter",
+    "Quadriceps",
+    "Adutores",
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "Segure um halter entre as pernas, afaste os pés e agache acompanhando a direção dos joelhos com os pés."
+  ],
+  [
+    "Agachamento com halteres ao lado do corpo",
+    "Quadriceps",
+    "Gluteos",
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "Segure os halteres ao lado do corpo e agache mantendo os pés apoiados e o tronco estável."
+  ],
+  [
+    "Leg press unilateral",
+    "Quadriceps",
+    "Gluteos",
+    "Maquina",
+    "musculacao",
+    "intermediario",
+    "Apoie um pé na plataforma, mantenha o quadril no banco e empurre e retorne sem girar a pelve."
+  ],
+  [
+    "Cadeira extensora unilateral",
+    "Quadriceps",
+    null,
+    "Maquina",
+    "musculacao",
+    "iniciante",
+    "Ajuste o rolo acima do tornozelo e estenda um joelho por vez sem retirar as costas do apoio."
+  ],
+  [
+    "Afundo reverso com halteres",
+    "Quadriceps",
+    "Gluteos",
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "Segure os halteres, dê um passo para trás, flexione os joelhos e retorne apoiando a perna da frente."
+  ],
+  [
+    "Afundo lateral com halter",
+    "Adutores",
+    null,
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "Segure o halter junto ao peito, dê um passo lateral e flexione a perna que recebeu o passo mantendo a outra estendida."
+  ],
+  [
+    "Terra romeno unilateral com halter",
+    "Posteriores de coxa",
+    "Gluteos",
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "Com apoio em uma perna, leve o quadril para trás e a outra perna para trás, mantendo o halter próximo da perna de apoio."
+  ],
+  [
+    "Levantamento terra com kettlebell",
+    "Posteriores de coxa",
+    "Gluteos",
+    "Kettlebell",
+    "musculacao",
+    "intermediario",
+    "Com o kettlebell entre os pés, flexione quadril e joelhos para segurá-lo e fique em pé mantendo o peso próximo."
+  ],
+  [
+    "Elevacao pelvica na maquina",
+    "Gluteos",
+    null,
+    "Maquina",
+    "musculacao",
+    "iniciante",
+    "Ajuste o apoio sobre o quadril, mantenha as costas no suporte e eleve a pelve sem exagerar a extensão lombar."
+  ],
+  [
+    "Extensao de quadril na maquina",
+    "Gluteos",
+    null,
+    "Maquina",
+    "musculacao",
+    "iniciante",
+    "Apoie o tronco na máquina e empurre a plataforma para trás com uma perna sem girar o quadril."
+  ],
+  [
+    "Abducao de quadril na polia",
+    "Gluteos",
+    null,
+    "Polia",
+    "musculacao",
+    "intermediario",
+    "Com tornozeleira na polia baixa e apoio firme, afaste a perna lateralmente sem inclinar o tronco."
+  ],
+  [
+    "Puxada supinada",
+    "Costas",
+    "Biceps",
+    "Polia",
+    "musculacao",
+    "intermediario",
+    "Segure a barra com as palmas voltadas para você e puxe à frente em direção ao peito sem balançar o tronco."
+  ],
+  [
+    "Puxada unilateral na polia alta",
+    "Costas",
+    "Biceps",
+    "Polia",
+    "musculacao",
+    "intermediario",
+    "Segure um pegador alto e puxe o cotovelo para baixo ao lado do tronco, retornando sem girar o corpo."
+  ],
+  [
+    "Remada baixa unilateral",
+    "Costas",
+    "Biceps",
+    "Polia",
+    "musculacao",
+    "intermediario",
+    "Sentado com os pés apoiados, puxe um pegador em direção ao abdômen e retorne mantendo o tronco estável."
+  ],
+  [
+    "Remada cavalinho com apoio",
+    "Costas",
+    "Biceps",
+    "Maquina",
+    "musculacao",
+    "intermediario",
+    "Apoie o peito na máquina cavalinho e puxe os pegadores em direção ao tronco, mantendo as costas estáveis."
+  ],
+  [
+    "Remada curvada com halteres",
+    "Costas",
+    "Biceps",
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "Incline o tronco pelo quadril e puxe os halteres ao lado do corpo sem arredondar ou balançar as costas."
+  ],
+  [
+    "Remada alta com peito apoiado",
+    "Costas",
+    "Biceps",
+    "Maquina",
+    "musculacao",
+    "intermediario",
+    "Com o peito apoiado na máquina, puxe os pegadores altos em direção ao tronco sem elevar os ombros."
+  ],
+  [
+    "Barra fixa pronada",
+    "Costas",
+    "Biceps",
+    "Barra fixa",
+    "musculacao",
+    "intermediario",
+    "Segure a barra com as palmas para frente e eleve o corpo puxando os cotovelos para baixo, descendo sem balanço."
+  ],
+  [
+    "Barra fixa supinada",
+    "Costas",
+    "Biceps",
+    "Barra fixa",
+    "musculacao",
+    "intermediario",
+    "Segure a barra com palmas para você, eleve o corpo com controle e desça sem impulso das pernas."
+  ],
+  [
+    "Pullover com halter",
+    "Costas",
+    "Peitoral",
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "Deitado no banco, leve um halter atrás da cabeça com cotovelos levemente flexionados e retorne sem arquear a lombar."
+  ],
+  [
+    "Extensao de tronco no banco romano",
+    "Costas",
+    "Gluteos",
+    "Banco romano",
+    "musculacao",
+    "intermediario",
+    "Com quadril e pés apoiados, incline o tronco pelo quadril e retorne apenas até alinhar o corpo."
+  ],
+  [
+    "Supino na maquina",
+    "Peitoral",
+    "Triceps",
+    "Maquina",
+    "musculacao",
+    "iniciante",
+    "Ajuste o banco, apoie as costas e empurre os pegadores à frente, retornando com controle."
+  ],
+  [
+    "Supino inclinado na maquina",
+    "Peitoral",
+    "Triceps",
+    "Maquina",
+    "musculacao",
+    "iniciante",
+    "Com costas apoiadas, empurre os pegadores para cima e à frente seguindo o caminho da máquina."
+  ],
+  [
+    "Supino declinado com halteres",
+    "Peitoral",
+    "Triceps",
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "No banco declinado com pernas fixadas, desça os halteres ao lado do peito e empurre mantendo os punhos alinhados."
+  ],
+  [
+    "Supino unilateral com halter",
+    "Peitoral",
+    "Triceps",
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "Deitado com pés apoiados, empurre um halter por vez sem deixar o tronco girar."
+  ],
+  [
+    "Crucifixo inclinado com halteres",
+    "Peitoral",
+    "Triceps",
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "No banco inclinado, abra os braços com cotovelos levemente flexionados e aproxime os halteres acima do peito."
+  ],
+  [
+    "Crucifixo na polia baixa",
+    "Peitoral",
+    "Triceps",
+    "Polia",
+    "musculacao",
+    "intermediario",
+    "Segure os pegadores baixos e aproxime os braços à frente e acima do peito sem balançar o tronco."
+  ],
+  [
+    "Crucifixo na polia alta",
+    "Peitoral",
+    "Triceps",
+    "Polia",
+    "musculacao",
+    "intermediario",
+    "Segure os pegadores altos e aproxime os braços à frente e abaixo do peito com cotovelos levemente flexionados."
+  ],
+  [
+    "Crucifixo unilateral na polia",
+    "Peitoral",
+    "Triceps",
+    "Polia",
+    "musculacao",
+    "intermediario",
+    "Com apoio estável, leve um pegador lateralmente até a frente do peito sem girar o tronco."
+  ],
+  [
+    "Supino no solo com halteres",
+    "Peitoral",
+    "Triceps",
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "Deitado no chão, desça os halteres até os braços tocarem suavemente o solo e empurre para cima."
+  ],
+  [
+    "Supino com pegada fechada",
+    "Triceps",
+    "Peitoral",
+    "Barra",
+    "musculacao",
+    "intermediario",
+    "Deitado com pés apoiados, segure a barra com mãos próximas e empurre sem abrir excessivamente os cotovelos."
+  ],
+  [
+    "Desenvolvimento com barra sentado",
+    "Ombros",
+    "Triceps",
+    "Barra",
+    "musculacao",
+    "intermediario",
+    "Sentado com apoio nas costas, empurre a barra da frente dos ombros para cima e retorne sem arquear a lombar."
+  ],
+  [
+    "Desenvolvimento unilateral com halter",
+    "Ombros",
+    "Triceps",
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "Segure um halter junto ao ombro e empurre para cima mantendo o tronco estável e sem inclinação lateral."
+  ],
+  [
+    "Desenvolvimento landmine unilateral",
+    "Ombros",
+    "Triceps",
+    "Barra",
+    "musculacao",
+    "intermediario",
+    "Com a barra fixada em landmine, empurre sua extremidade para cima e à frente sem girar o tronco."
+  ],
+  [
+    "Elevacao lateral na maquina",
+    "Ombros",
+    null,
+    "Maquina",
+    "musculacao",
+    "iniciante",
+    "Ajuste os apoios e eleve os braços lateralmente até a amplitude orientada, retornando lentamente."
+  ],
+  [
+    "Elevacao lateral com peito apoiado",
+    "Ombros",
+    null,
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "Com o peito apoiado no banco inclinado, eleve os halteres para os lados sem impulsionar o tronco."
+  ],
+  [
+    "Crucifixo invertido na maquina",
+    "Ombros",
+    "Costas",
+    "Maquina",
+    "musculacao",
+    "iniciante",
+    "Com peito no apoio, abra os braços para trás e retorne sem mover o tronco."
+  ],
+  [
+    "Rotacao externa na polia",
+    "Ombros",
+    null,
+    "Polia",
+    "musculacao",
+    "intermediario",
+    "Com cotovelo flexionado junto ao corpo, gire o antebraço para fora contra a polia sem afastar o cotovelo."
+  ],
+  [
+    "Encolhimento com halteres",
+    "Trapezio",
+    null,
+    "Halteres",
+    "musculacao",
+    "iniciante",
+    "Segure os halteres ao lado do corpo e eleve os ombros verticalmente, retornando sem fazer círculos."
+  ],
+  [
+    "Rosca inclinada com halteres",
+    "Biceps",
+    null,
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "Sentado no banco inclinado, flexione os cotovelos mantendo os braços ao lado do corpo e retorne lentamente."
+  ],
+  [
+    "Rosca Scott unilateral com halter",
+    "Biceps",
+    null,
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "Apoie um braço no banco Scott e flexione o cotovelo sem tirar o braço do apoio."
+  ],
+  [
+    "Rosca com barra W",
+    "Biceps",
+    null,
+    "Barra",
+    "musculacao",
+    "intermediario",
+    "Segure a barra W com cotovelos próximos ao corpo e flexione os braços sem balançar o tronco."
+  ],
+  [
+    "Rosca inversa com barra",
+    "Antebracos",
+    "Biceps",
+    "Barra",
+    "musculacao",
+    "intermediario",
+    "Com palmas voltadas para baixo, flexione os cotovelos para elevar a barra e retorne com punhos alinhados."
+  ],
+  [
+    "Triceps testa com halteres",
+    "Triceps",
+    null,
+    "Halteres",
+    "musculacao",
+    "intermediario",
+    "Deitado, flexione os cotovelos levando os halteres ao lado da cabeça e estenda os braços sem deslocar os ombros."
+  ],
+  [
+    "Triceps unilateral na polia",
+    "Triceps",
+    null,
+    "Polia",
+    "musculacao",
+    "iniciante",
+    "Segure um pegador alto, mantenha o cotovelo junto ao corpo e estenda o braço para baixo."
+  ],
+  [
+    "Triceps acima da cabeca na polia",
+    "Triceps",
+    null,
+    "Polia",
+    "musculacao",
+    "intermediario",
+    "Com a corda atrás da cabeça e tronco firme, estenda os cotovelos e retorne sem arquear a lombar."
+  ],
+  [
+    "Triceps na maquina",
+    "Triceps",
+    null,
+    "Maquina",
+    "musculacao",
+    "iniciante",
+    "Ajuste o banco e os apoios, estenda os cotovelos contra a máquina e retorne com controle."
+  ],
+  [
+    "Pallof press na polia",
+    "Core",
+    null,
+    "Polia",
+    "musculacao",
+    "intermediario",
+    "Em pé de lado para a polia, empurre o pegador à frente do peito sem permitir a rotação do tronco."
+  ],
+  [
+    "Abdominal na maquina",
+    "Core",
+    null,
+    "Maquina",
+    "musculacao",
+    "iniciante",
+    "Ajuste os apoios e flexione o tronco contra a resistência da máquina sem puxar pelo pescoço."
+  ],
+  [
+    "Abdominal com bola suica",
+    "Core",
+    null,
+    "Bola",
+    "musculacao",
+    "intermediario",
+    "Apoie as costas na bola com pés firmes e flexione a parte superior do tronco mantendo o quadril estável."
+  ],
+  [
+    "Elevacao de joelhos na cadeira romana",
+    "Core",
+    null,
+    "Cadeira romana",
+    "musculacao",
+    "intermediario",
+    "Apoie antebraços e costas, eleve os joelhos em direção ao tronco e retorne sem balanço."
+  ],
+  [
+    "Prancha com antebracos na bola",
+    "Core",
+    null,
+    "Bola",
+    "musculacao",
+    "intermediario",
+    "Apoie os antebraços na bola e mantenha o corpo alinhado sem deixar a lombar ceder."
+  ],
+  [
+    "Abdominal com roda",
+    "Core",
+    null,
+    "Roda abdominal",
+    "musculacao",
+    "avancado",
+    "Ajoelhado, role a roda à frente apenas até a amplitude controlada e retorne mantendo o tronco firme."
+  ],
+  [
+    "Panturrilha no Smith",
+    "Panturrilhas",
+    null,
+    "Maquina",
+    "musculacao",
+    "intermediario",
+    "Com a barra apoiada e travas ajustadas, eleve e abaixe os calcanhares mantendo o corpo estável."
+  ],
+  [
+    "Panturrilha sentada com halteres",
+    "Panturrilhas",
+    null,
+    "Halteres",
+    "musculacao",
+    "iniciante",
+    "Sentado, apoie os halteres sobre as coxas e eleve os calcanhares, retornando lentamente."
+  ],
+  [
+    "Elevacao de ponta dos pes na parede",
+    "Tibial anterior",
+    null,
+    "Peso corporal",
+    "musculacao",
+    "iniciante",
+    "Com costas apoiadas na parede e calcanhares no chão, eleve as pontas dos pés e retorne."
+  ],
+  [
+    "Flexao de punhos com halteres",
+    "Antebracos",
+    null,
+    "Halteres",
+    "musculacao",
+    "iniciante",
+    "Apoie os antebraços nas coxas com palmas para cima e flexione os punhos sem mover os cotovelos."
+  ],
+  [
+    "Extensao de punhos com halteres",
+    "Antebracos",
+    null,
+    "Halteres",
+    "musculacao",
+    "iniciante",
+    "Apoie os antebraços com palmas para baixo e eleve as mãos movimentando apenas os punhos."
+  ],
+  [
+    "Adutor na polia",
+    "Adutores",
+    null,
+    "Polia",
+    "musculacao",
+    "intermediario",
+    "Com tornozeleira na perna próxima da polia e apoio firme, aproxime a perna da linha do corpo sem girar o quadril."
+  ],
+  [
+    "Sentar e levantar da cadeira",
+    "Quadriceps",
+    "Gluteos",
+    "Cadeira",
+    "funcional",
+    "iniciante",
+    "Com pés apoiados, levante de uma cadeira firme e sente novamente de forma controlada."
+  ],
+  [
+    "Agachamento com apoio na parede",
+    "Quadriceps",
+    "Gluteos",
+    "Peso corporal",
+    "musculacao",
+    "iniciante",
+    "Apoie as costas na parede, deslize para baixo até a amplitude orientada e retorne."
+  ],
+  [
+    "Agachamento com fita de suspensao",
+    "Quadriceps",
+    "Gluteos",
+    "Suspensao",
+    "funcional",
+    "iniciante",
+    "Segure as alças firmes da fita, agache mantendo os pés apoiados e use o apoio para retornar."
+  ],
+  [
+    "Afundo reverso sem carga",
+    "Quadriceps",
+    "Gluteos",
+    "Peso corporal",
+    "musculacao",
+    "iniciante",
+    "Dê um passo para trás, flexione os joelhos mantendo equilíbrio e volte à posição em pé."
+  ],
+  [
+    "Ponte de gluteos unilateral",
+    "Gluteos",
+    "Posteriores de coxa",
+    "Peso corporal",
+    "musculacao",
+    "intermediario",
+    "Deitado, apoie um pé e eleve o quadril mantendo a pelve nivelada, sem arquear a lombar."
+  ],
+  [
+    "Abducao de quadril deitado",
+    "Gluteos",
+    null,
+    "Peso corporal",
+    "musculacao",
+    "iniciante",
+    "Deitado de lado com quadril alinhado, eleve a perna de cima e retorne sem girar o tronco."
+  ],
+  [
+    "Clamshell com elastico",
+    "Gluteos",
+    null,
+    "Elastico",
+    "musculacao",
+    "iniciante",
+    "Deitado de lado com joelhos flexionados e elástico acima deles, abra o joelho superior mantendo os pés juntos."
+  ],
+  [
+    "Caminhada lateral com miniband",
+    "Gluteos",
+    null,
+    "Elastico",
+    "funcional",
+    "iniciante",
+    "Com miniband acima dos joelhos, dê passos laterais curtos mantendo a tensão e o quadril estável."
+  ],
+  [
+    "Ponte de gluteos com miniband",
+    "Gluteos",
+    "Posteriores de coxa",
+    "Elastico",
+    "musculacao",
+    "iniciante",
+    "Deitado com elástico acima dos joelhos, mantenha as pernas alinhadas e eleve o quadril com controle."
+  ],
+  [
+    "Flexao de joelhos com elastico em pe",
+    "Posteriores de coxa",
+    "Gluteos",
+    "Elastico",
+    "musculacao",
+    "iniciante",
+    "Prenda o elástico em ancoragem baixa firme e flexione o joelho levando o calcanhar para trás com apoio para equilíbrio."
+  ],
+  [
+    "Agachamento com elastico",
+    "Quadriceps",
+    "Gluteos",
+    "Elastico",
+    "musculacao",
+    "iniciante",
+    "Pise no elástico, segure suas extremidades nos ombros e agache mantendo o tronco estável."
+  ],
+  [
+    "Remada com elastico sentado",
+    "Costas",
+    "Biceps",
+    "Elastico",
+    "musculacao",
+    "iniciante",
+    "Com elástico preso a ponto firme à frente, puxe as mãos em direção ao abdômen sem balançar o corpo."
+  ],
+  [
+    "Remada com fita de suspensao",
+    "Costas",
+    "Biceps",
+    "Suspensao",
+    "funcional",
+    "intermediario",
+    "Segure as alças, incline o corpo alinhado para trás e puxe o peito em direção às mãos."
+  ],
+  [
+    "Puxada com elastico",
+    "Costas",
+    "Biceps",
+    "Elastico",
+    "musculacao",
+    "iniciante",
+    "Com elástico em ancoragem alta segura, puxe as mãos em direção ao peito e retorne lentamente."
+  ],
+  [
+    "Pull apart com elastico",
+    "Ombros",
+    "Costas",
+    "Elastico",
+    "musculacao",
+    "iniciante",
+    "Segure o elástico à frente do peito e afaste as mãos sem elevar os ombros ou arquear o tronco."
+  ],
+  [
+    "Rotacao externa com elastico",
+    "Ombros",
+    null,
+    "Elastico",
+    "musculacao",
+    "iniciante",
+    "Com cotovelo junto ao corpo e elástico ancorado lateralmente, gire o antebraço para fora e retorne."
+  ],
+  [
+    "Elevacao lateral com elastico",
+    "Ombros",
+    null,
+    "Elastico",
+    "musculacao",
+    "iniciante",
+    "Pise no elástico e eleve os braços para os lados até a amplitude orientada, sem balançar o tronco."
+  ],
+  [
+    "Rosca com elastico",
+    "Biceps",
+    null,
+    "Elastico",
+    "musculacao",
+    "iniciante",
+    "Pise no elástico e flexione os cotovelos mantendo os braços próximos ao corpo."
+  ],
+  [
+    "Triceps com elastico",
+    "Triceps",
+    null,
+    "Elastico",
+    "musculacao",
+    "iniciante",
+    "Com elástico preso em ponto alto, estenda os cotovelos para baixo sem afastá-los do corpo."
+  ],
+  [
+    "Supino em pe com elastico",
+    "Peitoral",
+    "Triceps",
+    "Elastico",
+    "musculacao",
+    "iniciante",
+    "Com elástico ancorado atrás à altura do peito, empurre as mãos à frente mantendo o tronco firme."
+  ],
+  [
+    "Flexao na parede",
+    "Peitoral",
+    "Triceps",
+    "Peso corporal",
+    "musculacao",
+    "iniciante",
+    "Apoie as mãos na parede, flexione os cotovelos aproximando o peito e empurre para retornar."
+  ],
+  [
+    "Prancha com joelhos apoiados",
+    "Core",
+    null,
+    "Peso corporal",
+    "musculacao",
+    "iniciante",
+    "Apoie antebraços e joelhos, mantenha cabeça e tronco alinhados e respire sem deixar a lombar ceder."
+  ],
+  [
+    "Prancha lateral com joelhos apoiados",
+    "Core",
+    null,
+    "Peso corporal",
+    "musculacao",
+    "intermediario",
+    "De lado, apoie antebraço e joelhos e eleve o quadril mantendo o tronco alinhado."
+  ],
+  [
+    "Pallof press com elastico",
+    "Core",
+    null,
+    "Elastico",
+    "musculacao",
+    "intermediario",
+    "De lado para uma ancoragem firme, empurre as mãos à frente contra o elástico sem girar o tronco."
+  ],
+  [
+    "Bird dog apenas pernas",
+    "Core",
+    null,
+    "Peso corporal",
+    "musculacao",
+    "iniciante",
+    "Em quatro apoios, estenda uma perna por vez sem girar ou elevar excessivamente o quadril."
+  ],
+  [
+    "Mobilidade de tornozelo na parede",
+    "Panturrilhas",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Em meio ajoelhado, apoie o pé da frente perto da parede. Leve esse joelho até a parede sem levantar o calcanhar e retorne com controle."
+  ],
+  [
+    "Circulos de tornozelo sentado",
+    "Tibial anterior",
+    null,
+    "Cadeira",
+    "mobilidade",
+    "iniciante",
+    "Sentado, eleve um pé e faça círculos lentos com o tornozelo sem mover o joelho."
+  ],
+  [
+    "Alongamento de panturrilha na parede",
+    "Panturrilhas",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Apoie as mãos na parede e leve uma perna para trás mantendo o calcanhar no chão e o joelho estendido."
+  ],
+  [
+    "Alongamento de soleo na parede",
+    "Panturrilhas",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Com mãos na parede e um pé atrás, flexione levemente o joelho de trás mantendo o calcanhar apoiado."
+  ],
+  [
+    "Alongamento de quadriceps em pe",
+    "Quadriceps",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Com apoio para equilíbrio, segure o tornozelo atrás e aproxime o calcanhar do quadril sem arquear a lombar."
+  ],
+  [
+    "Alongamento de posterior sentado",
+    "Posteriores de coxa",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Sentado com uma perna estendida, incline o tronco pelo quadril sem forçar o alcance com as mãos."
+  ],
+  [
+    "Alongamento de posterior com faixa",
+    "Posteriores de coxa",
+    null,
+    "Faixa",
+    "mobilidade",
+    "iniciante",
+    "Deitado, passe a faixa no pé e eleve a perna mantendo o joelho na amplitude orientada e o quadril apoiado."
+  ],
+  [
+    "Alongamento de gluteos deitado",
+    "Gluteos",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Deitado, cruze um tornozelo sobre o joelho oposto e aproxime a coxa de apoio do tronco sem puxar o pescoço."
+  ],
+  [
+    "Alongamento de flexores do quadril",
+    "Flexores do quadril",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Em meio ajoelhado, avance suavemente o quadril mantendo a pelve alinhada e sem arquear a lombar."
+  ],
+  [
+    "Mobilidade de quadril 90 90",
+    "Gluteos",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Sentado com ambos os joelhos flexionados em 90 graus, alterne o lado dos joelhos com controle e sem forçar."
+  ],
+  [
+    "Mobilidade de adutores em quatro apoios",
+    "Adutores",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Em quatro apoios com uma perna estendida ao lado, leve o quadril lentamente para trás e retorne."
+  ],
+  [
+    "Alongamento borboleta sentado",
+    "Adutores",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Sentado com plantas dos pés juntas, mantenha o tronco ereto e permita a abertura dos joelhos sem pressioná-los."
+  ],
+  [
+    "Mobilidade gato e camelo",
+    "Costas",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Em quatro apoios, alterne suavemente o arredondamento e a extensão da coluna sem forçar os extremos."
+  ],
+  [
+    "Rotacao toracica em quatro apoios",
+    "Costas",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Com uma mão atrás da cabeça, gire o tronco abrindo o cotovelo para cima e retorne mantendo o quadril estável."
+  ],
+  [
+    "Rotacao toracica deitado de lado",
+    "Costas",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Deitado de lado com joelhos apoiados juntos, abra o braço de cima girando o tórax sem deslocar as pernas."
+  ],
+  [
+    "Alongamento de peitoral na parede",
+    "Peitoral",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Apoie o antebraço na parede e gire suavemente o tronco para longe do braço sem elevar o ombro."
+  ],
+  [
+    "Alongamento de dorsal ajoelhado",
+    "Costas",
+    null,
+    "Banco",
+    "mobilidade",
+    "iniciante",
+    "Ajoelhado, apoie as mãos em um banco firme e leve o quadril para trás sem forçar a lombar."
+  ],
+  [
+    "Deslizamento de bracos na parede",
+    "Ombros",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Com costas próximas à parede, deslize os braços para cima e retorne mantendo o tronco estável."
+  ],
+  [
+    "Alongamento de triceps acima da cabeca",
+    "Triceps",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Eleve um braço, flexione o cotovelo e use a outra mão para apoio suave sem puxar a cabeça."
+  ],
+  [
+    "Alongamento de flexores do punho",
+    "Antebracos",
+    null,
+    "Peso corporal",
+    "mobilidade",
+    "iniciante",
+    "Estenda um braço com palma para cima e conduza suavemente os dedos para baixo com a outra mão."
+  ],
+  [
+    "Marcha estacionaria",
+    "Corpo inteiro",
+    null,
+    "Peso corporal",
+    "cardio",
+    "iniciante",
+    "Marche no lugar alternando pés e braços com postura ereta e ritmo orientado."
+  ],
+  [
+    "Polichinelo sem salto",
+    "Corpo inteiro",
+    null,
+    "Peso corporal",
+    "cardio",
+    "iniciante",
+    "Afaste um pé por vez lateralmente enquanto eleva os braços e retorne alternando os lados."
+  ],
+  [
+    "Corrida estacionaria",
+    "Corpo inteiro",
+    null,
+    "Peso corporal",
+    "cardio",
+    "intermediario",
+    "Corra no lugar com passos leves, mantendo o tronco ereto e o ritmo prescrito."
+  ],
+  [
+    "Corrida na esteira",
+    "Corpo inteiro",
+    null,
+    "Esteira",
+    "cardio",
+    "intermediario",
+    "Inicie em velocidade baixa, progrida para corrida conforme prescrição e mantenha acesso à parada de segurança."
+  ],
+  [
+    "Caminhada inclinada na esteira",
+    "Corpo inteiro",
+    null,
+    "Esteira",
+    "cardio",
+    "iniciante",
+    "Caminhe com a inclinação prescrita, passos controlados e postura natural, reduzindo a velocidade antes de sair."
+  ],
+  [
+    "Bicicleta reclinada",
+    "Quadriceps",
+    null,
+    "Bicicleta reclinada",
+    "cardio",
+    "iniciante",
+    "Ajuste o banco para alcançar os pedais sem estender totalmente os joelhos e pedale com resistência orientada."
+  ],
+  [
+    "Remo ergometrico",
+    "Corpo inteiro",
+    null,
+    "Remo",
+    "cardio",
+    "iniciante",
+    "Empurre com as pernas, incline levemente o tronco e puxe o cabo; retorne braços, tronco e depois pernas."
+  ],
+  [
+    "Escada ergometrica",
+    "Quadriceps",
+    null,
+    "Escada",
+    "cardio",
+    "iniciante",
+    "Suba os degraus da máquina com passos firmes e ritmo orientado, usando apoio para entrar e sair."
+  ],
+  [
+    "Pular corda",
+    "Panturrilhas",
+    null,
+    "Corda",
+    "cardio",
+    "intermediario",
+    "Gire a corda pelos punhos e faça saltos baixos com aterrissagens suaves no ritmo prescrito."
+  ],
+  [
+    "Passos laterais entre cones",
+    "Corpo inteiro",
+    null,
+    "Cones",
+    "cardio",
+    "iniciante",
+    "Desloque-se lateralmente entre cones mantendo os pés alinhados e freando com controle."
+  ],
+  [
+    "Ergometro de esqui",
+    "Corpo inteiro",
+    null,
+    "Ergometro de esqui",
+    "cardio",
+    "intermediario",
+    "Em pé diante do ergômetro, puxe os cabos altos para baixo coordenando uma leve flexão de quadril e joelhos, e retorne com controle."
+  ],
+  [
+    "Shadow boxing",
+    "Corpo inteiro",
+    null,
+    "Peso corporal",
+    "cardio",
+    "iniciante",
+    "Em base estável, faça socos alternados no ar sem travar os cotovelos e mantendo ritmo controlado."
+  ],
+  [
+    "Cordas navais alternadas",
+    "Corpo inteiro",
+    null,
+    "Cordas navais",
+    "cardio",
+    "intermediario",
+    "Com joelhos levemente flexionados, movimente os braços alternadamente criando ondas nas cordas e mantendo o tronco firme."
+  ],
+  [
+    "Deslocamento em zigue zague entre cones",
+    "Corpo inteiro",
+    null,
+    "Cones",
+    "cardio",
+    "intermediario",
+    "Percorra os cones em zigue-zague com mudanças de direção controladas e espaço livre."
+  ],
+  [
+    "Mountain climber com apoio elevado",
+    "Core",
+    null,
+    "Banco",
+    "cardio",
+    "iniciante",
+    "Apoie as mãos em banco firme e aproxime alternadamente os joelhos do tronco sem girar o quadril."
+  ]
+]

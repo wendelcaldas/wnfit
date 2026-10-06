@@ -83,4 +83,5 @@ return [
     ['Caminhada na esteira', 'Corpo inteiro', 'Quadriceps', 'Esteira', 'cardio', 'iniciante', 'Inicie a esteira em ritmo baixo, caminhe com postura natural e ajuste velocidade e inclinação conforme o treino prescrito.'],
     ['Bicicleta ergometrica', 'Quadriceps', 'Gluteos', 'Bicicleta', 'cardio', 'iniciante', 'Ajuste banco e guidão, pedale de forma contínua e use a resistência orientada pelo professor.'],
     ['Eliptico', 'Corpo inteiro', 'Quadriceps', 'Eliptico', 'cardio', 'iniciante', 'Suba com apoio, mantenha os pés nas plataformas e movimente os pedais com ritmo e resistência controlados.'],
+    ...json_decode(file_get_contents(__DIR__.'/exercises-expansion.json'), true, flags: JSON_THROW_ON_ERROR),
 ];

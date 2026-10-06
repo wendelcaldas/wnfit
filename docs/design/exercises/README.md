@@ -21,3 +21,9 @@ Correção da flexora unilateral: prompt específico para máquina flexora unila
 - Imagens publicadas ficam em `v1`. Novas revisões de conteúdo devem usar outra versão para preservar referências anteriores.
 
 A conferência dos desenhos é visual; não equivale a uma certificação biomecânica. A galeria facilita a revisão técnica e ajustes pelo professor antes de publicar o módulo.
+
+## Expansão para 200 exercícios
+
+Os 80 arquivos publicados são preservados. Os outros 120 seguem o mesmo modelo, com instruções e equipamento próprios por exercício. A lista e os critérios estão em [EXPANSAO_200.md](EXPANSAO_200.md); os prompts finais e arquivos de origem selecionados ficam em `expansion-generation.json`. A geração usa a ferramenta integrada, sem CLI/API externa.
+
+Para montar pranchas de revisão dos novos exercícios, executar `php scripts/review-exercise-images.php`. Elas ficam em `storage/app/exercise-review`, sem alterar as imagens do produto. A revisão corrigiu representações ambíguas de supinação, supino unilateral, rotação externa, adução na polia e mobilidade de tornozelo, além de uniformizar acessórios na paleta branco/preto/verde.

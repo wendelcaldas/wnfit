@@ -25,7 +25,11 @@ class ExerciseSeeder extends Seeder
                     'nivel' => $level,
                     'instrucoes' => $instructions,
                     'imagem_url' => $imageUrl,
-                    'cuidados' => 'Use a carga, a amplitude e os apoios definidos pelo professor. Se sentir dor, interrompa e peça orientação.',
+                    'cuidados' => match ($category) {
+                        'mobilidade' => 'Respeite a amplitude orientada pelo professor, sem forçar ou usar impulsos. Se sentir dor, interrompa e peça orientação.',
+                        'cardio' => 'Siga o ritmo e o tempo definidos pelo professor e ajuste o equipamento antes de iniciar. Se sentir dor ou mal-estar, interrompa e peça orientação.',
+                        default => 'Use a carga, a amplitude e os apoios definidos pelo professor. Se sentir dor, interrompa e peça orientação.',
+                    },
                     'origem' => 'wnfit',
                     'ativo' => true,
                 ],
