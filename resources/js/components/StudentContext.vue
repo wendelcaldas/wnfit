@@ -22,7 +22,7 @@
         </section>
         <details class="panel-card student-context-widget" :open="wide">
             <summary>Últimos 7 dias <span class="text-xs text-[var(--wn-muted)]">{{ trainedDays }} dias com treino</span></summary>
-            <div class="student-week">
+            <div class="student-recent-week">
                 <div v-for="day in student.recentActivity" :key="day.date" :title="`${dateLabel(day.date)}: ${day.completedSessions ? 'Treinou' : 'Sem registro'}`">
                     <span>{{ weekday(day.date) }}</span>
                     <span class="student-day" :class="{ trained: day.completedSessions > 0 }" :aria-label="`${dateLabel(day.date)}: ${day.completedSessions ? 'Treinou' : 'Sem registro'}`">{{ day.completedSessions ? '✓' : '–' }}</span>

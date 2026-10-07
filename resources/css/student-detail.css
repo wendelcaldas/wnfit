@@ -11,8 +11,8 @@
 .student-context-widget summary { display:flex; align-items:center; justify-content:space-between; gap:12px; cursor:pointer; font-weight:600; font-size:14px; list-style:none; }
 .student-context-widget summary::-webkit-details-marker { display:none; }
 .student-context-widget:not([open]) summary::after { content:'+'; }
-.student-week { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; margin-top:20px; text-align:center; }
-.student-week>div { display:grid; justify-items:center; gap:8px; font-size:11px; color:var(--wn-muted); }
+.student-recent-week { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; margin-top:20px; text-align:center; }
+.student-recent-week>div { display:grid; justify-items:center; gap:8px; font-size:11px; color:var(--wn-muted); }
 .student-day { width:30px; height:34px; display:grid; place-items:center; border-radius:9px; background:var(--wn-neutral-soft); font-size:16px; }
 .student-day.trained { background:var(--wn-primary); color:var(--wn-ink); font-weight:700; }
 .student-widget-caption { margin-top:16px; font-size:11px; line-height:1.6; color:var(--wn-muted); }
@@ -42,7 +42,7 @@
 
 
  .student-context-menu { padding-top:12px; }
- .student-week { margin-top:12px; }
+ .student-recent-week { margin-top:12px; }
  .student-widget-caption { margin-top:10px; }
 }
 @container(max-width:600px) { .grid { grid-template-columns:minmax(0,1fr); } .grid>div { grid-column:auto; } .panel-card { padding:20px; } .student-workspace form>div:first-child { flex-wrap:wrap; } }
