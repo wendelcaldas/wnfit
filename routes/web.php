@@ -89,6 +89,8 @@ Route::prefix('api')->group(function () {
         Route::post('/students', [StudentController::class, 'store']);
         Route::get('/students/{student}', [StudentController::class, 'show']);
         Route::patch('/students/{student}', [StudentController::class, 'update']);
+        Route::post('/students/{student}/photo', [StudentController::class, 'uploadPhoto']);
+        Route::get('/students/{student}/photo', [StudentController::class, 'photo']);
         Route::get('/students/{student}/workouts', [StudentController::class, 'workouts']);
         Route::post('/students/{student}/workouts/{workout}', [StudentController::class, 'assignWorkout']);
         Route::post('/students/{student}/charges', [StudentController::class, 'generateCharge']);

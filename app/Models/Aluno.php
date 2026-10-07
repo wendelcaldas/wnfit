@@ -21,6 +21,7 @@ class Aluno extends Model
         'contato_emergencia',
         'telefone_emergencia',
         'data_nascimento',
+        'foto_path',
         'genero',
         'cpf',
         'rg',

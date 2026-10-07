@@ -16,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class StudentController extends Controller
 {
@@ -156,6 +157,32 @@ class StudentController extends Controller
         return response()->json([
             'student' => $this->studentDetailPayload($student->fresh(['assinatura.plano', 'cobrancas.eventos', 'cobrancas.mensagens', 'mensagens'])),
         ]);
+    }
+
+    public function uploadPhoto(Request $request, Aluno $student): JsonResponse
+    {
+        $organization = $request->user()->organizacoes()->firstOrFail();
+        abort_unless($student->organizacao_id === $organization->id, 404);
+        $request->validate(['photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=6000,max_height=6000']]);
+        $previous = $student->foto_path;
+        $path = $request->file('photo')->store('student-photos/'.$organization->id, 'local');
+        abort_unless($path, 500, 'Não foi possível salvar a foto.');
+        try {
+            $student->update(['foto_path' => $path]);
+        } catch (\Throwable $exception) {
+            Storage::disk('local')->delete($path);
+            throw $exception;
+        }
+        if ($previous) Storage::disk('local')->delete($previous);
+        return response()->json(['photoUrl' => '/api/students/'.$student->id.'/photo?v='.sha1($path)]);
+    }
+
+    public function photo(Request $request, Aluno $student)
+    {
+        $organization = $request->user()->organizacoes()->firstOrFail();
+        abort_unless($student->organizacao_id === $organization->id, 404);
+        abort_unless($student->foto_path && Storage::disk('local')->exists($student->foto_path), 404);
+        return Storage::disk('local')->response($student->foto_path, null, ['Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
     }
 
     public function options(Request $request): JsonResponse
@@ -390,6 +417,8 @@ class StudentController extends Controller
                 return ['date' => $day->toDateString(), 'completedSessions' => $count];
             })->values(),
             'birthDate' => optional($student->data_nascimento)->format('d/m/Y'),
+            'age' => $student->data_nascimento && $student->data_nascimento->lte(today()) ? (int) $student->data_nascimento->diffInYears(today()) : null,
+            'photoUrl' => $student->foto_path ? '/api/students/'.$student->id.'/photo?v='.sha1($student->foto_path) : null,
             'city' => $student->cidade,
             'state' => $student->estado,
             'plan' => $subscription?->plano?->nome ?? $student->plano,

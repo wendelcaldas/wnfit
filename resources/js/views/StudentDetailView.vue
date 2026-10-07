@@ -1,5 +1,5 @@
 <template>
-    <AppShell
+    <AppShell class="student-detail-shell"
         eyebrow="Alunos > Detalhe"
         title="Ficha do aluno"
         description="Cadastro, evolução, comunicação e controle financeiro do aluno."
@@ -8,8 +8,8 @@
         <RouterLink to="/alunos" class="inline-flex items-center gap-2 text-sm text-[var(--wn-muted)]"><ArrowLeft class="h-4 w-4" />Voltar para alunos</RouterLink>
         <p v-if="studentError" class="panel-card mt-5" role="alert">{{ studentError }} <button class="student-detail-link" @click="loadStudent">Tentar novamente</button></p>
         <div v-if="student" class="student-detail-layout">
-            <StudentContext :student="student" :tabs="tabs" :active-tab="activeTab" @select="selectTab" @edit="openProfile" />
-            <div class="student-workspace" aria-label="Conteúdo da ficha">
+            <StudentContext :student="student" :tabs="tabs" :active-tab="activeTab" @select="selectTab" @photo-updated="({ studentId, photoUrl }) => { if (student.id === studentId) student.photoUrl = photoUrl; }" />
+            <div class="student-workspace" role="region" tabindex="0" aria-label="Conteúdo da ficha">
         <StudentAccessPanel v-if="activeTab === 'access' || (accessCredentials.studentId === student.id && accessCredentials.credentials)" :student-id="student.id" :name="student.name" />
         <div v-if="activeTab === 'profile'" class="student-ficha-menu">
             <button :class="{ selected: profileSection === 'personal' }" :aria-pressed="profileSection === 'personal'" @click="profileSection = 'personal'">Dados pessoais</button>
@@ -39,22 +39,7 @@
 
             <aside class="space-y-5">
                 <PlanCard :student="student" />
-                <section class="panel-card">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Financeiro</h2>
-                        <button class="text-sm font-semibold text-[var(--wn-primary-strong)]" @click="activeTab = 'financial'">Ver detalhes</button>
-                    </div>
-                    <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <p class="text-[var(--wn-muted)]">Total pago</p>
-                            <p class="mt-1 font-bold text-[var(--wn-ink)]">{{ money(student.financial.totalPaid) }}</p>
-                        </div>
-                        <div>
-                            <p class="text-[var(--wn-muted)]">Em aberto</p>
-                            <p class="mt-1 font-bold text-[var(--wn-primary-strong)]">{{ money(student.financial.openAmount) }}</p>
-                        </div>
-                    </div>
-                </section>
+
             </aside>
         </section>
 
@@ -469,7 +454,6 @@ const saveChanges = async (payload) => {
 
 const saveProfile = () => saveChanges(profileForm);
 const saveHealth = () => saveChanges(healthForm);
-const openProfile = () => { profileSection.value = 'personal'; activeTab.value = 'profile'; formMessage.value = ''; };
 
 const loadWorkouts = async () => {
     workoutsLoading.value = true;
