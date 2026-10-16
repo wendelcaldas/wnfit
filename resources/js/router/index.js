@@ -22,6 +22,7 @@ export const router = createRouter({
         { path: '/aluno/entrar', component: () => import('../views/StudentLoginView.vue'), meta: { studentPortal: true, studentGuest: true } },
         { path: '/aluno/senha', component: () => import('../views/StudentPasswordView.vue'), meta: { studentPortal: true, password: true } },
         { path: '/aluno/inicio', component: () => import('../views/StudentHomeView.vue'), meta: { studentPortal: true } },
+        { path: '/aluno/evento', component: () => import('../views/StudentEventView.vue'), meta: { studentPortal: true, studentEvents: true } },
         { path: '/aluno/treinos', component: () => import('../views/StudentWorkoutsView.vue'), meta: { studentPortal: true } },
         { path: '/aluno/sessao/:id', component: () => import('../views/StudentSessionView.vue'), meta: { studentPortal: true } },
         { path: '/evento/:slug', component: () => import('../views/PublicEventView.vue'), meta: { public: true } },
@@ -129,6 +130,7 @@ router.beforeEach(async (to) => {
         try { await studentAuth.fetch(); } catch { if (!studentAuth.loaded) studentAuth.apply({ student: null }); }
         if (!studentAuth.student) return to.meta.studentGuest ? true : '/aluno/entrar';
         if (studentAuth.student.mustChangePassword) return to.meta.password ? true : '/aluno/senha';
+        if (to.meta.studentEvents && !studentAuth.student.canAccessEvents) return '/aluno/inicio';
         return to.meta.studentGuest ? '/aluno/inicio' : true;
     }
     const auth = useAuthStore();

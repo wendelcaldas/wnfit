@@ -77,6 +77,7 @@ class StudentPortalAuthController extends Controller
     {
         return ['csrf' => csrf_token(), 'student' => $account ? [
             'id' => $account->aluno_id, 'name' => $account->aluno->nome, 'username' => $account->username,
+            'canAccessEvents' => $account->username === 'wendel',
             'mustChangePassword' => $account->must_change_password, 'organization' => $account->aluno->organizacao->nome_fantasia,
         ] : null];
     }
