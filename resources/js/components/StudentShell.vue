@@ -61,13 +61,19 @@
                 }"
                 ><Dumbbell :size="22" />Treinos</RouterLink
             >
+            <RouterLink
+                v-if="auth.student?.canAccessEvents"
+                to="/aluno/evento"
+                :class="{ selected: route.path === '/aluno/evento' }"
+                ><CalendarDays :size="22" />Evento</RouterLink
+            >
         </nav>
     </div>
 </template>
 <script setup>
 import { computed, ref } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
-import { House, Dumbbell } from "lucide-vue-next";
+import { House, Dumbbell, CalendarDays } from "lucide-vue-next";
 import { useStudentAuthStore } from "../stores/studentAuth";
 defineProps({ hideNav: Boolean });
 const auth = useStudentAuthStore();
