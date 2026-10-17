@@ -18,6 +18,7 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\StudentAccessController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentEventController;
+use App\Http\Controllers\StudentPhysicalAssessmentController;
 use App\Http\Controllers\StudentPortalAuthController;
 use App\Http\Controllers\StudentPortalController;
 use App\Http\Controllers\TwilioWebhookController;
@@ -117,6 +118,10 @@ Route::prefix('api')->group(function () {
         Route::patch('/students/{student}', [StudentController::class, 'update']);
         Route::post('/students/{student}/photo', [StudentController::class, 'uploadPhoto']);
         Route::get('/students/{student}/photo', [StudentController::class, 'photo']);
+        Route::get('/students/{student}/physical-assessments', [StudentPhysicalAssessmentController::class, 'index']);
+        Route::post('/students/{student}/physical-assessments', [StudentPhysicalAssessmentController::class, 'store']);
+        Route::get('/students/{student}/physical-assessments/{assessment}', [StudentPhysicalAssessmentController::class, 'show']);
+        Route::put('/students/{student}/physical-assessments/{assessment}', [StudentPhysicalAssessmentController::class, 'update']);
         Route::get('/students/{student}/workouts', [StudentController::class, 'workouts']);
         Route::post('/students/{student}/workouts/{workout}', [StudentController::class, 'assignWorkout']);
         Route::post('/students/{student}/charges', [StudentController::class, 'generateCharge']);
