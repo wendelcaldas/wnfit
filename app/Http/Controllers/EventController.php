@@ -19,9 +19,14 @@ class EventController extends Controller
     {
         EventAccess::staff($request, $event, true);
         $data = $request->validate(['modules' => 'required|array:gift,album,feedback', 'modules.gift' => 'required|array:enabled,name,message,quantity,instructions', 'modules.gift.enabled' => 'required|boolean', 'modules.gift.name' => 'required_if:modules.gift.enabled,true|nullable|string|max:120', 'modules.gift.quantity' => 'required_if:modules.gift.enabled,true|nullable|integer|min:1|max:100000', 'modules.gift.message' => 'nullable|string|max:1000', 'modules.gift.instructions' => 'nullable|string|max:1000', 'modules.album' => 'required|array:enabled,instructions', 'modules.album.enabled' => 'required|boolean', 'modules.album.instructions' => 'nullable|string|max:1000', 'modules.feedback' => 'required|array:enabled,title,message', 'modules.feedback.enabled' => 'required|boolean', 'modules.feedback.title' => 'required_if:modules.feedback.enabled,true|nullable|string|max:120', 'modules.feedback.message' => 'nullable|string|max:1000']);
-        $event->update(['modules' => $data['modules']]);
 
-        return response()->json($event);
+        return DB::transaction(function () use ($event, $data) {
+            $event = Event::whereKey($event->id)->lockForUpdate()->firstOrFail();
+            abort_if(($data['modules']['gift']['quantity'] ?? 0) < $event->registrations()->whereNotNull('gift_snapshot')->count(), 422, 'A quantidade não pode ser menor que os presentes já atribuídos.');
+            $event->update(['modules' => $data['modules']]);
+
+            return response()->json($event);
+        });
     }
 
     public function addParticipant(Request $request, Event $event)
@@ -116,7 +121,7 @@ class EventController extends Controller
         EventAccess::staff($request, $event);
         $data = $request->validate(['q' => 'nullable|string|max:120', 'status' => 'nullable|in:present,absent']);
 
-        return $event->registrations()->with('aluno:id,nome')->select(['id', 'aluno_id', 'name', 'phone', 'created_at', 'checked_in_at', 'attendance_source', 'marketing_opt_in', 'rating', 'feedback'])
+        return $event->registrations()->with('aluno:id,nome')->select(['id', 'aluno_id', 'gift_snapshot', 'gift_delivered_at', 'name', 'phone', 'created_at', 'checked_in_at', 'attendance_source', 'marketing_opt_in', 'rating', 'feedback'])
             ->when($data['q'] ?? null, fn ($q, $term) => $q->where(fn ($q) => $q->where('name', 'like', '%'.$term.'%')->orWhere('phone', 'like', '%'.$term.'%')))
             ->when(($data['status'] ?? null) === 'present', fn ($q) => $q->whereNotNull('checked_in_at'))
             ->when(($data['status'] ?? null) === 'absent', fn ($q) => $q->whereNull('checked_in_at'))

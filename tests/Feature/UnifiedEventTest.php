@@ -51,6 +51,34 @@ class UnifiedEventTest extends TestCase
         $this->getJson('/api/students?tipo=participante')->assertOk()->assertJsonCount(1, 'students');
     }
 
+    public function test_gifts_preserve_snapshots_stock_and_delivery(): void
+    {
+        [$owner,$org,$event] = $this->context();
+        $event->update(['modules' => ['gift' => ['enabled' => true, 'name' => 'Nécessaire', 'quantity' => 1, 'message' => 'Cuide-se', 'instructions' => 'Equipe']]]);
+        $first = $this->student($org);
+        $second = $this->student($org);
+        foreach ([$first, $second] as $account) {
+            $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['student_id' => $account->aluno_id])->assertOk();
+        }
+        $this->loginStudent($first);
+        $this->getJson("/api/student/events/{$event->id}/gift")->assertOk()->assertJsonPath('gift', null);
+        $this->postJson("/api/student/events/{$event->id}/gift")->assertOk()->assertJsonPath('gift.name', 'Nécessaire');
+        $event->update(['modules' => ['gift' => ['enabled' => true, 'name' => 'Alterado', 'quantity' => 1]]]);
+        $this->postJson("/api/student/events/{$event->id}/gift")->assertOk()->assertJsonPath('gift.name', 'Nécessaire');
+        $this->loginStudent($second);
+        $this->postJson("/api/student/events/{$event->id}/gift")->assertUnprocessable();
+        $registration = $event->registrations()->where('aluno_id', $first->aluno_id)->first();
+        $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations/{$registration->id}/gift-delivery")->assertOk();
+        $time = $registration->fresh()->gift_delivered_at;
+        $this->postJson("/api/events/{$event->id}/registrations/{$registration->id}/gift-delivery")->assertOk();
+        $this->assertTrue($time->equalTo($registration->fresh()->gift_delivered_at));
+        $this->assertEquals($owner->id, $registration->fresh()->gift_delivered_by);
+        $event->update(['modules' => ['gift' => ['enabled' => false]]]);
+        $this->loginStudent($first);
+        $this->getJson("/api/student/events/{$event->id}/gift")->assertNotFound();
+        $this->assertNotNull($registration->fresh()->gift_snapshot);
+    }
+
     public function test_teacher_can_add_existing_students_with_shared_or_absent_phones_and_not_change_event(): void
     {
         [$teacher,$org,$event] = $this->context('professor');

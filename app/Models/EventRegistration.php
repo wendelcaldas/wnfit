@@ -18,7 +18,7 @@ class EventRegistration extends Model
 
     protected function casts(): array
     {
-        return ['marketing_opt_in' => 'boolean', 'checked_in_at' => 'datetime', 'privacy_accepted_at' => 'datetime'];
+        return ['gift_snapshot' => 'array', 'gift_revealed_at' => 'datetime', 'gift_delivered_at' => 'datetime', 'marketing_opt_in' => 'boolean', 'checked_in_at' => 'datetime', 'privacy_accepted_at' => 'datetime'];
     }
 
     public function participantPayload(): array

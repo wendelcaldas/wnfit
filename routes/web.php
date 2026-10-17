@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CollectionsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventGiftController;
 use App\Http\Controllers\StudentEventController;
 use App\Http\Controllers\EventParticipantController;
 use App\Http\Controllers\ExerciseController;
@@ -29,6 +30,8 @@ Route::prefix('api')->group(function () {
         Route::post('/logout', [StudentPortalAuthController::class, 'logout']);
         Route::put('/password', [StudentPortalAuthController::class, 'password'])->middleware(['student:password', 'throttle:10,1']);
         Route::middleware('student')->group(function () {
+            Route::get('/events/{event}/gift', [EventGiftController::class, 'show']);
+            Route::post('/events/{event}/gift', [EventGiftController::class, 'reveal']);
             Route::get('/events', [StudentEventController::class, 'index']);
             Route::get('/events/{event}', [StudentEventController::class, 'show']);
             Route::post('/events/{event}/welcome', [StudentEventController::class, 'welcome']);
@@ -66,6 +69,7 @@ Route::prefix('api')->group(function () {
         Route::post('/events', [EventController::class, 'save']);
         Route::patch('/events/{event}', [EventController::class, 'save']);
         Route::patch('/events/{event}/settings', [EventController::class, 'settings']);
+        Route::post('/events/{event}/registrations/{registration}/gift-delivery', [EventGiftController::class, 'deliver']);
         Route::get('/events/{event}/people', [EventController::class, 'people']);
         Route::post('/events/{event}/registrations', [EventController::class, 'addParticipant']);
         Route::post('/events/{event}/close', [EventController::class, 'close']);
