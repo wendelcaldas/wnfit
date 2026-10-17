@@ -6,6 +6,7 @@ use App\Models\Aluno;
 use App\Models\Cobranca;
 use App\Models\Plano;
 use App\Models\StudentWorkoutPlan;
+use App\Models\StudentPhysicalAssessment;
 use App\Models\StudentWorkoutSession;
 use App\Models\Treino;
 use App\Services\BillingService;
@@ -411,6 +412,9 @@ class StudentController extends Controller
             ->whereBetween('finished_at', [today()->subDays(6)->startOfDay(), today()->endOfDay()])
             ->get(['finished_at'])->groupBy(fn ($session) => $session->finished_at->toDateString());
 
+        $referenceWeight = StudentPhysicalAssessment::where('aluno_id', $student->id)->whereNotNull('weight')->orderByDesc('assessed_on')->orderByDesc('id')->value('weight') ?? $student->peso;
+        $referenceHeight = StudentPhysicalAssessment::where('aluno_id', $student->id)->whereNotNull('height')->orderByDesc('assessed_on')->orderByDesc('id')->value('height') ?? $student->altura;
+
         return [
             'id' => $student->id,
             'name' => $student->nome,
@@ -451,15 +455,15 @@ class StudentController extends Controller
                 'city' => $student->cidade,
                 'state' => $student->estado,
                 'zip' => $student->cep,
-                'weight' => $student->peso,
-                'height' => $student->altura,
+                'weight' => $referenceWeight,
+                'height' => $referenceHeight,
                 'emergencyContact' => $student->contato_emergencia,
                 'emergencyPhone' => $student->telefone_emergencia,
             ],
             'health' => [
                 'goal' => $student->objetivo,
-                'weight' => $student->peso,
-                'height' => $student->altura,
+                'weight' => $referenceWeight,
+                'height' => $referenceHeight,
                 'medicalRestrictions' => $student->restricoes_medicas,
                 'injuries' => $student->lesoes,
                 'medications' => $student->medicamentos,

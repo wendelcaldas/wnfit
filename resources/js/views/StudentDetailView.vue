@@ -14,6 +14,7 @@
         <div v-if="activeTab === 'profile'" class="student-ficha-menu">
             <button :class="{ selected: profileSection === 'personal' }" :aria-pressed="profileSection === 'personal'" @click="profileSection = 'personal'">Dados pessoais</button>
             <button :class="{ selected: profileSection === 'health' }" :aria-pressed="profileSection === 'health'" @click="profileSection = 'health'">Saúde e anamnese</button>
+            <button :class="{ selected: profileSection === 'physical' }" :aria-pressed="profileSection === 'physical'" @click="profileSection = 'physical'">Avaliação física</button>
         </div>
         <section v-if="student && activeTab === 'overview'" class="mt-5 grid gap-5 xl:grid-cols-[1fr_420px]">
             <div class="space-y-5">
@@ -76,13 +77,16 @@
                     <button class="btn-primary justify-center" :disabled="saving">{{ saving ? 'Salvando...' : 'Salvar saude' }}</button>
                 </div>
                 <div class="mt-6 grid gap-4 md:grid-cols-3">
-                    <ProfileField label="Objetivo principal" v-model="healthForm.objetivo" /><ProfileField label="Peso (kg)" v-model="healthForm.peso" type="number" /><ProfileField label="Altura (cm)" v-model="healthForm.altura" type="number" />
+                    <ProfileField label="Objetivo principal" v-model="healthForm.objetivo" /><div class="text-sm"><p class="text-[var(--wn-muted)]">Peso de referência</p><strong>{{ student.health.weight ?? 'Não informado' }}<template v-if="student.health.weight"> kg</template></strong></div><div class="text-sm"><p class="text-[var(--wn-muted)]">Altura de referência</p><strong>{{ student.health.height ?? 'Não informado' }}<template v-if="student.health.height"> cm</template></strong></div>
+                    <p class="md:col-span-3 text-xs text-[var(--wn-muted)]">Peso e altura usam a medida mais recente registrada em Avaliação física. Na ausência de medida, preservamos o valor do cadastro anterior, sem criar histórico.</p>
                     <TextField label="Restricoes medicas" v-model="healthForm.restricoes_medicas" /><TextField label="Lesoes ou limitacoes" v-model="healthForm.lesoes" /><TextField label="Medicamentos" v-model="healthForm.medicamentos" />
                     <div class="md:col-span-3"><TextField label="Observacoes do acompanhamento" v-model="healthForm.observacoes" /></div>
                 </div>
                 <FormMessage :text="formMessage" />
             </form>
         </section>
+
+        <StudentPhysicalAssessmentPanel v-if="student && activeTab === 'profile' && profileSection === 'physical'" :key="student.id" :student="student" @saved="loadStudent" />
 
         <section v-if="student && activeTab === 'workouts'" class="mt-5 space-y-5">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -291,6 +295,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { ArrowLeft, CheckCircle2, Copy, Dumbbell, ExternalLink, Library, Mail, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Plus, ReceiptText, Send, X } from 'lucide-vue-next';
 
 import StudentContext from '../components/StudentContext.vue';
+import StudentPhysicalAssessmentPanel from '../components/StudentPhysicalAssessmentPanel.vue';
 import '../../css/student-detail.css';
 import AppShell from '../components/AppShell.vue';
 import ChargeActionDialog from '../components/ChargeActionDialog.vue';
@@ -453,7 +458,7 @@ const saveChanges = async (payload) => {
 };
 
 const saveProfile = () => saveChanges(profileForm);
-const saveHealth = () => saveChanges(healthForm);
+const saveHealth = () => { const { peso, altura, ...payload } = healthForm; return saveChanges(payload); };
 
 const loadWorkouts = async () => {
     workoutsLoading.value = true;
