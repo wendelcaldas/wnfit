@@ -11,6 +11,7 @@ class Cobranca extends Model
 {
     protected $fillable = [
         'organizacao_id',
+        'event_registration_id', 'origem', 'descricao', 'refund_review_required',
         'aluno_id',
         'assinatura_id',
         'competencia',
@@ -26,11 +27,17 @@ class Cobranca extends Model
     protected function casts(): array
     {
         return [
+            'refund_review_required' => 'boolean',
             'vencimento' => 'date',
             'valor' => 'decimal:2',
             'pago_em' => 'datetime',
             'enviado_em' => 'datetime',
         ];
+    }
+
+    public function eventRegistration(): BelongsTo
+    {
+        return $this->belongsTo(EventRegistration::class);
     }
 
     public function aluno(): BelongsTo

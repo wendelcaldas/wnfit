@@ -31,11 +31,12 @@ class EventTest extends TestCase
     {
         [, $event, $url] = $this->fixture();
         $response = $this->signup($url)->assertCreated()->assertJsonMissingPath('participant.phone')->assertJsonMissingPath('participant.access_hash');
-        $this->assertDatabaseCount('alunos', 0);
+        $this->assertDatabaseCount('alunos', 1);
+        $this->assertDatabaseHas('alunos', ['perfil_tipo' => 'participante', 'status' => 'participante']);
         $this->assertDatabaseCount('cobrancas', 0);
         $this->assertDatabaseHas('event_registrations', ['phone' => '+5571999991234', 'marketing_opt_in' => false]);
         $this->getJson($url)->assertJsonPath('participant', null);
-        $this->signup($url)->assertConflict();
+        $this->signup($url)->assertUnprocessable();
         $this->postJson($url.'/recover', ['code' => '5571999991234'])->assertUnprocessable();
         $recovered = $this->postJson($url.'/recover', ['code' => $response->json('recoveryCode')])->assertOk();
         $cookie = $recovered->getCookie('wnfit_event_'.$event->id, false);

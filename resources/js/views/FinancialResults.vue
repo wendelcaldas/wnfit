@@ -18,7 +18,7 @@
         <section class="panel-card mt-5">
             <h2 class="font-semibold">De onde vieram os recebimentos?</h2>
             <div class="mt-3 grid gap-4 sm:grid-cols-3">
-                <div><p class="text-sm text-[var(--wn-muted)]">Mensalidades do próprio mês</p><strong>{{ money(summary.current) }}</strong></div>
+                <div><p class="text-sm text-[var(--wn-muted)]">Cobranças do próprio mês</p><strong>{{ money(summary.current) }}</strong></div>
                 <div><p class="text-sm text-[var(--wn-muted)]">Recuperado de meses anteriores</p><strong>{{ money(summary.recovered) }}</strong></div>
                 <div><p class="text-sm text-[var(--wn-muted)]">Antecipações de meses futuros</p><strong>{{ money(summary.advance) }}</strong></div>
             </div>
@@ -35,12 +35,12 @@
             </div>
             <div class="admin-desktop-table overflow-x-auto">
                 <table class="min-w-full text-left text-sm">
-                    <thead class="bg-[var(--wn-surface-soft)] text-[var(--wn-muted)]"><tr><th class="p-4">Aluno / plano</th><th class="p-4">Vencimento</th><th class="p-4">Valor</th><th class="p-4">Situação</th><th class="p-4">Último envio registrado</th><th class="p-4 text-right">Ações</th></tr></thead>
+                    <thead class="bg-[var(--wn-surface-soft)] text-[var(--wn-muted)]"><tr><th class="p-4">Pessoa / cobrança</th><th class="p-4">Vencimento</th><th class="p-4">Valor</th><th class="p-4">Situação</th><th class="p-4">Último envio registrado</th><th class="p-4 text-right">Ações</th></tr></thead>
                     <tbody class="divide-y divide-[var(--wn-line)]">
                         <tr v-if="loading"><td colspan="6" class="p-10 text-center text-[var(--wn-muted)]">Carregando financeiro…</td></tr>
                         <tr v-else-if="!charges.length"><td colspan="6" class="p-10 text-center"><p class="font-semibold">Nenhuma cobrança neste filtro</p><p class="mt-2 text-[var(--wn-muted)]">Escolha outro mês ou situação. Você também pode gerar uma cobrança no financeiro do aluno.</p></td></tr>
                         <template v-else><tr v-for="charge in charges" :key="charge.id">
-                            <td class="p-4"><RouterLink :to="`/alunos/${charge.studentId}?tab=financial`" class="font-semibold text-[var(--wn-primary-strong)]">{{ charge.student }}</RouterLink><p class="mt-1 text-xs text-[var(--wn-muted)]">{{ charge.plan }}</p></td>
+                            <td class="p-4"><RouterLink :to="`/alunos/${charge.studentId}?tab=financial`" class="font-semibold text-[var(--wn-primary-strong)]">{{ charge.student }}</RouterLink><p class="mt-1 text-xs text-[var(--wn-muted)]">{{ charge.plan }}</p><p v-if="charge.refundReview" class="mt-1 text-xs text-amber-700">Devolução a conferir</p></td>
                             <td class="whitespace-nowrap p-4">{{ charge.dueDate }}</td><td class="whitespace-nowrap p-4 font-semibold">{{ money(charge.value) }}</td>
                             <td class="p-4"><span :class="charge.status === 'pago' ? 'badge-success' : charge.status === 'atrasado' ? 'badge-danger' : 'badge-warning'">{{ labels[charge.status] ?? charge.status }}</span></td>
                             <td class="p-4 text-xs text-[var(--wn-muted)]">{{ charge.sentAt || 'Nenhum envio confirmado' }}</td>
@@ -58,7 +58,7 @@
                         <span :class="charge.status === 'pago' ? 'badge-success' : charge.status === 'atrasado' ? 'badge-danger' : 'badge-warning'">{{ labels[charge.status] ?? charge.status }}</span>
                     </div>
                     <dl class="admin-mobile-details">
-                        <div><dt>Plano</dt><dd>{{ charge.plan }}</dd></div>
+                        <div><dt>Origem</dt><dd>{{ charge.plan }}<span v-if="charge.refundReview" class="block text-amber-700">Devolução a conferir</span></dd></div>
                         <div><dt>Valor</dt><dd class="font-semibold">{{ money(charge.value) }}</dd></div>
                         <div><dt>Vencimento</dt><dd>{{ charge.dueDate }}</dd></div>
                         <div><dt>Último envio</dt><dd>{{ charge.sentAt || 'Nenhum envio confirmado' }}</dd></div>

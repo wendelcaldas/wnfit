@@ -226,7 +226,7 @@
                             </thead>
                             <tbody class="divide-y divide-[var(--wn-line)]">
                                 <tr v-for="charge in student.financial.charges" :key="charge.id">
-                                    <td data-label="Competência" class="px-5 py-4 text-sm">{{ charge.competence }}</td>
+                                    <td data-label="Competência" class="px-5 py-4 text-sm">{{ charge.competence }}<small v-if="charge.refundReview" class="block text-amber-700">Devolução a conferir</small></td>
                                     <td data-label="Vencimento" class="px-5 py-4 text-sm">{{ charge.dueDate }}</td>
                                     <td data-label="Valor" class="px-5 py-4 text-sm">{{ money(charge.value) }}</td>
                                     <td data-label="Situação" class="px-5 py-4"><span :class="charge.statusClass">{{ labelStatus(charge.status) }}</span></td>

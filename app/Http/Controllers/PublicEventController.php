@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Services\EventAccess;
+use App\Services\EventFeedbackService;
+use App\Services\EventRegistrationService;
 use App\Services\Messaging\MessagingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -13,11 +17,17 @@ class PublicEventController extends Controller
 {
     private function visible(Request $request, Event $event): void
     {
-        abort_unless($event->status !== 'draft' || $request->user()?->organizacoes()->where('organizacoes.id', $event->organizacao_id)->exists(), 404);
+        abort_unless($event->status !== 'draft' || $request->user()?->organizacoes()->where('organizacoes.id', $event->organizacao_id)->wherePivot('status', 'ativo')->wherePivotIn('papel', ['proprietario', 'administrador', 'professor'])->exists(), 404);
     }
 
     private function participant(Request $request, Event $event): ?EventRegistration
     {
+        $account = Auth::guard('student')->user();
+        if ($account && $request->session()->get('student_credential_version') === $account->credential_version && ! $account->must_change_password && $account->aluno?->organizacao?->ativa && $account->aluno->organizacao_id === $event->organizacao_id) {
+            $registration = $event->registrations()->where('aluno_id', $account->aluno_id)->first();
+
+            return $registration;
+        }
         $token = $request->cookie('wnfit_event_'.$event->id);
 
         return $token ? $event->registrations()->where('access_hash', hash('sha256', $token))->first() : null;
@@ -32,7 +42,10 @@ class PublicEventController extends Controller
     {
         $this->visible($request, $event);
 
-        return response()->json(['event' => $event->publicPayload(), 'participant' => $this->participant($request, $event)?->participantPayload()])
+        $account = Auth::guard('student')->user();
+        $student = $account && $request->session()->get('student_credential_version') === $account->credential_version && ! $account->must_change_password && $account->aluno?->organizacao?->ativa && $account->aluno->organizacao_id === $event->organizacao_id ? $account->aluno : null;
+
+        return response()->json(['student' => $student ? ['name' => $student->nome, 'phone' => $student->telefone, 'canAccessExperience' => EventAccess::experienceAllowed($account) && $event->status === 'published', 'eligible' => $event->audience === 'open' || $student->perfil_tipo === 'aluno'] : null, 'event' => $event->publicPayload(), 'participant' => $this->participant($request, $event)?->participantPayload()])
             ->header('Cache-Control', 'no-store');
     }
 
@@ -41,20 +54,19 @@ class PublicEventController extends Controller
         $this->visible($request, $event);
         $data = $request->validate(['name' => 'required|string|min:2|max:120', 'phone' => 'required|string|max:30', 'privacy' => 'accepted', 'marketing' => 'sometimes|boolean']);
         $phone = $messaging->normalizeBrazilianPhone($data['phone']);
-        $token = Str::random(64);
-        $recovery = strtoupper(bin2hex(random_bytes(12)));
-        $participant = DB::transaction(function () use ($event, $data, $phone, $token, $recovery) {
-            $event = Event::query()->lockForUpdate()->findOrFail($event->id);
-            abort_unless($event->status === 'published' && ! $event->closed_at, 422, 'As inscrições não estão abertas.');
-            abort_if($event->registrations()->where('phone', $phone)->exists(), 409, 'Já existe uma inscrição com esse telefone. Use seu código para recuperar o acesso.');
-            abort_if($event->capacity && $event->registrations()->count() >= $event->capacity, 422, 'As vagas deste evento foram preenchidas.');
-
-            return $event->registrations()->create(['name' => trim($data['name']), 'phone' => $phone, 'access_hash' => hash('sha256', $token), 'recovery_hash' => hash('sha256', $recovery),
-                'privacy_accepted_at' => now(), 'marketing_opt_in' => $data['marketing'] ?? false]);
-        });
+        [$participant, $token, $recovery] = app(EventRegistrationService::class)->register($event, null, [...$data, 'phone' => $phone], 'public');
 
         return response()->json(['participant' => $participant->participantPayload(), 'recoveryCode' => implode('-', str_split($recovery, 4))], 201)
             ->cookie($this->cookie($request, $event, $token))->header('Cache-Control', 'no-store');
+    }
+
+    public function studentRegister(Request $request, Event $event)
+    {
+        $request->validate(['privacy' => 'accepted']);
+        $student = Auth::guard('student')->user()->aluno;
+        [$registration] = app(EventRegistrationService::class)->register($event, $student, $request->all(), 'student');
+
+        return response()->json(['participant' => $registration->participantPayload()]);
     }
 
     public function recover(Request $request, Event $event)
@@ -94,9 +106,8 @@ class PublicEventController extends Controller
         $this->visible($request, $event);
         $participant = $this->participant($request, $event);
         abort_unless($participant, 401);
-        abort_unless($event->status === 'published' && $event->closed_at && $participant->checked_in_at, 422, 'A avaliação estará disponível após o evento para quem confirmou presença.');
         $data = $request->validate(['rating' => 'required|integer|min:1|max:5', 'feedback' => 'nullable|string|max:1000']);
-        $participant->update($data);
+        $participant = app(EventFeedbackService::class)->save($event, $participant, $data);
 
         return response()->json(['participant' => $participant->participantPayload()]);
     }

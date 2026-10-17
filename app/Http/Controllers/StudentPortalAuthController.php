@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
 use App\Models\StudentAccount;
+use App\Services\EventAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -77,7 +79,7 @@ class StudentPortalAuthController extends Controller
     {
         return ['csrf' => csrf_token(), 'student' => $account ? [
             'id' => $account->aluno_id, 'name' => $account->aluno->nome, 'username' => $account->username,
-            'canAccessEvents' => $account->username === 'wendel',
+            'canAccessEvents' => EventAccess::experienceAllowed($account) && Event::where('organizacao_id', $account->aluno->organizacao_id)->where('status', 'published')->whereHas('registrations', fn ($q) => $q->where('aluno_id', $account->aluno_id))->exists(),
             'mustChangePassword' => $account->must_change_password, 'organization' => $account->aluno->organizacao->nome_fantasia,
         ] : null];
     }

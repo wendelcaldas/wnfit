@@ -1,23 +1,27 @@
-<template>
-    <StudentShell>
-        <div class="mb-7">
-            <p class="student-overline">VAMOS NOS ENCONTRAR</p>
-            <h1 class="mt-2 font-display text-3xl font-bold">Evento</h1>
-            <p class="mt-2 text-sm text-[var(--wn-muted)]">
-                Um espaço para viver novas experiências com o WNFit.
-            </p>
-        </div>
-        <section class="student-card !p-7">
-            <div class="student-icon"><CalendarDays :size="24" /></div>
-            <h2 class="mt-5 text-xl font-bold">Novidades em breve</h2>
-            <p class="mt-3 text-sm leading-6 text-[var(--wn-muted)]">
-                Estamos preparando os detalhes do próximo evento.
-                Quando estiver tudo pronto, você acompanha por aqui.
-            </p>
-        </section>
-    </StudentShell>
-</template>
 <script setup>
-import { CalendarDays } from "lucide-vue-next";
-import StudentShell from "../components/StudentShell.vue";
+import {ref,onMounted,onUnmounted,watch} from 'vue';
+import {RouterLink,useRoute} from 'vue-router';
+import EventFeedback from '../components/EventFeedback.vue';
+import { Images, ArrowUpRight } from 'lucide-vue-next';
+import EventGift from '../components/EventGift.vue';
+import StudentShell from '../components/StudentShell.vue';
+const route=useRoute(),events=ref([]),detail=ref(null),error=ref(''),busy=ref(false);
+function fail(e){error.value=Object.values(e.response?.data?.errors||{}).flat()[0]||e.response?.data?.message||'Não foi possível carregar. Tente novamente.';}
+let loadVersion=0;const loading=ref(true);
+async function load(){const version=++loadVersion,id=route.params.id;error.value='';detail.value=null;loading.value=true;try{const {data}=await window.axios.get(id?'/api/student/events/'+id:'/api/student/events');if(version===loadVersion){if(id)detail.value=data;else events.value=data;}}catch(e){if(version===loadVersion)fail(e);}finally{if(version===loadVersion)loading.value=false;}}
+onUnmounted(()=>{loadVersion++;});
+async function welcome(){busy.value=true;try{await window.axios.post('/api/student/events/'+route.params.id+'/welcome');detail.value.welcomed=true;}catch(e){fail(e);}finally{busy.value=false;}}
+async function checkin(){busy.value=true;try{detail.value.participant=(await window.axios.post('/api/student/events/'+route.params.id+'/checkin')).data.participant;}catch(e){fail(e);}finally{busy.value=false;}}
+function date(v){return v?new Date(v).toLocaleString('pt-BR',{timeZone:'America/Bahia',dateStyle:'medium',timeStyle:'short'}):'A confirmar';}
+onMounted(load);watch(()=>route.params.id,load);
 </script>
+<template><StudentShell><p class="student-overline">MOVIMENTO E COMUNIDADE</p><h1 class="mt-2 text-3xl font-bold">{{detail?.event.name||'Meus eventos'}}</h1><p v-if="error" role="alert" class="student-error">{{error}} <button @click="load">Tentar novamente</button></p>
+<p v-if="loading" role="status" class="mt-5">Carregando seu encontro…</p><template v-if="!route.params.id"><p v-if="!loading && !events.length && !error" class="mt-5">Seus próximos encontros aparecerão aqui após a inscrição.</p><RouterLink v-for="event in events" :key="event.id" :to="'/aluno/evento/'+event.id" class="student-card event-student-card"><span>{{event.organizer}}</span><h2>{{event.name}}</h2><p>{{date(event.startsAt)}} · {{event.location}}</p><strong>Abrir experiência →</strong></RouterLink></template>
+<template v-if="detail"><RouterLink to="/aluno/evento" class="event-back">← Meus eventos</RouterLink><section v-if="!detail.welcomed" class="student-card event-welcome" aria-labelledby="event-welcome-title"><p class="student-overline">BEM-VINDO À EXPERIÊNCIA</p><h2 id="event-welcome-title">{{detail.event.name}}</h2><p>Um encontro para se movimentar, compartilhar e cuidar de você.</p><button class="btn-primary" :disabled="busy" @click="welcome">Começar experiência</button></section><section class="student-card event-student-card"><p>{{detail.event.description}}</p><p>{{date(detail.event.startsAt)}} · {{detail.event.location}}</p><p class="event-instructions">{{detail.event.instructions}}</p><p v-if="detail.participant.payment">Inscrição: {{Number(detail.participant.payment.value).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}} · {{detail.participant.payment.status==='pago'?'Pagamento confirmado':'Pagamento pendente · procure a equipe'}}</p><p v-if="detail.participant.checkedInAt">✓ Presença confirmada</p><button v-else-if="detail.event.checkinOpen" class="btn-primary" :disabled="busy" @click="checkin">Confirmar minha presença</button><p v-if="detail.event.finished">Evento encerrado. Obrigado por participar!</p></section>
+<RouterLink v-if="detail.event.modules.album.enabled" :to="'/aluno/evento/'+detail.event.id+'/album'" class="student-card event-album-entry">
+<span class="event-album-symbol"><Images :size="40" :stroke-width="1.5" aria-hidden="true" /></span>
+<div><p class="student-overline">MEMÓRIAS DO ENCONTRO</p><h2>Nosso álbum</h2><p>Reviva os momentos e compartilhe seu olhar.</p><strong>Abrir álbum <ArrowUpRight :size="18" aria-hidden="true" /></strong></div>
+</RouterLink>
+<EventFeedback v-if="detail.event.modules.feedback.enabled" :key="detail.event.id" :event="detail.event" :participant="detail.participant" @updated="detail.participant=$event" />
+<EventGift v-if="detail.event.modules.gift.enabled" :key="detail.event.id" :event-id="detail.event.id" :auto-open-allowed="detail.welcomed" /></template></StudentShell></template>
+<style scoped>.event-student-card{display:block;margin-top:20px;padding:24px!important}.event-student-card h2,.event-welcome h2{font-size:22px;font-weight:750;margin:8px 0}.event-student-card p,.event-welcome p{line-height:1.7;margin:12px 0;overflow-wrap:anywhere}.event-student-card strong{color:var(--wn-primary-strong)}.event-back{display:block;margin:16px 0;text-decoration:underline}.event-welcome{padding:24px!important;margin:20px 0;border:2px solid var(--wn-primary)}.event-instructions{white-space:pre-line}.event-album-entry{display:flex;align-items:center;gap:24px;margin-top:24px;padding:28px!important;border:1px solid var(--wn-line);transition:border-color .18s,box-shadow .18s}.event-album-entry:hover{border-color:#365314;box-shadow:0 8px 24px #15171508}.event-album-entry:focus-visible{outline:2px solid #365314;outline-offset:4px}.event-album-symbol{display:grid;place-items:center;flex-shrink:0;width:96px;height:112px;border-radius:24px;background:#ecfccb;color:#365314}.event-album-entry h2{font-size:26px;font-weight:800;margin:8px 0}.event-album-entry p{line-height:1.6}.event-album-entry strong{display:flex;align-items:center;gap:6px;margin-top:16px;color:#365314}@media(max-width:480px){.event-album-entry{gap:16px;padding:20px!important}.event-album-symbol{width:68px;height:88px;border-radius:20px}.event-album-entry h2{font-size:23px}}@media(prefers-reduced-motion:reduce){.event-album-entry{transition:none}}</style>

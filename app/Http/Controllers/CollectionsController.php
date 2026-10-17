@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Aluno;
 use App\Services\BillingService;
+use App\Services\EventBillingService;
 use App\Services\Messaging\MessagingService;
 use App\Services\RecurringBillingService;
 use Illuminate\Http\Request;
@@ -40,7 +41,7 @@ class CollectionsController extends Controller
                 'lastContact' => $student->cobrancas->max('enviado_em')?->format('d/m/Y H:i'),
                 'lastContactSort' => $student->cobrancas->max('enviado_em')?->timestamp ?? 0,
                 'needsReview' => $student->assinatura && ! $student->assinatura->recorrencia_inicio && $student->assinatura->auto_renovacao && $student->assinatura->status === 'ativa',
-                'installments' => $open->map(fn ($c) => ['id' => $c->id, 'month' => $c->competencia, 'status' => $c->status])->values(),
+                'installments' => $open->map(fn ($c) => ['id' => $c->id, 'month' => $c->origem === 'evento' ? $c->descricao : $c->competencia, 'status' => $c->status])->values(),
             ];
         });
         $summary = ['overdue' => $rows->sum('overdue'), 'students' => $rows->where('overdue', '>', 0)->count(), 'upcoming' => $rows->sum('upcoming'), 'review' => $rows->where('needsReview', true)->count()];
@@ -67,7 +68,7 @@ class CollectionsController extends Controller
 
         return response()->json([
             'student' => ['id' => $student->id, 'name' => $student->nome, 'phone' => $student->telefone],
-            'charges' => $charges->map(fn ($c) => ['id' => $c->id, 'competence' => $c->competencia, 'dueDate' => $c->vencimento->format('d/m/Y'), 'value' => (float) $c->valor, 'status' => $c->status, 'paidAt' => $c->pago_em?->format('d/m/Y'), 'sentAt' => $c->enviado_em?->format('d/m/Y H:i')]),
+            'charges' => $charges->map(fn ($c) => ['id' => $c->id, 'competence' => $c->origem === 'evento' ? $c->descricao : $c->competencia, 'dueDate' => $c->vencimento->format('d/m/Y'), 'value' => (float) $c->valor, 'status' => $c->status, 'paidAt' => $c->pago_em?->format('d/m/Y'), 'sentAt' => $c->enviado_em?->format('d/m/Y H:i')]),
             'subscription' => $student->assinatura?->only(['id', 'status', 'recorrencia_inicio', 'pausa_em', 'encerramento_em', 'auto_renovacao']),
             'messages' => $student->mensagens()->latest('id')->limit(20)->get()->map(fn ($m) => ['id' => $m->id, 'content' => $m->conteudo, 'status' => $m->status, 'sentAt' => $m->enviado_em?->format('d/m/Y H:i'), 'createdAt' => $m->created_at->format('d/m/Y H:i')]),
         ]);
@@ -96,11 +97,15 @@ class CollectionsController extends Controller
 
     public function pay(Request $request, Aluno $student, BillingService $billing)
     {
-        $data = $request->validate(['method' => 'required|in:PIX,Dinheiro,Cartão,Transferência', 'date' => 'required|date_format:Y-m-d|before_or_equal:today']);
+        $data = $request->validate(['method' => 'required|in:PIX,Dinheiro,Cartão,Crédito,Débito,Transferência,Boleto', 'date' => 'required|date_format:Y-m-d|before_or_equal:today']);
 
         return DB::transaction(function () use ($request, $student, $billing, $data) {
             $charges = $this->selected($request, $student, true);
             foreach ($charges as $charge) {
+                app(EventBillingService::class)->authorizePayment($request, $charge);
+                if ($charge->event_registration_id) {
+                    $request->validate(['method' => 'required|in:PIX,Crédito,Débito,Dinheiro,Transferência,Boleto']);
+                }
                 $billing->registerPayment($charge, method: $data['method'], paymentDate: $data['date']);
             }
 

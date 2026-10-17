@@ -105,13 +105,15 @@
 </template>
 <script setup>
 import { reactive, ref } from "vue";
-import { RouterLink, useRouter } from "vue-router";
+import { RouterLink, useRouter, useRoute } from "vue-router";
 import { ArrowRight, Dumbbell, Eye, EyeOff, LockKeyhole, UserRound } from "lucide-vue-next";
 import { useStudentAuthStore } from "../stores/studentAuth";
 import { useAuthStore } from "../stores/auth";
 import { useStudentCredentialsStore } from "../stores/studentCredentials";
 const auth = useStudentAuthStore();
 const router = useRouter();
+const route = useRoute();
+const destination = () => { const v = route.query.redirect; return typeof v === 'string' && /^\/(evento\/|aluno\/(?:evento|inicio|treinos|sessao)(?:\/|$))/.test(v) && !v.startsWith('//') ? v : '/aluno/inicio'; };
 const form = reactive({ username: "", password: "" });
 const show = ref(false);
 const help = ref(false);
@@ -125,7 +127,7 @@ async function submit() {
         useAuthStore().$reset();
         useStudentCredentialsStore().clear();
         router.replace(
-            auth.student.mustChangePassword ? "/aluno/senha" : "/aluno/inicio",
+            auth.student.mustChangePassword ? {path:"/aluno/senha",query:{redirect:destination()}} : destination(),
         );
     } catch (e) {
         error.value =

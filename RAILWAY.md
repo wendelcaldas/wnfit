@@ -100,3 +100,7 @@ Em producao, mantenha `TWILIO_VALIDATE_WEBHOOK_SIGNATURE=true` para validar a as
 - O banco SQLite nao deve ser usado em producao, pois o filesystem do container e efemero.
 - Arquivos enviados para o disco `local` tambem nao sao permanentes. Antes de implementar uploads de producao, configure um storage externo como S3.
 - Quando houver jobs em fila, crie um segundo servico usando a mesma imagem e o comando `php artisan queue:work --sleep=3 --tries=3`.
+
+## Álbum dos eventos
+
+Configure um bucket privado S3 compatível e as variáveis AWS do disco `s3`. Use `EVENT_PHOTO_DISK=s3`. Depois de conferir upload, leitura autenticada e permanência dos arquivos após um novo deploy, defina `EVENT_PHOTO_STORAGE_PERSISTENT=true`. Até essa confirmação, uploads em produção retornam indisponibilidade; a base local usa o disco local. Não use um bucket público: as fotos são servidas por endpoints que verificam o vínculo do participante ou papel da equipe. A imagem é reprocessada sem metadados, com miniatura.

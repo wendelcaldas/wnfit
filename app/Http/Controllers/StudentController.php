@@ -9,6 +9,7 @@ use App\Models\StudentWorkoutPlan;
 use App\Models\StudentWorkoutSession;
 use App\Models\Treino;
 use App\Services\BillingService;
+use App\Services\EventBillingService;
 use App\Services\Messaging\MessagingService;
 use App\Services\StudentAccessService;
 use App\Services\WorkoutPublishingService;
@@ -30,7 +31,7 @@ class StudentController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
         $this->billing->refreshOverdueCharges($organization->id);
 
-        $query = Aluno::query()
+        $query = Aluno::query()->where('perfil_tipo', $request->input('tipo') === 'participante' ? 'participante' : 'aluno')
             ->with(['assinatura.plano', 'cobrancas'])
             ->withMax('completedWorkoutSessions', 'finished_at')
             ->where('organizacao_id', $organization->id);
@@ -57,7 +58,7 @@ class StudentController extends Controller
 
         $students = $query->latest()->get();
 
-        $allStudents = Aluno::query()
+        $allStudents = Aluno::query()->where('perfil_tipo', 'aluno')
             ->with('cobrancas')
             ->where('organizacao_id', $organization->id)
             ->get();
@@ -173,7 +174,10 @@ class StudentController extends Controller
             Storage::disk('local')->delete($path);
             throw $exception;
         }
-        if ($previous) Storage::disk('local')->delete($previous);
+        if ($previous) {
+            Storage::disk('local')->delete($previous);
+        }
+
         return response()->json(['photoUrl' => '/api/students/'.$student->id.'/photo?v='.sha1($path)]);
     }
 
@@ -182,6 +186,7 @@ class StudentController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
         abort_unless($student->organizacao_id === $organization->id, 404);
         abort_unless($student->foto_path && Storage::disk('local')->exists($student->foto_path), 404);
+
         return Storage::disk('local')->response($student->foto_path, null, ['Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
     }
 
@@ -268,6 +273,10 @@ class StudentController extends Controller
 
     public function payCharge(Request $request, Cobranca $charge): JsonResponse
     {
+        app(EventBillingService::class)->authorizePayment($request, $charge);
+        if ($charge->event_registration_id) {
+            $request->validate(['method' => 'required|in:PIX,Crédito,Débito,Dinheiro,Transferência,Boleto']);
+        }
         $organization = $request->user()->organizacoes()->firstOrFail();
         abort_unless($charge->organizacao_id === $organization->id, 404);
 
@@ -494,7 +503,8 @@ class StudentController extends Controller
 
         return [
             'id' => $charge->id,
-            'competence' => $charge->competencia,
+            'competence' => $charge->origem === 'evento' ? $charge->descricao : $charge->competencia,
+            'origin' => $charge->origem, 'refundReview' => (bool) $charge->refund_review_required,
             'dueDate' => $charge->vencimento->format('d/m/Y'),
             'value' => (float) $charge->valor,
             'status' => $charge->status,

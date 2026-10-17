@@ -22,6 +22,8 @@ export const router = createRouter({
         { path: '/aluno/entrar', component: () => import('../views/StudentLoginView.vue'), meta: { studentPortal: true, studentGuest: true } },
         { path: '/aluno/senha', component: () => import('../views/StudentPasswordView.vue'), meta: { studentPortal: true, password: true } },
         { path: '/aluno/inicio', component: () => import('../views/StudentHomeView.vue'), meta: { studentPortal: true } },
+        { path: '/aluno/evento/:id/album', component: () => import('../views/StudentEventAlbumView.vue'), meta: { studentPortal: true, studentEvents: true } },
+        { path: '/aluno/evento/:id', component: () => import('../views/StudentEventView.vue'), meta: { studentPortal: true, studentEvents: true } },
         { path: '/aluno/evento', component: () => import('../views/StudentEventView.vue'), meta: { studentPortal: true, studentEvents: true } },
         { path: '/aluno/treinos', component: () => import('../views/StudentWorkoutsView.vue'), meta: { studentPortal: true } },
         { path: '/aluno/sessao/:id', component: () => import('../views/StudentSessionView.vue'), meta: { studentPortal: true } },
@@ -128,10 +130,11 @@ router.beforeEach(async (to) => {
     if (to.meta.studentPortal) {
         const studentAuth = useStudentAuthStore();
         try { await studentAuth.fetch(); } catch { if (!studentAuth.loaded) studentAuth.apply({ student: null }); }
-        if (!studentAuth.student) return to.meta.studentGuest ? true : '/aluno/entrar';
-        if (studentAuth.student.mustChangePassword) return to.meta.password ? true : '/aluno/senha';
+        if (!studentAuth.student) return to.meta.studentGuest ? true : {path:'/aluno/entrar',query:{redirect:to.fullPath}};
+        if (studentAuth.student.mustChangePassword) return to.meta.password ? true : {path:'/aluno/senha',query:{redirect:to.query.redirect || to.fullPath}};
         if (to.meta.studentEvents && !studentAuth.student.canAccessEvents) return '/aluno/inicio';
-        return to.meta.studentGuest ? '/aluno/inicio' : true;
+        if (to.meta.studentGuest) { const target = to.query.redirect; return typeof target === 'string' && /^\/(evento\/|aluno\/(?:evento|inicio|treinos|sessao)(?:\/|$))/.test(target) && target !== to.path ? target : '/aluno/inicio'; }
+        return true;
     }
     const auth = useAuthStore();
 

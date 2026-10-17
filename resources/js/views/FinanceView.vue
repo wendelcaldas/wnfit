@@ -1,5 +1,5 @@
 <template>
-    <AppShell visual-refresh eyebrow="Gestão do estúdio" title="Financeiro" description="Acompanhe o faturamento e os pagamentos dos alunos por mês.">
+    <AppShell visual-refresh eyebrow="Gestão do estúdio" title="Financeiro" description="Acompanhe mensalidades, inscrições e recebimentos por mês.">
         <FinancialResults />
     </AppShell>
 </template>
