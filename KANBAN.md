@@ -4,6 +4,12 @@ Este quadro organiza as proximas features por prioridade e reduz ambiguidade ant
 
 ## Prioridades
 
+## Implementação de eventos — 17/10/2026
+
+As seis entregas do plano revisado foram implementadas em branches encadeadas: inscrição unificada, experiência configurável, presentes, álbum moderado, pesquisa integrada e cobrança avulsa. Publicação em produção pendente; storage externo e piloto precisam de conferência no ambiente de destino.
+
+Documento vigente: [eventos — comportamento, branches e publicação](docs/EVENTOS.md). Os blocos anteriores abaixo preservam o histórico do planejamento.
+
 ## Foco de 17/10/2026 — evento WNFit + Team Peu em 18/10
 
 Plano vigente: [entregas, critérios de aceite e operação do evento](docs/PLANO_EVENTO_2026-10-18.md).

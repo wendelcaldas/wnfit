@@ -140,4 +140,4 @@ O bloco antigo “Próximo Plano Sugerido” do KANBAN contém automações/Twil
 
 ## Estado deste planejamento
 
-Contexto, quadro e código inspecionados. A primeira entrega está implementada na branch `codex/event-participant-access`: vínculo de inscritos com alunos, criação sem assinatura/cobrança e preparação de acesso individual. Ver `docs/VALIDACAO_ACESSO_EVENTO.md`. Suíte local de 85 testes e build passaram; os dois caminhos foram conferidos no navegador com cópia isolada do banco. Produção não foi alterada. Página configurável, presente, álbum e integração da avaliação seguem pendentes.
+As seis entregas do plano revisado foram implementadas em branches encadeadas: inscrição unificada, experiência configurável, presentes, álbum, pesquisa e financeiro de eventos. Validação final: 103 testes, 1.382 assertions, build e conferência no navegador. O documento vigente é [Eventos](EVENTOS.md), com regras, branches e publicação. Produção não foi alterada; configuração do armazenamento persistente e validação do piloto em produção permanecem pendentes.

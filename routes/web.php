@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventGiftController;
 use App\Http\Controllers\EventParticipantController;
+use App\Http\Controllers\EventPaymentController;
 use App\Http\Controllers\EventPhotoController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\FinanceController;
@@ -78,6 +79,7 @@ Route::prefix('api')->group(function () {
         Route::patch('/events/{event}/photos/{photo}', [EventPhotoController::class, 'moderate']);
         Route::patch('/events/{event}/settings', [EventController::class, 'settings']);
         Route::post('/events/{event}/registrations/{registration}/gift-delivery', [EventGiftController::class, 'deliver']);
+        Route::post('/events/{event}/registrations/{registration}/payment', [EventPaymentController::class, 'pay']);
         Route::get('/events/{event}/people', [EventController::class, 'people']);
         Route::post('/events/{event}/registrations', [EventController::class, 'addParticipant']);
         Route::post('/events/{event}/close', [EventController::class, 'close']);

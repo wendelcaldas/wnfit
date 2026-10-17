@@ -24,15 +24,15 @@ onUnmounted(() => clearInterval(timer));
     <template v-if="event">
       <section class="event-hero">
         <p class="event-kicker">UMA EXPERIÊNCIA {{ event.organizer }}</p>
-        <h1>{{ event.name }}</h1><p>{{ event.description }}</p>
+        <h1>{{ event.name }}</h1><p>{{event.isPaid?Number(event.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})+' por pessoa':'Inscrição gratuita'}}</p><p>{{ event.description }}</p>
         <div class="event-details"><div><small>QUANDO</small><strong>{{ date(event.startsAt) }}</strong><span>{{ date(event.startsAt, true) }} às {{ date(event.endsAt, true) }} · término previsto</span></div><div><small>ONDE</small><strong>{{ event.location }}</strong></div></div>
       </section>
       <section class="event-card">
         <p v-if="event.status === 'draft'" class="event-note">Prévia do gestor · este evento ainda não foi publicado.</p>
         <template v-if="event.status === 'cancelled'"><h2>Evento cancelado</h2><p>Entre em contato com a equipe organizadora para mais informações.</p></template>
         <template v-else-if="participant">
-          <RouterLink v-if="student" class="event-secondary" :to="'/aluno/evento/'+event.id">Abrir minha experiência</RouterLink><p class="event-kicker">MEU EVENTO</p><h2>Você está na lista, {{ participant.name.split(' ')[0] }}!</h2>
-          <p v-if="!event.finished && !participant.checkedInAt">Sua pré-inscrição está confirmada. No dia, abra este mesmo link e confirme sua presença.</p>
+          <RouterLink v-if="student?.canAccessExperience" class="event-secondary" :to="'/aluno/evento/'+event.id">Abrir minha experiência</RouterLink><p class="event-kicker">MEU EVENTO</p><h2>Você está na lista, {{ participant.name.split(' ')[0] }}!</h2>
+          <p v-if="participant.payment">Pagamento: {{participant.payment.status==='pago'?'confirmado':participant.payment.status==='cancelado'?'cancelado':'pendente'}} · {{Number(participant.payment.value).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}}</p><p v-if="!event.finished && !participant.checkedInAt">Sua pré-inscrição está confirmada. No dia, abra este mesmo link e confirme sua presença.</p>
           <div v-if="recovery" class="event-access"><strong>Guarde seu acesso</strong><p>O acesso fica salvo neste navegador. Para usar outro aparelho ou recuperar o acesso, guarde este código. Não compartilhe com outras pessoas.</p><code>{{ recovery }}</code><button class="event-secondary" @click="saveAccess">Baixar meu acesso e link</button></div>
           <div v-if="participant.checkedInAt" class="event-note">✓ Presença {{ participant.attendanceSource === 'self' ? 'confirmada por você' : 'registrada pela equipe' }}.</div>
           <template v-else-if="!event.finished"><button v-if="event.checkinOpen" class="event-primary" :disabled="busy" @click="act('checkin', {})">Estou no aulão · confirmar presença</button><p v-else class="event-note">A confirmação de presença abre em {{ date(event.checkinOpensAt) }}, às {{ date(event.checkinOpensAt, true) }}.</p><small>A confirmação é feita por você e pode ser revisada pela equipe. É preciso estar conectado à internet.</small></template>

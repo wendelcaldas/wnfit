@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Services\EventAccess;
 use App\Services\EventFeedbackService;
 use App\Services\EventRegistrationService;
 use App\Services\Messaging\MessagingService;
@@ -16,7 +17,7 @@ class PublicEventController extends Controller
 {
     private function visible(Request $request, Event $event): void
     {
-        abort_unless($event->status !== 'draft' || $request->user()?->organizacoes()->where('organizacoes.id', $event->organizacao_id)->exists(), 404);
+        abort_unless($event->status !== 'draft' || $request->user()?->organizacoes()->where('organizacoes.id', $event->organizacao_id)->wherePivot('status', 'ativo')->wherePivotIn('papel', ['proprietario', 'administrador', 'professor'])->exists(), 404);
     }
 
     private function participant(Request $request, Event $event): ?EventRegistration
@@ -24,9 +25,8 @@ class PublicEventController extends Controller
         $account = Auth::guard('student')->user();
         if ($account && $request->session()->get('student_credential_version') === $account->credential_version && ! $account->must_change_password && $account->aluno?->organizacao?->ativa && $account->aluno->organizacao_id === $event->organizacao_id) {
             $registration = $event->registrations()->where('aluno_id', $account->aluno_id)->first();
-            if ($registration) {
-                return $registration;
-            }
+
+            return $registration;
         }
         $token = $request->cookie('wnfit_event_'.$event->id);
 
@@ -45,7 +45,7 @@ class PublicEventController extends Controller
         $account = Auth::guard('student')->user();
         $student = $account && $request->session()->get('student_credential_version') === $account->credential_version && ! $account->must_change_password && $account->aluno?->organizacao?->ativa && $account->aluno->organizacao_id === $event->organizacao_id ? $account->aluno : null;
 
-        return response()->json(['student' => $student ? ['name' => $student->nome, 'phone' => $student->telefone, 'eligible' => $event->audience === 'open' || $student->perfil_tipo === 'aluno'] : null, 'event' => $event->publicPayload(), 'participant' => $this->participant($request, $event)?->participantPayload()])
+        return response()->json(['student' => $student ? ['name' => $student->nome, 'phone' => $student->telefone, 'canAccessExperience' => EventAccess::experienceAllowed($account) && $event->status === 'published', 'eligible' => $event->audience === 'open' || $student->perfil_tipo === 'aluno'] : null, 'event' => $event->publicPayload(), 'participant' => $this->participant($request, $event)?->participantPayload()])
             ->header('Cache-Control', 'no-store');
     }
 

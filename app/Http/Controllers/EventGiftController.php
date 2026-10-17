@@ -27,13 +27,21 @@ class EventGiftController extends Controller
             $r = EventRegistration::whereKey($r->id)->lockForUpdate()->firstOrFail();
             $settings = $event->moduleSettings()['gift'];
             abort_unless($settings['enabled'], 404);
-            if (! $r->gift_snapshot) {
-                abort_if($event->registrations()->whereNotNull('gift_snapshot')->count() >= ($settings['quantity'] ?? 0), 422, 'Os presentes disponíveis já foram reservados. Procure a equipe.');
-                $r->update(['gift_snapshot' => ['name' => $settings['name'], 'message' => $settings['message'] ?? '', 'instructions' => $settings['instructions'] ?? ''], 'gift_revealed_at' => now()]);
-            }
+            $this->assign($event, $r);
 
             return response()->json(['gift' => $r->gift_snapshot, 'deliveredAt' => $r->gift_delivered_at]);
         });
+    }
+
+    private function assign(Event $event, EventRegistration $r): void
+    {
+        if ($r->gift_snapshot) {
+            return;
+        }
+        $settings = $event->moduleSettings()['gift'];
+        abort_unless($event->status === 'published' && $settings['enabled'], 422, 'O presente não está disponível neste evento.');
+        abort_if($event->registrations()->whereNotNull('gift_snapshot')->count() >= ($settings['quantity'] ?? 0), 422, 'Os presentes disponíveis já foram reservados. Procure a equipe.');
+        $r->update(['gift_snapshot' => ['name' => $settings['name'], 'message' => $settings['message'] ?? '', 'instructions' => $settings['instructions'] ?? ''], 'gift_revealed_at' => now()]);
     }
 
     public function deliver(Request $request, Event $event, EventRegistration $registration)
@@ -41,9 +49,10 @@ class EventGiftController extends Controller
         EventAccess::staff($request, $event);
         abort_unless($registration->event_id === $event->id, 404);
 
-        return DB::transaction(function () use ($request, $registration) {
+        return DB::transaction(function () use ($request, $event, $registration) {
+            $event = Event::whereKey($event->id)->lockForUpdate()->firstOrFail();
             $r = EventRegistration::whereKey($registration->id)->lockForUpdate()->firstOrFail();
-            abort_unless($r->gift_snapshot, 422, 'O participante ainda não revelou seu presente.');
+            $this->assign($event, $r);
             if (! $r->gift_delivered_at) {
                 $r->update(['gift_delivered_at' => now(), 'gift_delivered_by' => $request->user()->id]);
             }

@@ -111,6 +111,6 @@ class EventPhotoController extends Controller
         $data = $request->validate(['status' => 'required|in:approved,removed']);
         $photo->update(['status' => $data['status'], 'moderated_by' => $request->user()->id, 'moderated_at' => now()]);
 
-        return response()->json(['photo' => $this->payload($request,$photo)]);
+        return response()->json(['photo' => $this->payload($request, $photo)]);
     }
 }

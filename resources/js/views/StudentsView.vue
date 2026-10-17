@@ -30,7 +30,7 @@
             </article>
         </section>
 
-        <section class="panel-card mt-6 !p-0">
+        <label class="mt-6 mb-4 block text-sm font-semibold">Exibir<select v-model="filters.tipo" class="form-control mt-2" @change="filters.status='todos';loadStudents()"><option value="aluno">Alunos</option><option value="participante">Participantes de eventos</option></select></label><section class="panel-card mt-6 !p-0">
             <div class="admin-student-filters grid gap-4 border-b border-[var(--wn-line)] p-5 xl:grid-cols-[1.6fr_repeat(3,0.9fr)_auto]">
                 <label class="input-shell self-end">
                     <Search class="h-5 w-5 text-[var(--wn-muted)]" />
@@ -43,7 +43,7 @@
                         <option value="todos">Todos</option>
                         <option value="ativo">Ativo</option>
                         <option value="avaliacao">Em avaliação</option>
-                        <option value="pausado">Pausado</option>
+                        <option value="pausado">Pausado</option><option v-if="filters.tipo==='participante'" value="participante">Participante</option>
                     </select>
                 </label>
 
@@ -158,7 +158,7 @@ const summaryMeta = {
 const summary = ref([]);
 const students = ref([]);
 const options = reactive({ plans: [], teachers: [] });
-const filters = reactive({ q: '', status: 'todos', plano: 'todos', professor: 'todos' });
+const filters = reactive({ tipo:'aluno', q: '', status: 'todos', plano: 'todos', professor: 'todos' });
 
 const loadStudents = async () => {
     const { data } = await window.axios.get('/api/students', { params: filters });

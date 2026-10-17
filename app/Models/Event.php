@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Event extends Model
 {
@@ -11,7 +12,12 @@ class Event extends Model
 
     protected function casts(): array
     {
-        return ['modules' => 'array', 'closed_at' => 'datetime', 'starts_at' => 'datetime', 'ends_at' => 'datetime', 'checkin_opens_at' => 'datetime', 'checkin_closes_at' => 'datetime'];
+        return ['is_paid' => 'boolean', 'price' => 'decimal:2', 'modules' => 'array', 'closed_at' => 'datetime', 'starts_at' => 'datetime', 'ends_at' => 'datetime', 'checkin_opens_at' => 'datetime', 'checkin_closes_at' => 'datetime'];
+    }
+
+    public function charges(): HasManyThrough
+    {
+        return $this->hasManyThrough(Cobranca::class, EventRegistration::class, 'event_id', 'event_registration_id');
     }
 
     public function registrations(): HasMany
@@ -27,14 +33,15 @@ class Event extends Model
     public function publicPayload(): array
     {
         return [
-            'audience' => $this->audience, 'modules' => $this->moduleSettings(),
+            'isPaid' => (bool) $this->is_paid, 'price' => (float) $this->price, 'audience' => $this->audience, 'modules' => $this->moduleSettings(),
             'id' => $this->id, 'slug' => $this->slug, 'name' => $this->name, 'organizer' => $this->organizer,
             'description' => $this->description, 'location' => $this->location, 'instructions' => $this->instructions,
             'status' => $this->status, 'startsAt' => $this->starts_at?->toIso8601String(), 'endsAt' => $this->ends_at?->toIso8601String(),
             'checkinOpensAt' => $this->checkin_opens_at?->toIso8601String(), 'checkinClosesAt' => $this->checkin_closes_at?->toIso8601String(),
             'timezone' => config('app.timezone'),
             'registrationOpen' => $this->status === 'published' && ! $this->closed_at
-                && (! $this->capacity || $this->registrations()->count() < $this->capacity),
+                && (! $this->capacity || $this->registrations()->count() < $this->capacity)
+                && (! $this->moduleSettings()['gift']['enabled'] || $this->registrations()->count() < ($this->moduleSettings()['gift']['quantity'] ?? 0)),
             'checkinOpen' => $this->status === 'published' && ! $this->closed_at && $this->checkin_opens_at && now()->gte($this->checkin_opens_at),
             'finished' => (bool) $this->closed_at,
             'afterContent' => $this->closed_at ? $this->after_content : null,

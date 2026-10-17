@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Services\EventAccess;
 use App\Services\EventFeedbackService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +14,9 @@ class StudentEventController extends Controller
 {
     public function participant(Event $event): EventRegistration
     {
-        $student = Auth::guard('student')->user()->aluno;
+        $account = Auth::guard('student')->user();
+        abort_unless(EventAccess::experienceAllowed($account), 404);
+        $student = $account->aluno;
         abort_unless($event->organizacao_id === $student->organizacao_id && $event->status === 'published', 404);
 
         return $event->registrations()->where('aluno_id', $student->id)->firstOrFail();

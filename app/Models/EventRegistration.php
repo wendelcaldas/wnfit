@@ -4,12 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class EventRegistration extends Model
 {
     protected $guarded = ['id'];
 
-    protected $hidden = ['access_hash', 'recovery_hash'];
+    protected $hidden = ['access_hash', 'recovery_hash', 'enrollment_key'];
+
+    public function event(): BelongsTo
+    {
+        return $this->belongsTo(Event::class);
+    }
+
+    public function charge(): HasOne
+    {
+        return $this->hasOne(Cobranca::class);
+    }
 
     public function aluno(): BelongsTo
     {
@@ -23,7 +34,7 @@ class EventRegistration extends Model
 
     public function participantPayload(): array
     {
-        return ['name' => $this->name, 'registeredAt' => $this->created_at->toIso8601String(), 'checkedInAt' => $this->checked_in_at?->toIso8601String(),
+        return ['payment' => $this->charge ? ['status' => $this->charge->status, 'value' => (float) $this->charge->valor, 'description' => $this->charge->descricao, 'refundReview' => (bool) $this->charge->refund_review_required] : null, 'name' => $this->name, 'registeredAt' => $this->created_at->toIso8601String(), 'checkedInAt' => $this->checked_in_at?->toIso8601String(),
             'attendanceSource' => $this->attendance_source, 'rating' => $this->rating, 'feedback' => $this->feedback,
             'marketingOptIn' => $this->marketing_opt_in];
     }

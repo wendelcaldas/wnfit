@@ -113,7 +113,7 @@ import { useStudentCredentialsStore } from "../stores/studentCredentials";
 const auth = useStudentAuthStore();
 const router = useRouter();
 const route = useRoute();
-const destination = () => { const v = route.query.redirect; return typeof v === 'string' && /^\/(evento\/|aluno\/)/.test(v) && !v.startsWith('//') ? v : '/aluno/inicio'; };
+const destination = () => { const v = route.query.redirect; return typeof v === 'string' && /^\/(evento\/|aluno\/(?:evento|inicio|treinos|sessao)(?:\/|$))/.test(v) && !v.startsWith('//') ? v : '/aluno/inicio'; };
 const form = reactive({ username: "", password: "" });
 const show = ref(false);
 const help = ref(false);

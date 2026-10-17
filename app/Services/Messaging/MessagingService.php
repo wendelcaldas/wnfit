@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class MessagingService
 {
@@ -20,7 +21,7 @@ class MessagingService
     {
         $charge->loadMissing(['aluno', 'assinatura.plano', 'organizacao']);
 
-        if ($this->isManualMode()) {
+        if ($charge->origem === 'evento' || $this->isManualMode()) {
             return $this->prepareManualChargeReminder($charge, 'Envio manual configurado para esta organizacao.');
         }
 
@@ -47,7 +48,7 @@ class MessagingService
         $settings = $this->settingsForOrganization($charge->organizacao);
         $variables = $this->chargeTemplateVariables($charge);
         $to = $this->normalizeBrazilianPhone($charge->aluno->telefone);
-        $body = $this->renderTemplate($settings->charge_message_body, $variables);
+        $body = $charge->origem === 'evento' ? 'Olá, '.$charge->aluno->nome.'! Sua inscrição — '.$charge->descricao.' — tem valor de R$ '.number_format((float) $charge->valor, 2, ',', '.').' e vencimento em '.$charge->vencimento->format('d/m/Y').'. Procure a equipe para combinar o pagamento. Se já pagou, envie o comprovante para conferência.' : $this->renderTemplate($settings->charge_message_body, $variables);
 
         return Mensagem::query()->create([
             'organizacao_id' => $charge->organizacao_id,
@@ -182,8 +183,8 @@ class MessagingService
 
     public function prepareGroupedReminder(Aluno $student, Collection $charges): Mensagem
     {
-        $lines = $charges->sortBy('vencimento')->map(fn ($c) => $c->competencia.' — R$ '.number_format((float) $c->valor, 2, ',', '.').' (vencimento '.$c->vencimento->format('d/m/Y').')')->implode("\n");
-        $body = 'Ola, '.$student->nome.'! Seguem as mensalidades em aberto no '.$student->organizacao->nome_fantasia.":\n\n".$lines."\n\nTotal: R$ ".number_format((float) $charges->sum('valor'), 2, ',', '.').".\nPodemos combinar o pagamento? Se ja pagou, envie o comprovante para conferirmos. Obrigado!";
+        $lines = $charges->sortBy('vencimento')->map(fn ($c) => ($c->origem === 'evento' ? $c->descricao : $c->competencia).' — R$ '.number_format((float) $c->valor, 2, ',', '.').' (vencimento '.$c->vencimento->format('d/m/Y').')')->implode("\n");
+        $body = 'Ola, '.$student->nome.'! Seguem as '.($charges->contains(fn ($c) => $c->origem === 'evento') ? 'cobranças' : 'mensalidades').' em aberto no '.$student->organizacao->nome_fantasia.":\n\n".$lines."\n\nTotal: R$ ".number_format((float) $charges->sum('valor'), 2, ',', '.').".\nPodemos combinar o pagamento? Se ja pagou, envie o comprovante para conferirmos. Obrigado!";
         $message = Mensagem::create([
             'organizacao_id' => $student->organizacao_id, 'aluno_id' => $student->id,
             'canal' => 'whatsapp', 'provedor' => 'whatsapp_link', 'tipo' => 'cobranca_manual_assistida',
@@ -376,10 +377,11 @@ class MessagingService
             $digits = substr($digits, 2);
         }
         if (! preg_match('/^[1-9][0-9](?:[2-5][0-9]{7}|9[0-9]{8})$/', $digits)) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'telefone' => 'Cadastre um telefone válido do aluno com DDD para enviar pelo WhatsApp.',
             ]);
         }
+
         return '+55'.$digits;
     }
 }

@@ -6,6 +6,7 @@ use App\Models\Aluno;
 use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Services\EventAccess;
+use App\Services\EventBillingService;
 use App\Services\EventRegistrationService;
 use App\Services\Messaging\MessagingService;
 use Illuminate\Http\Request;
@@ -22,7 +23,8 @@ class EventController extends Controller
 
         return DB::transaction(function () use ($event, $data) {
             $event = Event::whereKey($event->id)->lockForUpdate()->firstOrFail();
-            abort_if(($data['modules']['gift']['quantity'] ?? 0) < $event->registrations()->whereNotNull('gift_snapshot')->count(), 422, 'A quantidade não pode ser menor que os presentes já atribuídos.');
+            abort_if(($data['modules']['gift']['enabled'] ?? false) && ($data['modules']['gift']['quantity'] ?? 0) < $event->registrations()->whereNotNull('gift_snapshot')->count(), 422, 'A quantidade não pode ser menor que os presentes já atribuídos.');
+            abort_if(($data['modules']['gift']['enabled'] ?? false) && ($data['modules']['gift']['quantity'] ?? 0) < $event->registrations()->count(), 422, 'A quantidade de presentes deve cobrir todos os inscritos.');
             $event->update(['modules' => $data['modules']]);
 
             return response()->json($event);
@@ -32,14 +34,23 @@ class EventController extends Controller
     public function addParticipant(Request $request, Event $event)
     {
         EventAccess::staff($request, $event);
-        $data = $request->validate(['student_id' => 'nullable|integer', 'name' => 'required_without:student_id|string|min:2|max:120', 'phone' => 'nullable|string|max:30']);
+        $data = $request->validate(['request_id' => 'required_without:student_id|uuid', 'allow_shared_phone' => 'sometimes|boolean', 'student_id' => 'nullable|integer', 'name' => 'required_without:student_id|string|min:2|max:120', 'phone' => 'nullable|string|max:30', 'paid' => 'sometimes|boolean', 'method' => 'required_if:paid,true|in:PIX,Crédito,Débito,Dinheiro,Transferência,Boleto', 'paid_at' => 'required_if:paid,true|date|before_or_equal:today']);
         if (! empty($data['phone'])) {
             $data['phone'] = app(MessagingService::class)->normalizeBrazilianPhone($data['phone']);
         }
         $student = ! empty($data['student_id']) ? Aluno::where('organizacao_id', $event->organizacao_id)->findOrFail($data['student_id']) : null;
-        [$registration] = app(EventRegistrationService::class)->register($event, $student, $data, 'staff', $request->user()->id);
+        if ($request->boolean('paid')) {
+            EventAccess::staff($request, $event, true);
+        }
 
-        return response()->json(['participant' => $registration->participantPayload()]);
+        return DB::transaction(function () use ($event, $student, $data, $request) {
+            [$registration] = app(EventRegistrationService::class)->register($event, $student, $data, 'staff', $request->user()->id);
+            if ($request->boolean('paid')) {
+                app(EventBillingService::class)->receive($request, $event, $registration);
+            }
+
+            return response()->json(['participant' => $registration->fresh()->participantPayload()]);
+        });
     }
 
     public function people(Request $request, Event $event)
@@ -63,7 +74,8 @@ class EventController extends Controller
     {
         $org = $request->user()->organizacoes()->wherePivot('status', 'ativo')->wherePivotIn('papel', ['proprietario', 'administrador', 'professor'])->firstOrFail();
 
-        return Event::where('organizacao_id', $org->id)->withCount(['registrations', 'registrations as present_count' => fn ($q) => $q->whereNotNull('checked_in_at')])->latest()->get()->map(function ($event) use ($org) {
+        return Event::where('organizacao_id', $org->id)->withSum(['charges as paid_total' => fn ($q) => $q->where('cobrancas.status', 'pago')], 'valor')->withSum(['charges as open_total' => fn ($q) => $q->whereIn('cobrancas.status', ['pendente', 'atrasado'])], 'valor')->withCount(['registrations', 'registrations as present_count' => fn ($q) => $q->whereNotNull('checked_in_at')])->latest()->get()->map(function ($event) use ($org) {
+            $event->setAttribute('modules', $event->moduleSettings());
             $event->setAttribute('can_manage', in_array($org->pivot->papel, ['proprietario', 'administrador']));
 
             return $event;
@@ -75,7 +87,7 @@ class EventController extends Controller
         $org = $this->organization($request, $event);
         abort_if($event?->closed_at, 422, 'O evento já foi encerrado.');
         $data = $request->validate([
-            'audience' => 'sometimes|in:open,students', 'name' => 'required|string|max:150', 'organizer' => 'required|string|max:150',
+            'is_paid' => 'sometimes|boolean', 'price' => 'sometimes|numeric|decimal:0,2|min:0|max:99999999.99', 'audience' => 'sometimes|in:open,students', 'name' => 'required|string|max:150', 'organizer' => 'required|string|max:150',
             'description' => 'nullable|string|max:3000', 'location' => 'required|string|max:255',
             'instructions' => 'nullable|string|max:3000', 'after_content' => 'nullable|string|max:3000',
             'starts_at' => 'required|date', 'ends_at' => 'required|date|after:starts_at',
@@ -87,12 +99,22 @@ class EventController extends Controller
             $data[$field] = Carbon::parse($data[$field], config('app.timezone'))->setTimezone(config('app.timezone'));
         }
 
+        if (isset($data['is_paid']) && ! $data['is_paid']) {
+            $data['price'] = 0;
+        }
+        abort_if(($data['is_paid'] ?? $event?->is_paid) && (float) ($data['price'] ?? $event?->price ?? 0) <= 0, 422, 'Informe o valor da inscrição.');
+
         return DB::transaction(function () use ($event, $data, $org) {
             if ($event) {
                 $event = Event::lockForUpdate()->findOrFail($event->id);
+                abort_if($event->status === 'cancelled' && $data['status'] !== 'cancelled', 422, 'Um evento cancelado não pode ser reaberto. Crie um novo evento.');
                 abort_if($event->closed_at, 422, 'O evento já foi encerrado.');
                 abort_if(($data['capacity'] ?? null) && $data['capacity'] < $event->registrations()->count(), 422, 'O limite não pode ser menor que o total de inscritos.');
+                abort_if($event->registrations()->exists() && ((array_key_exists('is_paid', $data) && (bool) $data['is_paid'] !== (bool) $event->is_paid) || (array_key_exists('price', $data) && (float) $data['price'] !== (float) $event->price)), 422, 'Valor e modalidade ficam fixos após a primeira inscrição.');
                 $event->update($data);
+                if ($event->status === 'cancelled') {
+                    app(EventBillingService::class)->cancel($event);
+                }
             } else {
                 $event = Event::create([...$data, 'modules' => ['gift' => ['enabled' => false], 'album' => ['enabled' => false], 'feedback' => ['enabled' => false]], 'organizacao_id' => $org->id, 'slug' => Str::slug($data['name']).'-'.Str::lower(Str::random(8))]);
             }
@@ -121,7 +143,7 @@ class EventController extends Controller
         EventAccess::staff($request, $event);
         $data = $request->validate(['q' => 'nullable|string|max:120', 'status' => 'nullable|in:present,absent']);
 
-        return $event->registrations()->with('aluno:id,nome')->select(['id', 'aluno_id', 'gift_snapshot', 'gift_delivered_at', 'name', 'phone', 'created_at', 'checked_in_at', 'attendance_source', 'marketing_opt_in', 'rating', 'feedback'])
+        return $event->registrations()->with(['aluno:id,nome', 'charge'])->select(['id', 'aluno_id', 'gift_snapshot', 'gift_delivered_at', 'name', 'phone', 'created_at', 'checked_in_at', 'attendance_source', 'marketing_opt_in', 'rating', 'feedback'])
             ->when($data['q'] ?? null, fn ($q, $term) => $q->where(fn ($q) => $q->where('name', 'like', '%'.$term.'%')->orWhere('phone', 'like', '%'.$term.'%')))
             ->when(($data['status'] ?? null) === 'present', fn ($q) => $q->whereNotNull('checked_in_at'))
             ->when(($data['status'] ?? null) === 'absent', fn ($q) => $q->whereNull('checked_in_at'))

@@ -58,11 +58,11 @@ class UnifiedEventTest extends TestCase
     public function test_gifts_preserve_snapshots_stock_and_delivery(): void
     {
         [$owner,$org,$event] = $this->context();
-        $event->update(['modules' => ['gift' => ['enabled' => true, 'name' => 'Nécessaire', 'quantity' => 1, 'message' => 'Cuide-se', 'instructions' => 'Equipe']]]);
+        $event->update(['modules' => ['gift' => ['enabled' => true, 'name' => 'Nécessaire', 'quantity' => 2, 'message' => 'Cuide-se', 'instructions' => 'Equipe']]]);
         $first = $this->student($org);
         $second = $this->student($org);
         foreach ([$first, $second] as $account) {
-            $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['student_id' => $account->aluno_id])->assertOk();
+            $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['request_id' => Str::uuid(), 'student_id' => $account->aluno_id])->assertOk();
         }
         $this->loginStudent($first);
         $this->getJson("/api/student/events/{$event->id}/gift")->assertOk()->assertJsonPath('gift', null);
@@ -91,7 +91,7 @@ class UnifiedEventTest extends TestCase
         $first = $this->student($org);
         $second = $this->student($org);
         foreach ([$first, $second] as $account) {
-            $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['student_id' => $account->aluno_id])->assertOk();
+            $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['request_id' => Str::uuid(), 'student_id' => $account->aluno_id])->assertOk();
         }
         $base = "/api/student/events/{$event->id}/photos";
         $this->loginStudent($first);
@@ -146,8 +146,8 @@ class UnifiedEventTest extends TestCase
         $this->actingAs($teacher);
         foreach (['71999991234', '71999991234', null] as $phone) {
             $student = Aluno::create(['organizacao_id' => $org->id, 'nome' => 'Aluno', 'telefone' => $phone]);
-            $this->postJson("/api/events/{$event->id}/registrations", ['student_id' => $student->id])->assertOk();
-            $this->postJson("/api/events/{$event->id}/registrations", ['student_id' => $student->id])->assertOk();
+            $this->postJson("/api/events/{$event->id}/registrations", ['request_id' => Str::uuid(), 'student_id' => $student->id])->assertOk();
+            $this->postJson("/api/events/{$event->id}/registrations", ['request_id' => Str::uuid(), 'student_id' => $student->id])->assertOk();
         }
         $this->assertDatabaseCount('event_registrations', 3);
         $registration = $event->registrations()->first();
@@ -182,15 +182,89 @@ class UnifiedEventTest extends TestCase
         [$owner,$org,$event] = $this->context();
         $event->update(['capacity' => 1]);
         $this->postJson('/api/public/events/'.$event->slug.'/register', ['name' => 'Visitante', 'phone' => '71999991234', 'privacy' => true])->assertCreated();
-        $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['name' => 'Outro Visitante'])->assertUnprocessable();
+        $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['request_id' => Str::uuid(), 'name' => 'Outro Visitante'])->assertUnprocessable();
         $this->assertDatabaseCount('alunos', 1);
+    }
+
+    public function test_teacher_can_deliver_guaranteed_gift_to_participant_without_phone_or_account(): void
+    {
+        [$teacher,$org,$event] = $this->context('professor');
+        $event->update(['modules' => ['gift' => ['enabled' => true, 'quantity' => 1, 'name' => 'Nécessaire']]]);
+        $this->actingAs($teacher)->postJson("/api/events/{$event->id}/registrations", ['request_id' => Str::uuid(), 'name' => 'Pessoa sem celular'])->assertOk();
+        $registration = $event->registrations()->firstOrFail();
+        $url = "/api/events/{$event->id}/registrations/{$registration->id}/gift-delivery";
+        $this->postJson($url)->assertOk();
+        $this->postJson($url)->assertOk();
+        $this->assertSame('Nécessaire', $registration->fresh()->gift_snapshot['name']);
+        $this->assertEquals($teacher->id, $registration->fresh()->gift_delivered_by);
+        $this->assertDatabaseCount('student_accounts', 0);
+        $this->assertSame(1, $event->registrations()->whereNotNull('gift_snapshot')->count());
+    }
+
+    public function test_pilot_is_configurable_without_changing_event_membership(): void
+    {
+        [$owner,$org,$event] = $this->context();
+        $account = $this->student($org);
+        $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['request_id' => Str::uuid(), 'student_id' => $account->aluno_id])->assertOk();
+        config(['events.pilot_username' => 'outro-usuario']);
+        $this->loginStudent($account);
+        $this->getJson('/api/student/me')->assertJsonPath('student.canAccessEvents', false);
+        $this->getJson("/api/student/events/{$event->id}")->assertNotFound();
+        config(['events.pilot_username' => '']);
+        $this->getJson("/api/student/events/{$event->id}")->assertOk();
+    }
+
+    public function test_staff_can_confirm_shared_phone_without_duplicate_on_retry(): void
+    {
+        [$owner,$org,$event] = $this->context();
+        $url = "/api/events/{$event->id}/registrations";
+        $this->actingAs($owner);
+        $first = ['request_id' => (string) Str::uuid(), 'name' => 'Pessoa Um', 'phone' => '71999991234'];
+        $this->postJson($url, $first)->assertOk();
+        $this->postJson($url, $first)->assertOk();
+        $this->assertDatabaseCount('alunos', 1);
+        $second = ['request_id' => (string) Str::uuid(), 'name' => 'Pessoa Dois', 'phone' => '71999991234'];
+        $this->postJson($url, $second)->assertUnprocessable();
+        $this->postJson($url, [...$second, 'allow_shared_phone' => true])->assertOk();
+        $this->postJson($url, [...$second, 'allow_shared_phone' => true])->assertOk();
+        $this->assertDatabaseCount('event_registrations', 2);
+        $this->assertDatabaseCount('alunos', 2);
+        $this->postJson($url, [...$second, 'name' => 'Outra Pessoa', 'allow_shared_phone' => true])->assertConflict();
+    }
+
+    public function test_legacy_registration_requires_explicit_link_instead_of_duplicate_signup(): void
+    {
+        [$owner,$org,$event] = $this->context();
+        $account = $this->student($org);
+        $account->aluno->update(['telefone' => '(71) 99999-1234']);
+        $registration = $event->registrations()->create(['name' => 'Cadastro antigo', 'phone' => '+5571999991234', 'access_hash' => hash('sha256', Str::uuid()), 'recovery_hash' => hash('sha256', Str::uuid()), 'privacy_accepted_at' => now()]);
+        $this->loginStudent($account);
+        $this->postJson("/api/student/events/{$event->id}/register", ['privacy' => true])->assertUnprocessable();
+        $this->assertDatabaseCount('event_registrations', 1);
+        $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations/{$registration->id}/access", ['mode' => 'link', 'student_id' => $account->aluno_id])->assertOk();
+        $this->loginStudent($account);
+        $this->getJson("/api/student/events/{$event->id}")->assertOk();
+    }
+
+    public function test_production_upload_requires_confirmed_persistence(): void
+    {
+        [$owner,$org,$event] = $this->context();
+        $event->update(['modules' => ['album' => ['enabled' => true]]]);
+        $account = $this->student($org);
+        $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['request_id' => Str::uuid(), 'student_id' => $account->aluno_id])->assertOk();
+        $this->loginStudent($account);
+        config(['events.photo_storage_persistent' => false]);
+        $this->app['env'] = 'production';
+        $this->withSession(['_token' => 'event-test-token']);
+        $this->postJson("/api/student/events/{$event->id}/photos", ['_token' => 'event-test-token', 'consent' => true])->assertStatus(503);
+        $this->assertDatabaseCount('event_photos', 0);
     }
 
     public function test_event_page_is_scoped_and_welcome_is_persisted(): void
     {
         [$owner,$org,$event] = $this->context();
         $account = $this->student($org);
-        $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['student_id' => $account->aluno_id])->assertOk();
+        $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['request_id' => Str::uuid(), 'student_id' => $account->aluno_id])->assertOk();
         $this->loginStudent($account);
         $this->getJson('/api/student/me')->assertJsonPath('student.canAccessEvents', true);
         $this->getJson('/api/student/events')->assertOk()->assertJsonCount(1);

@@ -1,5 +1,7 @@
 # Participantes e acesso do evento
 
+Registro da primeira entrega. Para o comportamento integrado e a publicação das entregas seguintes, consultar [Eventos](EVENTOS.md).
+
 Branch da entrega: `codex/event-participant-access`, a partir de `f54da4d` (main).
 
 ## Fluxo da equipe

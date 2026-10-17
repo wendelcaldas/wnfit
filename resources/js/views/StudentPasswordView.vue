@@ -74,7 +74,7 @@ import { useStudentAuthStore } from "../stores/studentAuth";
 const auth = useStudentAuthStore();
 const router = useRouter();
 const route = useRoute();
-const destination = () => { const v = route.query.redirect; return typeof v === 'string' && /^\/(evento\/|aluno\/)/.test(v) && !v.startsWith('//') ? v : '/aluno/inicio'; };
+const destination = () => { const v = route.query.redirect; return typeof v === 'string' && /^\/(evento\/|aluno\/(?:evento|inicio|treinos|sessao)(?:\/|$))/.test(v) && !v.startsWith('//') ? v : '/aluno/inicio'; };
 const busy = ref(false);
 const error = ref("");
 const form = reactive({
