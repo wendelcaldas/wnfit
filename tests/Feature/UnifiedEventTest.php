@@ -94,6 +94,40 @@ class UnifiedEventTest extends TestCase
         $event->update(['capacity' => 1]);
         $this->postJson('/api/public/events/'.$event->slug.'/register', ['name' => 'Visitante', 'phone' => '71999991234', 'privacy' => true])->assertCreated();
         $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['name' => 'Outro Visitante'])->assertUnprocessable();
-        $this->assertDatabaseCount('alunos',1);
+        $this->assertDatabaseCount('alunos', 1);
+    }
+
+    public function test_event_page_is_scoped_and_welcome_is_persisted(): void
+    {
+        [$owner,$org,$event] = $this->context();
+        $account = $this->student($org);
+        $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['student_id' => $account->aluno_id])->assertOk();
+        $this->loginStudent($account);
+        $this->getJson('/api/student/me')->assertJsonPath('student.canAccessEvents', true);
+        $this->getJson('/api/student/events')->assertOk()->assertJsonCount(1);
+        $this->getJson("/api/student/events/{$event->id}")->assertOk()->assertJsonPath('welcomed', false);
+        $this->postJson("/api/student/events/{$event->id}/welcome")->assertOk();
+        $time = $event->registrations()->first()->welcomed_at;
+        $this->postJson("/api/student/events/{$event->id}/welcome")->assertOk();
+        $this->assertEquals($time, $event->registrations()->first()->welcomed_at);
+        $this->getJson("/api/student/events/{$event->id}")->assertJsonPath('welcomed', true);
+        $this->loginStudent($this->student($org));
+        $this->getJson("/api/student/events/{$event->id}")->assertNotFound();
+        $event->update(['status' => 'draft']);
+        $this->loginStudent($account);
+        $this->getJson("/api/student/events/{$event->id}")->assertNotFound();
+    }
+
+    public function test_modules_are_per_event_and_configuration_is_manager_only(): void
+    {
+        [$owner,$org,$event] = $this->context();
+        [,$otherOrg,$otherEvent] = $this->context();
+        $modules = ['gift' => ['enabled' => true, 'name' => 'Nécessaire', 'quantity' => 20], 'album' => ['enabled' => false], 'feedback' => ['enabled' => false]];
+        $this->actingAs($owner)->patchJson("/api/events/{$event->id}/settings", ['modules' => $modules])->assertOk();
+        $this->assertTrue($event->fresh()->moduleSettings()['gift']['enabled']);
+        $this->assertFalse($otherEvent->fresh()->moduleSettings()['gift']['enabled']);
+        $this->patchJson("/api/events/{$otherEvent->id}/settings", ['modules' => $modules])->assertNotFound();
+        $owner->organizacoes()->updateExistingPivot($org->id, ['papel' => 'professor']);
+        $this->patchJson("/api/events/{$event->id}/settings", ['modules' => $modules])->assertForbidden();
     }
 }

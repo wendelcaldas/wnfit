@@ -11,7 +11,7 @@ class Event extends Model
 
     protected function casts(): array
     {
-        return ['closed_at' => 'datetime', 'starts_at' => 'datetime', 'ends_at' => 'datetime', 'checkin_opens_at' => 'datetime', 'checkin_closes_at' => 'datetime'];
+        return ['modules' => 'array', 'closed_at' => 'datetime', 'starts_at' => 'datetime', 'ends_at' => 'datetime', 'checkin_opens_at' => 'datetime', 'checkin_closes_at' => 'datetime'];
     }
 
     public function registrations(): HasMany
@@ -19,10 +19,15 @@ class Event extends Model
         return $this->hasMany(EventRegistration::class);
     }
 
+    public function moduleSettings(): array
+    {
+        return array_replace_recursive(['gift' => ['enabled' => false], 'album' => ['enabled' => false], 'feedback' => ['enabled' => true, 'title' => 'Como foi a experiência?', 'message' => 'Sua opinião é importante.']], $this->modules ?? []);
+    }
+
     public function publicPayload(): array
     {
         return [
-            'audience' => $this->audience,
+            'audience' => $this->audience, 'modules' => $this->moduleSettings(),
             'id' => $this->id, 'slug' => $this->slug, 'name' => $this->name, 'organizer' => $this->organizer,
             'description' => $this->description, 'location' => $this->location, 'instructions' => $this->instructions,
             'status' => $this->status, 'startsAt' => $this->starts_at?->toIso8601String(), 'endsAt' => $this->ends_at?->toIso8601String(),

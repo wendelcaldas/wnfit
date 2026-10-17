@@ -15,6 +15,15 @@ use Illuminate\Support\Str;
 
 class EventController extends Controller
 {
+    public function settings(Request $request, Event $event)
+    {
+        EventAccess::staff($request, $event, true);
+        $data = $request->validate(['modules' => 'required|array:gift,album,feedback', 'modules.gift' => 'required|array:enabled,name,message,quantity,instructions', 'modules.gift.enabled' => 'required|boolean', 'modules.gift.name' => 'required_if:modules.gift.enabled,true|nullable|string|max:120', 'modules.gift.quantity' => 'required_if:modules.gift.enabled,true|nullable|integer|min:1|max:100000', 'modules.gift.message' => 'nullable|string|max:1000', 'modules.gift.instructions' => 'nullable|string|max:1000', 'modules.album' => 'required|array:enabled,instructions', 'modules.album.enabled' => 'required|boolean', 'modules.album.instructions' => 'nullable|string|max:1000', 'modules.feedback' => 'required|array:enabled,title,message', 'modules.feedback.enabled' => 'required|boolean', 'modules.feedback.title' => 'required_if:modules.feedback.enabled,true|nullable|string|max:120', 'modules.feedback.message' => 'nullable|string|max:1000']);
+        $event->update(['modules' => $data['modules']]);
+
+        return response()->json($event);
+    }
+
     public function addParticipant(Request $request, Event $event)
     {
         EventAccess::staff($request, $event);
@@ -49,7 +58,11 @@ class EventController extends Controller
     {
         $org = $request->user()->organizacoes()->wherePivot('status', 'ativo')->wherePivotIn('papel', ['proprietario', 'administrador', 'professor'])->firstOrFail();
 
-        return Event::where('organizacao_id', $org->id)->withCount(['registrations', 'registrations as present_count' => fn ($q) => $q->whereNotNull('checked_in_at')])->latest()->get();
+        return Event::where('organizacao_id', $org->id)->withCount(['registrations', 'registrations as present_count' => fn ($q) => $q->whereNotNull('checked_in_at')])->latest()->get()->map(function ($event) use ($org) {
+            $event->setAttribute('can_manage', in_array($org->pivot->papel, ['proprietario', 'administrador']));
+
+            return $event;
+        });
     }
 
     public function save(Request $request, ?Event $event = null)
