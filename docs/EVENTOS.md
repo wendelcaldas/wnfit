@@ -2,7 +2,9 @@
 
 ## Entregas e branches
 
-As branches são encadeadas: cada uma parte da entrega anterior, sem misturar o trabalho local de avaliação física.
+A branch consolidada para revisão e deploy é **`feature/eventos`**. Ela reúne todas as entregas abaixo e o refinamento da experiência do aluno, preservando seus commits. O trabalho local de avaliação física permanece separado.
+
+As branches de desenvolvimento abaixo registram as etapas anteriores, encadeadas na branch consolidada.
 
 | Entrega | Branch |
 |---|---|
@@ -13,6 +15,7 @@ As branches são encadeadas: cada uma parte da entrega anterior, sem misturar o 
 | Álbum privado e moderação | `codex/event-shared-album` |
 | Pesquisa integrada | `codex/event-feedback` |
 | Cobrança avulsa e integração financeira | `codex/event-paid-registration` |
+| Refinamento da experiência do aluno | `codex/student-event-experience` |
 
 ## Participação
 
