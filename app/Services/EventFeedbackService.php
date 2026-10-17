@@ -8,13 +8,13 @@ use Illuminate\Support\Facades\DB;
 
 class EventFeedbackService
 {
-    public function save(Event $event, EventRegistration $registration, array $data): EventRegistration
+    public function save(Event $event, EventRegistration $registration, array $data, bool $pilotAccess = false): EventRegistration
     {
-        return DB::transaction(function () use ($event, $registration, $data) {
+        return DB::transaction(function () use ($event, $registration, $data, $pilotAccess) {
             $event = Event::whereKey($event->id)->lockForUpdate()->firstOrFail();
             $registration = EventRegistration::whereKey($registration->id)->lockForUpdate()->firstOrFail();
             abort_unless($registration->event_id === $event->id, 404);
-            abort_unless($event->moduleSettings()['feedback']['enabled'] && $event->status === 'published' && $event->closed_at && $registration->checked_in_at, 422, 'A avaliação estará disponível após o evento para quem confirmou presença.');
+            abort_unless($event->moduleSettings()['feedback']['enabled'] && $event->status === 'published' && ($pilotAccess || ($event->closed_at && $registration->checked_in_at)), 422, 'A avaliação estará disponível após o evento para quem confirmou presença.');
             $registration->update($data);
 
             return $registration;

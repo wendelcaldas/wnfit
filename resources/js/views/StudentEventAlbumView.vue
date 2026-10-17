@@ -12,6 +12,7 @@ async function load() {
         const { data } = await window.axios.get('/api/student/events/' + route.params.id);
         if (current !== version) return;
         if (!data.event.modules.album.enabled) { error.value = 'O álbum deste evento não está disponível.'; return; }
+        if (!data.event.modulesAvailable) { error.value = 'O álbum estará disponível no dia do evento.'; return; }
         detail.value = data;
     } catch (e) { if (current === version) error.value = e.response?.data?.message || 'Não foi possível carregar o álbum.'; }
     finally { if (current === version) loading.value = false; }

@@ -15,7 +15,6 @@ class StudentEventController extends Controller
     public function participant(Event $event): EventRegistration
     {
         $account = Auth::guard('student')->user();
-        abort_unless(EventAccess::experienceAllowed($account), 404);
         $student = $account->aluno;
         abort_unless($event->organizacao_id === $student->organizacao_id && $event->status === 'published', 404);
 
@@ -33,7 +32,17 @@ class StudentEventController extends Controller
     {
         $participant = $this->participant($event);
 
-        return response()->json(['event' => $event->publicPayload(), 'participant' => $participant->participantPayload(), 'welcomed' => (bool) $participant->welcomed_at]);
+        $account = Auth::guard('student')->user();
+
+        return response()->json([
+            'event' => [
+                ...$event->publicPayload(),
+                'modulesAvailable' => EventAccess::modulesAvailable($account, $event),
+                'pilotAccess' => EventAccess::isPilot($account),
+            ],
+            'participant' => $participant->participantPayload(),
+            'welcomed' => (bool) $participant->welcomed_at,
+        ]);
     }
 
     public function welcome(Event $event)
@@ -47,8 +56,9 @@ class StudentEventController extends Controller
     public function feedback(Request $request, Event $event)
     {
         $registration = $this->participant($event);
+        EventAccess::ensureModulesAvailable(Auth::guard('student')->user(), $event);
         $data = $request->validate(['rating' => 'required|integer|min:1|max:5', 'feedback' => 'nullable|string|max:1000']);
-        $registration = app(EventFeedbackService::class)->save($event, $registration, $data);
+        $registration = app(EventFeedbackService::class)->save($event, $registration, $data, EventAccess::isPilot(Auth::guard('student')->user()));
 
         return response()->json(['participant' => $registration->participantPayload()]);
     }

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventRegistration;
-use App\Services\EventAccess;
 use App\Services\EventFeedbackService;
 use App\Services\EventRegistrationService;
 use App\Services\Messaging\MessagingService;
@@ -45,7 +44,7 @@ class PublicEventController extends Controller
         $account = Auth::guard('student')->user();
         $student = $account && $request->session()->get('student_credential_version') === $account->credential_version && ! $account->must_change_password && $account->aluno?->organizacao?->ativa && $account->aluno->organizacao_id === $event->organizacao_id ? $account->aluno : null;
 
-        return response()->json(['student' => $student ? ['name' => $student->nome, 'phone' => $student->telefone, 'canAccessExperience' => EventAccess::experienceAllowed($account) && $event->status === 'published', 'eligible' => $event->audience === 'open' || $student->perfil_tipo === 'aluno'] : null, 'event' => $event->publicPayload(), 'participant' => $this->participant($request, $event)?->participantPayload()])
+        return response()->json(['student' => $student ? ['name' => $student->nome, 'phone' => $student->telefone, 'canAccessExperience' => $event->status === 'published', 'eligible' => $event->audience === 'open' || $student->perfil_tipo === 'aluno'] : null, 'event' => $event->publicPayload(), 'participant' => $this->participant($request, $event)?->participantPayload()])
             ->header('Cache-Control', 'no-store');
     }
 

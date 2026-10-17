@@ -65,7 +65,7 @@
                 v-if="auth.student?.canAccessEvents"
                 to="/aluno/evento"
                 :class="{ selected: route.path.startsWith('/aluno/evento') }"
-                ><CalendarDays :size="22" />Evento</RouterLink
+                ><CalendarDays :size="22" />Eventos</RouterLink
             >
         </nav>
     </div>

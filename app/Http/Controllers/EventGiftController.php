@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Services\EventAccess;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class EventGiftController extends Controller
@@ -14,6 +15,7 @@ class EventGiftController extends Controller
     {
         $r = app(StudentEventController::class)->participant($event);
         abort_unless($event->moduleSettings()['gift']['enabled'], 404);
+        EventAccess::ensureModulesAvailable(Auth::guard('student')->user(), $event);
 
         return response()->json(['gift' => $r->gift_snapshot, 'deliveredAt' => $r->gift_delivered_at]);
     }
@@ -21,6 +23,7 @@ class EventGiftController extends Controller
     public function reveal(Event $event)
     {
         $r = app(StudentEventController::class)->participant($event);
+        EventAccess::ensureModulesAvailable(Auth::guard('student')->user(), $event);
 
         return DB::transaction(function () use ($event, $r) {
             $event = Event::whereKey($event->id)->lockForUpdate()->firstOrFail();

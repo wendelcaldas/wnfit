@@ -1,7 +1,7 @@
 <script setup>
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { ArrowRight, Gift, X, Check } from 'lucide-vue-next';
-const props = defineProps({ eventId: Number, autoOpenAllowed: Boolean });
+const props = defineProps({ eventId: Number, autoOpenAllowed: Boolean, available: { type: Boolean, default: true } });
 const loading = ref(true), result = ref(null), error = ref(''), busy = ref(false);
 const dialog = ref(null), trigger = ref(null), canvas = ref(null), title = ref(null);
 let drawing = false, distance = 0, last = null, autoOpened = false, disposed = false, previousFocus;
@@ -32,6 +32,7 @@ function maybeOpen() {
     if (!disposed && !loading.value && !error.value && !result.value?.gift && props.autoOpenAllowed && !autoOpened) { autoOpened = true; open(); }
 }
 async function load() {
+    if (!props.available) { loading.value = false; return; }
     loading.value = true; error.value = '';
     try { const { data } = await window.axios.get(base()); if (!disposed) result.value = data; }
     catch (e) { if (!disposed) fail(e); }
@@ -58,18 +59,19 @@ onMounted(load);
 onUnmounted(() => { disposed = true; dialog.value?.close(); document.body.classList.remove('event-gift-open'); });
 </script>
 <template>
-    <section class="student-card gift-entry" aria-label="Meu presente">
+    <section class="student-card gift-entry" :class="{ 'gift-entry-locked': !available }" aria-label="Meu presente" :aria-disabled="!available">
         <Gift class="gift-entry-icon" :size="28" aria-hidden="true" />
         <div class="gift-entry-copy">
             <p class="student-overline">MEU PRESENTE</p>
             <h2>{{ result?.gift ? result.gift.name : 'Tem um cuidado esperando por você' }}</h2>
-            <p v-if="loading" role="status">Carregando seu presente…</p>
+            <p v-if="!available">Disponível no dia do evento.</p>
+            <p v-else-if="loading" role="status">Carregando seu presente…</p>
             <p v-else-if="result?.gift">{{ result.deliveredAt ? 'Retirada confirmada pela equipe.' : 'Presente revelado. Retire com a equipe.' }}</p>
             <p v-else>Uma surpresa do encontro para levar com você.</p>
             <p v-if="error && !dialog?.open" role="alert">{{ error }} <button @click="load">Tentar novamente</button></p>
         </div>
-        <button ref="trigger" class="gift-entry-button" :disabled="loading || !!error" aria-haspopup="dialog" @click="open">
-            {{ result?.gift ? 'Ver meu presente' : 'Abrir raspadinha' }} <ArrowRight :size="18" aria-hidden="true" />
+        <button ref="trigger" class="gift-entry-button" :disabled="!available || loading || !!error" aria-haspopup="dialog" @click="open">
+            {{ !available ? 'Bloqueado por enquanto' : result?.gift ? 'Ver meu presente' : 'Abrir raspadinha' }} <ArrowRight :size="18" aria-hidden="true" />
         </button>
     </section>
     <Teleport to="body">
@@ -96,5 +98,6 @@ onUnmounted(() => { disposed = true; dialog.value?.close(); document.body.classL
 </template>
 <style>body.event-gift-open{overflow:hidden}</style>
 <style scoped>
+.gift-entry-locked{filter:grayscale(1);opacity:.58}
 .gift-entry{display:flex;align-items:center;gap:18px;padding:24px!important;margin-top:24px}.gift-entry-icon{flex-shrink:0;color:var(--wn-primary-strong)}.gift-entry-copy{flex:1;min-width:0}.gift-entry h2{font-size:20px;font-weight:750;margin:8px 0}.gift-entry p{line-height:1.6;overflow-wrap:anywhere}.gift-entry-button{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;font-weight:750;border-radius:12px;padding:12px 16px;background:var(--wn-primary);color:#151715}.gift-entry-button:disabled{opacity:.5}.event-gift-dialog{min-height:0;height:fit-content;position:fixed;inset:0;margin:auto;width:calc(100% - 32px);max-width:460px;max-height:calc(100dvh - 32px);padding:0;border:0;border-radius:24px;background:#fff;color:#151715;overflow:auto;box-shadow:0 24px 80px #0003}.event-gift-dialog::backdrop{background:#151715a6;backdrop-filter:blur(4px)}.gift-content{position:relative;padding:32px 24px;text-align:center}.gift-close{position:absolute;top:12px;right:12px;width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:#f5f6f4}.gift-symbol{display:grid;place-items:center;width:72px;height:72px;background:#ecfccb;border-radius:24px;margin:8px auto 24px}.gift-content h2{font-size:30px;line-height:1.2;font-weight:800;margin:12px 0}.gift-content p{line-height:1.65;white-space:pre-line;overflow-wrap:anywhere}.gift-content canvas{display:block;width:100%;height:180px;border-radius:16px;touch-action:none;margin:24px 0}.gift-content .btn-primary{width:100%;min-height:48px;margin-top:20px}.gift-hint{font-size:12px;color:#646d60;margin-top:12px}.gift-pickup{display:flex;gap:12px;text-align:left;background:#f5f6f4;border-radius:16px;padding:20px;margin-top:24px}.gift-pickup svg{flex-shrink:0;color:#365314}.gift-pickup p{margin-top:8px;font-size:14px}@media(max-width:600px){.gift-entry{flex-wrap:wrap;padding:20px!important;gap:14px}.gift-entry-copy{flex-basis:calc(100% - 50px)}.gift-entry-button{width:100%}}button:focus-visible{outline:2px solid #365314;outline-offset:4px}
 </style>

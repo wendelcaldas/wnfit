@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\EventPhoto;
 use App\Services\EventAccess;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -16,6 +17,7 @@ class EventPhotoController extends Controller
         if ($request->is('api/student/*')) {
             $r = app(StudentEventController::class)->participant($event);
             abort_unless($event->moduleSettings()['album']['enabled'], 404);
+            EventAccess::ensureModulesAvailable(Auth::guard('student')->user(), $event);
 
             return $r;
         }
@@ -42,6 +44,7 @@ class EventPhotoController extends Controller
     {
         $r = app(StudentEventController::class)->participant($event);
         abort_unless($event->moduleSettings()['album']['enabled'], 404);
+        EventAccess::ensureModulesAvailable(Auth::guard('student')->user(), $event);
         abort_if(app()->environment('production') && ! config('events.photo_storage_persistent'), 503, 'O álbum aguarda configuração de armazenamento permanente pela equipe.');
         $request->validate(['photo' => 'required|image|mimes:jpg,jpeg,png,webp|max:8192|dimensions:max_width=4096,max_height=4096', 'consent' => 'accepted']);
         abort_unless(function_exists('imagecreatefromstring'), 503, 'O envio de imagens está indisponível. Procure a equipe.');

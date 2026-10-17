@@ -201,17 +201,29 @@ class UnifiedEventTest extends TestCase
         $this->assertSame(1, $event->registrations()->whereNotNull('gift_snapshot')->count());
     }
 
-    public function test_pilot_is_configurable_without_changing_event_membership(): void
+    public function test_event_menu_is_available_to_every_student_and_production_pilot_bypasses_event_date(): void
     {
         [$owner,$org,$event] = $this->context();
+        $event->update([
+            'starts_at' => now()->addDays(2),
+            'ends_at' => now()->addDays(2)->addHour(),
+            'modules' => ['gift' => ['enabled' => true, 'name' => 'Presente', 'quantity' => 1], 'album' => ['enabled' => true], 'feedback' => ['enabled' => true]],
+        ]);
         $account = $this->student($org);
         $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['request_id' => Str::uuid(), 'student_id' => $account->aluno_id])->assertOk();
-        config(['events.pilot_username' => 'outro-usuario']);
         $this->loginStudent($account);
-        $this->getJson('/api/student/me')->assertJsonPath('student.canAccessEvents', false);
-        $this->getJson("/api/student/events/{$event->id}")->assertNotFound();
-        config(['events.pilot_username' => '']);
-        $this->getJson("/api/student/events/{$event->id}")->assertOk();
+        $this->getJson('/api/student/me')->assertJsonPath('student.canAccessEvents', true);
+        $this->getJson("/api/student/events/{$event->id}")->assertOk()->assertJsonPath('event.modulesAvailable', false);
+        $this->getJson("/api/student/events/{$event->id}/gift")->assertUnprocessable();
+        $this->getJson("/api/student/events/{$event->id}/photos")->assertUnprocessable();
+        $this->postJson("/api/student/events/{$event->id}/feedback", ['rating' => 5])->assertUnprocessable();
+
+        $account->update(['username' => 'wendel']);
+        config(['events.pilot_username' => 'wendel']);
+        $this->app['env'] = 'production';
+        $this->getJson("/api/student/events/{$event->id}")->assertOk()->assertJsonPath('event.modulesAvailable', true)->assertJsonPath('event.pilotAccess', true);
+        $this->getJson("/api/student/events/{$event->id}/gift")->assertOk();
+        $this->postJson("/api/student/events/{$event->id}/feedback", ['rating' => 5])->assertOk()->assertJsonPath('participant.rating', 5);
     }
 
     public function test_staff_can_confirm_shared_phone_without_duplicate_on_retry(): void
@@ -275,6 +287,7 @@ class UnifiedEventTest extends TestCase
         $this->assertEquals($time, $event->registrations()->first()->welcomed_at);
         $this->getJson("/api/student/events/{$event->id}")->assertJsonPath('welcomed', true);
         $this->loginStudent($this->student($org));
+        $this->getJson('/api/student/me')->assertJsonPath('student.canAccessEvents', true);
         $this->getJson("/api/student/events/{$event->id}")->assertNotFound();
         $event->update(['status' => 'draft']);
         $this->loginStudent($account);
