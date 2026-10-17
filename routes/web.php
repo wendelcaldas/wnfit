@@ -38,6 +38,7 @@ Route::prefix('api')->group(function () {
             Route::post('/events/{event}/gift', [EventGiftController::class, 'reveal']);
             Route::get('/events', [StudentEventController::class, 'index']);
             Route::get('/events/{event}', [StudentEventController::class, 'show']);
+            Route::post('/events/{event}/feedback', [StudentEventController::class, 'feedback']);
             Route::post('/events/{event}/welcome', [StudentEventController::class, 'welcome']);
             Route::post('/events/{event}/checkin', [StudentEventController::class, 'checkin']);
             Route::post('/events/{event}/register', [PublicEventController::class, 'studentRegister']);

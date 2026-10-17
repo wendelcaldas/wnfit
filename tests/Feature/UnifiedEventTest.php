@@ -117,6 +117,29 @@ class UnifiedEventTest extends TestCase
         $this->assertDatabaseCount('event_photos', 1);
     }
 
+    public function test_feedback_uses_same_record_for_public_code_and_student_account(): void
+    {
+        [$owner,$org,$event] = $this->context();
+        $url = '/api/public/events/'.$event->slug;
+        $signup = $this->postJson($url.'/register', ['name' => 'Pessoa Teste', 'phone' => '71999991234', 'privacy' => true])->assertCreated();
+        $cookie = $signup->getCookie('wnfit_event_'.$event->id, false);
+        $this->withCredentials()->withUnencryptedCookie($cookie->getName(), $cookie->getValue());
+        $this->postJson($url.'/feedback', ['rating' => 4])->assertUnprocessable();
+        $this->postJson($url.'/checkin')->assertOk();
+        $this->actingAs($owner)->postJson("/api/events/{$event->id}/close")->assertOk();
+        $this->postJson($url.'/feedback', ['rating' => 4, 'feedback' => 'Bom encontro'])->assertOk();
+        $registration = $event->registrations()->first();
+        $account = StudentAccount::create(['aluno_id' => $registration->aluno_id, 'username' => 'visitante', 'password' => 'SenhaTeste123', 'must_change_password' => false]);
+        $this->loginStudent($account);
+        $this->getJson("/api/student/events/{$event->id}")->assertJsonPath('participant.rating', 4);
+        $this->postJson("/api/student/events/{$event->id}/feedback", ['rating' => 5])->assertOk();
+        $this->assertDatabaseCount('event_registrations', 1);
+        $this->assertSame(5, $registration->fresh()->rating);
+        $event->update(['modules' => ['feedback' => ['enabled' => false]]]);
+        $this->postJson("/api/student/events/{$event->id}/feedback", ['rating' => 1])->assertUnprocessable();
+        $this->assertSame(5, $registration->fresh()->rating);
+    }
+
     public function test_teacher_can_add_existing_students_with_shared_or_absent_phones_and_not_change_event(): void
     {
         [$teacher,$org,$event] = $this->context('professor');

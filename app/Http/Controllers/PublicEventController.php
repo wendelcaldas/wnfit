@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Services\EventFeedbackService;
 use App\Services\EventRegistrationService;
 use App\Services\Messaging\MessagingService;
 use Illuminate\Http\Request;
@@ -105,9 +106,8 @@ class PublicEventController extends Controller
         $this->visible($request, $event);
         $participant = $this->participant($request, $event);
         abort_unless($participant, 401);
-        abort_unless($event->status === 'published' && $event->closed_at && $participant->checked_in_at, 422, 'A avaliação estará disponível após o evento para quem confirmou presença.');
         $data = $request->validate(['rating' => 'required|integer|min:1|max:5', 'feedback' => 'nullable|string|max:1000']);
-        $participant->update($data);
+        $participant = app(EventFeedbackService::class)->save($event, $participant, $data);
 
         return response()->json(['participant' => $participant->participantPayload()]);
     }

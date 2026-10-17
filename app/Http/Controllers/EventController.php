@@ -94,7 +94,7 @@ class EventController extends Controller
                 abort_if(($data['capacity'] ?? null) && $data['capacity'] < $event->registrations()->count(), 422, 'O limite não pode ser menor que o total de inscritos.');
                 $event->update($data);
             } else {
-                $event = Event::create([...$data, 'organizacao_id' => $org->id, 'slug' => Str::slug($data['name']).'-'.Str::lower(Str::random(8))]);
+                $event = Event::create([...$data, 'modules' => ['gift' => ['enabled' => false], 'album' => ['enabled' => false], 'feedback' => ['enabled' => false]], 'organizacao_id' => $org->id, 'slug' => Str::slug($data['name']).'-'.Str::lower(Str::random(8))]);
             }
 
             return response()->json($event);

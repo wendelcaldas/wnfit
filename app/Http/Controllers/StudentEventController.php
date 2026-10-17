@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Services\EventFeedbackService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,15 @@ class StudentEventController extends Controller
         $participant->whereKey($participant->id)->whereNull('welcomed_at')->update(['welcomed_at' => now()]);
 
         return response()->json(['ok' => true]);
+    }
+
+    public function feedback(Request $request, Event $event)
+    {
+        $registration = $this->participant($event);
+        $data = $request->validate(['rating' => 'required|integer|min:1|max:5', 'feedback' => 'nullable|string|max:1000']);
+        $registration = app(EventFeedbackService::class)->save($event, $registration, $data);
+
+        return response()->json(['participant' => $registration->participantPayload()]);
     }
 
     public function checkin(Request $request, Event $event)
