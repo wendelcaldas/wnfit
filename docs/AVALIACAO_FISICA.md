@@ -21,8 +21,12 @@ Peso e altura antigos continuam em `alunos`, sem alterações ou histórico inve
 
 Na atualização do ambiente executar `php artisan migrate --force` e publicar o build frontend. A migração foi executada apenas no ambiente local durante esta implementação.
 
-## Validação
+## Validação e entrega
 
-Build frontend concluído. Suíte com 81 testes e 1.192 verificações: criação parcial, validação de faixas/data/precisão, edição com responsáveis, histórico e comparação, preservação de valores antigos e isolamento por organização/aluno.
+Branch de publicação: `feature/avaliacao-fisica`, baseada na `main` atualizada (`78a946c`), incluindo as alterações de eventos feitas no outro computador. A implementação original está preservada em `codex/student-physical-assessment`.
 
-Conferência de interface: estado vazio, novo registro, seleção de regiões e campos dos dois lados; medidas permanecem ao alternar regiões. Dados de teste não foram gravados em fichas locais de alunos reais.
+- Suíte completa: 107 testes e 1.446 verificações, incluindo os fluxos de eventos e avaliação física. Build frontend concluído.
+- Navegador local: estado vazio, criação com vírgula decimal, histórico com nomes e comparação de duas avaliações, incluindo medida ausente em uma delas. Revisão em viewport de 390 × 844 sem rolagem horizontal. Somente dados fictícios da organização de QA na porta 8001.
+- A interface entregue usa formulário direto, sem mapa corporal. O protótipo local de mapa permanece fora desta entrega.
+- Ajustado o teste de piloto de eventos herdado da main para enviar token CSRF durante a simulação de produção; nenhuma proteção de produção foi desativada.
+- Deploy: executar as duas migrations aditivas com `php artisan migrate --force` e publicar o build. Os dados legados de peso e altura permanecem preservados. Produção não foi alterada nesta preparação.

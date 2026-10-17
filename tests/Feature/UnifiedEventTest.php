@@ -221,6 +221,9 @@ class UnifiedEventTest extends TestCase
         $account->update(['username' => 'wendel']);
         config(['events.pilot_username' => 'wendel']);
         $this->app['env'] = 'production';
+        // Production simulation enables CSRF checks; send a real session token.
+        $token = Str::random(40);
+        $this->withSession(['_token' => $token])->withHeader('X-CSRF-TOKEN', $token);
         $this->getJson("/api/student/events/{$event->id}")->assertOk()->assertJsonPath('event.modulesAvailable', true)->assertJsonPath('event.pilotAccess', true);
         $this->getJson("/api/student/events/{$event->id}/gift")->assertOk();
         $this->postJson("/api/student/events/{$event->id}/feedback", ['rating' => 5])->assertOk()->assertJsonPath('participant.rating', 5);
