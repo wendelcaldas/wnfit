@@ -4,10 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\Aluno;
 use App\Models\Event;
+use App\Models\EventPhoto;
 use App\Models\Organizacao;
 use App\Models\StudentAccount;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -34,6 +37,7 @@ class UnifiedEventTest extends TestCase
 
     protected function loginStudent(StudentAccount $account): void
     {
+        $account->refresh();
         $this->actingAs($account, 'student')->withSession(['student_credential_version' => $account->credential_version]);
     }
 
@@ -77,6 +81,40 @@ class UnifiedEventTest extends TestCase
         $this->loginStudent($first);
         $this->getJson("/api/student/events/{$event->id}/gift")->assertNotFound();
         $this->assertNotNull($registration->fresh()->gift_snapshot);
+    }
+
+    public function test_album_requires_consent_and_moderation_and_protects_files(): void
+    {
+        Storage::fake('local');
+        [$owner,$org,$event] = $this->context();
+        $event->update(['modules' => ['album' => ['enabled' => true]]]);
+        $first = $this->student($org);
+        $second = $this->student($org);
+        foreach ([$first, $second] as $account) {
+            $this->actingAs($owner)->postJson("/api/events/{$event->id}/registrations", ['student_id' => $account->aluno_id])->assertOk();
+        }
+        $base = "/api/student/events/{$event->id}/photos";
+        $this->loginStudent($first);
+        $this->postJson($base, ['photo' => UploadedFile::fake()->image('foto.jpg', 100, 80)])->assertUnprocessable();
+        $response = $this->postJson($base, ['photo' => UploadedFile::fake()->image('foto.jpg', 100, 80), 'consent' => true])->assertCreated()->assertJsonPath('photo.status', 'pending');
+        $id = $response->json('photo.id');
+        $photo = EventPhoto::findOrFail($id);
+        Storage::disk('local')->assertExists([$photo->path, $photo->thumbnail_path]);
+        $this->getJson($base)->assertOk()->assertJsonCount(1, 'data');
+        $this->get($base."/{$id}/file")->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+        $this->loginStudent($second);
+        $this->getJson($base)->assertJsonCount(0, 'data');
+        $this->get($base."/{$id}/file")->assertNotFound();
+        $this->actingAs($owner)->patchJson("/api/events/{$event->id}/photos/{$id}", ['status' => 'approved'])->assertOk();
+        $this->loginStudent($second);
+        $this->getJson($base)->assertOk()->assertJsonCount(1, 'data');
+        $this->get($base."/{$id}/file?thumbnail=1")->assertOk();
+        $this->actingAs($owner)->patchJson("/api/events/{$event->id}/photos/{$id}", ['status' => 'removed'])->assertOk();
+        $this->loginStudent($second);
+        $this->get($base."/{$id}/file")->assertNotFound();
+        $event->update(['modules' => ['album' => ['enabled' => false]]]);
+        $this->getJson($base)->assertNotFound();
+        $this->assertDatabaseCount('event_photos', 1);
     }
 
     public function test_teacher_can_add_existing_students_with_shared_or_absent_phones_and_not_change_event(): void

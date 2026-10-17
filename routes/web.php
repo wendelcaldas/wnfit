@@ -5,8 +5,8 @@ use App\Http\Controllers\CollectionsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventGiftController;
-use App\Http\Controllers\StudentEventController;
 use App\Http\Controllers\EventParticipantController;
+use App\Http\Controllers\EventPhotoController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\MessageController;
@@ -16,6 +16,7 @@ use App\Http\Controllers\PublicEventController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\StudentAccessController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\StudentEventController;
 use App\Http\Controllers\StudentPortalAuthController;
 use App\Http\Controllers\StudentPortalController;
 use App\Http\Controllers\TwilioWebhookController;
@@ -30,6 +31,9 @@ Route::prefix('api')->group(function () {
         Route::post('/logout', [StudentPortalAuthController::class, 'logout']);
         Route::put('/password', [StudentPortalAuthController::class, 'password'])->middleware(['student:password', 'throttle:10,1']);
         Route::middleware('student')->group(function () {
+            Route::get('/events/{event}/photos', [EventPhotoController::class, 'index']);
+            Route::post('/events/{event}/photos', [EventPhotoController::class, 'upload'])->middleware('throttle:20,1');
+            Route::get('/events/{event}/photos/{photo}/file', [EventPhotoController::class, 'file']);
             Route::get('/events/{event}/gift', [EventGiftController::class, 'show']);
             Route::post('/events/{event}/gift', [EventGiftController::class, 'reveal']);
             Route::get('/events', [StudentEventController::class, 'index']);
@@ -68,6 +72,9 @@ Route::prefix('api')->group(function () {
         Route::get('/events', [EventController::class, 'index']);
         Route::post('/events', [EventController::class, 'save']);
         Route::patch('/events/{event}', [EventController::class, 'save']);
+        Route::get('/events/{event}/photos', [EventPhotoController::class, 'index']);
+        Route::get('/events/{event}/photos/{photo}/file', [EventPhotoController::class, 'file']);
+        Route::patch('/events/{event}/photos/{photo}', [EventPhotoController::class, 'moderate']);
         Route::patch('/events/{event}/settings', [EventController::class, 'settings']);
         Route::post('/events/{event}/registrations/{registration}/gift-delivery', [EventGiftController::class, 'deliver']);
         Route::get('/events/{event}/people', [EventController::class, 'people']);

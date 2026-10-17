@@ -15,12 +15,16 @@ ENV APP_ENV=production \
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         gettext-base \
+        libjpeg62-turbo-dev \
+        libpng-dev \
+        libwebp-dev \
         libicu-dev \
         libzip-dev \
         nginx \
         supervisor \
         unzip \
-    && docker-php-ext-install -j"$(nproc)" bcmath intl opcache pcntl pdo_mysql zip \
+    && docker-php-ext-configure gd --with-jpeg --with-webp \
+    && docker-php-ext-install -j"$(nproc)" bcmath gd intl opcache pcntl pdo_mysql zip \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/* \
     && rm -f /etc/nginx/sites-enabled/default
 
