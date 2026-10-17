@@ -22,6 +22,7 @@ class Event extends Model
     public function publicPayload(): array
     {
         return [
+            'audience' => $this->audience,
             'id' => $this->id, 'slug' => $this->slug, 'name' => $this->name, 'organizer' => $this->organizer,
             'description' => $this->description, 'location' => $this->location, 'instructions' => $this->instructions,
             'status' => $this->status, 'startsAt' => $this->starts_at?->toIso8601String(), 'endsAt' => $this->ends_at?->toIso8601String(),

@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Aluno;
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Services\EventAccess;
+use App\Services\EventRegistrationService;
+use App\Services\Messaging\MessagingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +15,27 @@ use Illuminate\Support\Str;
 
 class EventController extends Controller
 {
+    public function addParticipant(Request $request, Event $event)
+    {
+        EventAccess::staff($request, $event);
+        $data = $request->validate(['student_id' => 'nullable|integer', 'name' => 'required_without:student_id|string|min:2|max:120', 'phone' => 'nullable|string|max:30']);
+        if (! empty($data['phone'])) {
+            $data['phone'] = app(MessagingService::class)->normalizeBrazilianPhone($data['phone']);
+        }
+        $student = ! empty($data['student_id']) ? Aluno::where('organizacao_id', $event->organizacao_id)->findOrFail($data['student_id']) : null;
+        [$registration] = app(EventRegistrationService::class)->register($event, $student, $data, 'staff', $request->user()->id);
+
+        return response()->json(['participant' => $registration->participantPayload()]);
+    }
+
+    public function people(Request $request, Event $event)
+    {
+        EventAccess::staff($request, $event);
+        $data = $request->validate(['q' => 'nullable|string|max:120']);
+
+        return Aluno::where('organizacao_id', $event->organizacao_id)->when($data['q'] ?? null, fn ($q, $term) => $q->where(fn ($q) => $q->where('nome', 'like', '%'.$term.'%')->orWhere('telefone', 'like', '%'.$term.'%')))->select(['id', 'nome', 'telefone', 'perfil_tipo'])->orderBy('nome')->paginate(15);
+    }
+
     private function organization(Request $request, ?Event $event = null)
     {
         $org = $request->user()->organizacoes()->wherePivot('status', 'ativo')->firstOrFail();
@@ -22,7 +47,7 @@ class EventController extends Controller
 
     public function index(Request $request)
     {
-        $org = $this->organization($request);
+        $org = $request->user()->organizacoes()->wherePivot('status', 'ativo')->wherePivotIn('papel', ['proprietario', 'administrador', 'professor'])->firstOrFail();
 
         return Event::where('organizacao_id', $org->id)->withCount(['registrations', 'registrations as present_count' => fn ($q) => $q->whereNotNull('checked_in_at')])->latest()->get();
     }
@@ -32,7 +57,7 @@ class EventController extends Controller
         $org = $this->organization($request, $event);
         abort_if($event?->closed_at, 422, 'O evento já foi encerrado.');
         $data = $request->validate([
-            'name' => 'required|string|max:150', 'organizer' => 'required|string|max:150',
+            'audience' => 'sometimes|in:open,students', 'name' => 'required|string|max:150', 'organizer' => 'required|string|max:150',
             'description' => 'nullable|string|max:3000', 'location' => 'required|string|max:255',
             'instructions' => 'nullable|string|max:3000', 'after_content' => 'nullable|string|max:3000',
             'starts_at' => 'required|date', 'ends_at' => 'required|date|after:starts_at',
@@ -75,7 +100,7 @@ class EventController extends Controller
 
     public function registrations(Request $request, Event $event)
     {
-        $this->organization($request, $event);
+        EventAccess::staff($request, $event);
         $data = $request->validate(['q' => 'nullable|string|max:120', 'status' => 'nullable|in:present,absent']);
 
         return $event->registrations()->with('aluno:id,nome')->select(['id', 'aluno_id', 'name', 'phone', 'created_at', 'checked_in_at', 'attendance_source', 'marketing_opt_in', 'rating', 'feedback'])
@@ -87,7 +112,7 @@ class EventController extends Controller
 
     public function attendance(Request $request, Event $event, EventRegistration $registration)
     {
-        $this->organization($request, $event);
+        EventAccess::staff($request, $event);
         abort_unless($registration->event_id === $event->id, 404);
         $data = $request->validate(['present' => 'required|boolean']);
         $registration->update(['checked_in_at' => $data['present'] ? now() : null, 'attendance_source' => $data['present'] ? 'staff' : 'staff_absent', 'attendance_updated_by' => $request->user()->id]);

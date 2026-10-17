@@ -28,6 +28,7 @@ Route::prefix('api')->group(function () {
         Route::post('/logout', [StudentPortalAuthController::class, 'logout']);
         Route::put('/password', [StudentPortalAuthController::class, 'password'])->middleware(['student:password', 'throttle:10,1']);
         Route::middleware('student')->group(function () {
+            Route::post('/events/{event}/register', [PublicEventController::class, 'studentRegister']);
             Route::get('/home', [StudentPortalController::class, 'home']);
             Route::post('/sessions', [StudentPortalController::class, 'start']);
             Route::get('/sessions/{session}', [StudentPortalController::class, 'show']);
@@ -59,6 +60,8 @@ Route::prefix('api')->group(function () {
         Route::get('/events', [EventController::class, 'index']);
         Route::post('/events', [EventController::class, 'save']);
         Route::patch('/events/{event}', [EventController::class, 'save']);
+        Route::get('/events/{event}/people', [EventController::class, 'people']);
+        Route::post('/events/{event}/registrations', [EventController::class, 'addParticipant']);
         Route::post('/events/{event}/close', [EventController::class, 'close']);
         Route::get('/events/{event}/registrations', [EventController::class, 'registrations']);
         Route::get('/events/{event}/registrations/{registration}/students', [EventParticipantController::class, 'candidates']);

@@ -24,8 +24,11 @@ class EventParticipantController extends Controller
         return $organization;
     }
 
-    private function phoneMatches(int $organizationId, string $phone): array
+    private function phoneMatches(int $organizationId, ?string $phone): array
     {
+        if (! $phone) {
+            return [];
+        }
         $messaging = app(MessagingService::class);
         $ids = [];
         foreach (Aluno::where('organizacao_id', $organizationId)->whereNotNull('telefone')->select(['id', 'telefone'])->cursor() as $student) {
@@ -92,7 +95,7 @@ class EventParticipantController extends Controller
                 abort_if(count($this->phoneMatches($organization->id, $registration->phone)) > 0, 422, 'Já existe aluno com este telefone. Confira os cadastros e vincule o aluno existente.');
                 $student = Aluno::create([
                     'organizacao_id' => $organization->id, 'nome' => $registration->name,
-                    'telefone' => $registration->phone, 'plano' => 'Participante de evento', 'status' => 'ativo',
+                    'telefone' => $registration->phone, 'plano' => 'Participante de evento', 'status' => 'participante', 'perfil_tipo' => 'participante',
                 ]);
             }
             abort_if($event->registrations()->where('aluno_id', $student->id)->where('id', '!=', $registration->id)->exists(), 422, 'Este aluno já está vinculado a outro participante deste evento.');

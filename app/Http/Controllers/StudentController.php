@@ -30,7 +30,7 @@ class StudentController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
         $this->billing->refreshOverdueCharges($organization->id);
 
-        $query = Aluno::query()
+        $query = Aluno::query()->where('perfil_tipo', $request->input('tipo') === 'participante' ? 'participante' : 'aluno')
             ->with(['assinatura.plano', 'cobrancas'])
             ->withMax('completedWorkoutSessions', 'finished_at')
             ->where('organizacao_id', $organization->id);
@@ -57,7 +57,7 @@ class StudentController extends Controller
 
         $students = $query->latest()->get();
 
-        $allStudents = Aluno::query()
+        $allStudents = Aluno::query()->where('perfil_tipo', 'aluno')
             ->with('cobrancas')
             ->where('organizacao_id', $organization->id)
             ->get();
@@ -173,7 +173,10 @@ class StudentController extends Controller
             Storage::disk('local')->delete($path);
             throw $exception;
         }
-        if ($previous) Storage::disk('local')->delete($previous);
+        if ($previous) {
+            Storage::disk('local')->delete($previous);
+        }
+
         return response()->json(['photoUrl' => '/api/students/'.$student->id.'/photo?v='.sha1($path)]);
     }
 
@@ -182,6 +185,7 @@ class StudentController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
         abort_unless($student->organizacao_id === $organization->id, 404);
         abort_unless($student->foto_path && Storage::disk('local')->exists($student->foto_path), 404);
+
         return Storage::disk('local')->response($student->foto_path, null, ['Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
     }
 

@@ -67,12 +67,14 @@
 </template>
 <script setup>
 import { reactive, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { KeyRound } from "lucide-vue-next";
 import StudentShell from "../components/StudentShell.vue";
 import { useStudentAuthStore } from "../stores/studentAuth";
 const auth = useStudentAuthStore();
 const router = useRouter();
+const route = useRoute();
+const destination = () => { const v = route.query.redirect; return typeof v === 'string' && /^\/(evento\/|aluno\/)/.test(v) && !v.startsWith('//') ? v : '/aluno/inicio'; };
 const busy = ref(false);
 const error = ref("");
 const form = reactive({
@@ -85,7 +87,7 @@ async function submit() {
     error.value = "";
     try {
         await auth.password(form);
-        router.replace("/aluno/inicio");
+        router.replace(destination());
     } catch (e) {
         error.value =
             Object.values(e.response?.data?.errors ?? {}).flat()[0] ??

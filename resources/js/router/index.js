@@ -131,7 +131,8 @@ router.beforeEach(async (to) => {
         if (!studentAuth.student) return to.meta.studentGuest ? true : '/aluno/entrar';
         if (studentAuth.student.mustChangePassword) return to.meta.password ? true : '/aluno/senha';
         if (to.meta.studentEvents && !studentAuth.student.canAccessEvents) return '/aluno/inicio';
-        return to.meta.studentGuest ? '/aluno/inicio' : true;
+        if (to.meta.studentGuest) { const target = to.query.redirect; return typeof target === 'string' && /^\/(evento\/|aluno\/)/.test(target) && target !== to.path ? target : '/aluno/inicio'; }
+        return true;
     }
     const auth = useAuthStore();
 
