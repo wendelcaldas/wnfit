@@ -3,12 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EventRegistration extends Model
 {
     protected $guarded = ['id'];
 
     protected $hidden = ['access_hash', 'recovery_hash'];
+
+    public function aluno(): BelongsTo
+    {
+        return $this->belongsTo(Aluno::class);
+    }
 
     protected function casts(): array
     {

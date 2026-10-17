@@ -78,7 +78,7 @@ class EventController extends Controller
         $this->organization($request, $event);
         $data = $request->validate(['q' => 'nullable|string|max:120', 'status' => 'nullable|in:present,absent']);
 
-        return $event->registrations()->select(['id', 'name', 'phone', 'created_at', 'checked_in_at', 'attendance_source', 'marketing_opt_in', 'rating', 'feedback'])
+        return $event->registrations()->with('aluno:id,nome')->select(['id', 'aluno_id', 'name', 'phone', 'created_at', 'checked_in_at', 'attendance_source', 'marketing_opt_in', 'rating', 'feedback'])
             ->when($data['q'] ?? null, fn ($q, $term) => $q->where(fn ($q) => $q->where('name', 'like', '%'.$term.'%')->orWhere('phone', 'like', '%'.$term.'%')))
             ->when(($data['status'] ?? null) === 'present', fn ($q) => $q->whereNotNull('checked_in_at'))
             ->when(($data['status'] ?? null) === 'absent', fn ($q) => $q->whereNull('checked_in_at'))

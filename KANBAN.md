@@ -4,6 +4,28 @@ Este quadro organiza as proximas features por prioridade e reduz ambiguidade ant
 
 ## Prioridades
 
+## Foco de 17/10/2026 — evento WNFit + Team Peu em 18/10
+
+Plano vigente: [entregas, critérios de aceite e operação do evento](docs/PLANO_EVENTO_2026-10-18.md).
+
+1. Preparar base atualizada preservando as alterações locais de avaliação física.
+2. P0: vincular participantes às contas de aluno e preparar acesso sem cobranças involuntárias.
+3. P0: página do evento no portal, boas-vindas e módulos configuráveis pelo gestor em cada evento (raspadinha, álbum e pesquisa).
+4. P0: raspadinha com uma nécessaire garantida para cada um dos 20 alunos e controle de retirada; sem bônus nesta edição.
+5. P0: álbum colaborativo com armazenamento persistente e aprovação pela equipe.
+6. P0: integrar avaliação existente, ensaiar a jornada e conferir publicação real.
+
+O andamento de cada entrega é registrado abaixo. Acesso, fotos, prêmio e avaliação devem ser validados no celular. Operação manual de WhatsApp permanece; planos comerciais, trial, automações e demais evoluções voltam após o evento. O “Próximo Plano Sugerido” antigo abaixo é histórico e não substitui esta ordem.
+
+### Entrega 1 implementada — participantes e acesso — 17/10
+
+- Branch `codex/event-participant-access`, baseada na main atualizada.
+- Vínculo explícito inscrição/aluno, sugestões por telefone e criação de participante sem assinatura/cobrança.
+- Conta existente preservada; senha provisória somente para quem ainda não possui acesso; mensagem para cópia e envio individual.
+- 85 testes (1.220 assertions), build e conferência dos dois caminhos no navegador local.
+- Publicação pendente. Módulos e página do aluno seguem na próxima entrega.
+- Roteiro: [validação dos acessos](docs/VALIDACAO_ACESSO_EVENTO.md).
+
 ## Entrega para validação — portal do aluno e treinos — 02/10/2026
 
 - Conta criada junto com o aluno: usuário sugerido/editável, senha provisória aleatória e troca obrigatória no primeiro acesso.

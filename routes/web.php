@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CollectionsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventParticipantController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\MessageController;
@@ -60,6 +61,8 @@ Route::prefix('api')->group(function () {
         Route::patch('/events/{event}', [EventController::class, 'save']);
         Route::post('/events/{event}/close', [EventController::class, 'close']);
         Route::get('/events/{event}/registrations', [EventController::class, 'registrations']);
+        Route::get('/events/{event}/registrations/{registration}/students', [EventParticipantController::class, 'candidates']);
+        Route::post('/events/{event}/registrations/{registration}/access', [EventParticipantController::class, 'access']);
         Route::patch('/events/{event}/registrations/{registration}', [EventController::class, 'attendance']);
         Route::get('/dashboard', DashboardController::class);
         Route::get('/finance', FinanceController::class);
