@@ -22,6 +22,7 @@ export const router = createRouter({
         { path: '/aluno/entrar', component: () => import('../views/StudentLoginView.vue'), meta: { studentPortal: true, studentGuest: true } },
         { path: '/aluno/senha', component: () => import('../views/StudentPasswordView.vue'), meta: { studentPortal: true, password: true } },
         { path: '/aluno/inicio', component: () => import('../views/StudentHomeView.vue'), meta: { studentPortal: true } },
+        { path: '/aluno/evento/:id/album', component: () => import('../views/StudentEventAlbumView.vue'), meta: { studentPortal: true, studentEvents: true } },
         { path: '/aluno/evento/:id', component: () => import('../views/StudentEventView.vue'), meta: { studentPortal: true, studentEvents: true } },
         { path: '/aluno/evento', component: () => import('../views/StudentEventView.vue'), meta: { studentPortal: true, studentEvents: true } },
         { path: '/aluno/treinos', component: () => import('../views/StudentWorkoutsView.vue'), meta: { studentPortal: true } },

@@ -83,3 +83,14 @@ Ao cancelar evento, cobranças abertas são canceladas e pagamentos existentes p
 - S3 remoto e persistência após deploy são pendências de configuração/validação externa, não demonstradas por um disco local ou fake de teste.
 - No navegador local foram conferidos retorno após login, boas-vindas, presença, presente, envio/miniatura pendente, aprovação, retirada, baixa de inscrição paga e atualização dos totais. A experiência do aluno foi conferida em viewport de 390 × 844, sem rolagem horizontal.
 - A interface aceita imagens que o navegador consegue abrir, reprocessadas como JPEG. Se o aparelho não conseguir decodificar HEIC, a tela orienta escolher JPG/PNG/WebP; não há conversor HEIC no servidor.
+
+## Refinamento da experiência do aluno
+
+Branch: `codex/student-event-experience` (sobre a entrega de inscrições pagas).
+
+- A página do evento organiza apresentação/presença, entrada do álbum, pesquisa e presente, nessa ordem. As fotos e seus pedidos de carregamento ficam exclusivamente em `/aluno/evento/:id/album`, com retorno ao evento.
+- A avaliação usa cinco estrelas acessíveis e comentário opcional. O formulário fica visível com orientação enquanto aguarda encerramento manual e presença; as regras da API permanecem.
+- Presente opcional abre em diálogo nativo após as boas-vindas, enquanto não revelado. Fechar não revela nem registra retirada. O diálogo só abre automaticamente uma vez por entrada na página; o botão ao final permite retomar.
+- Após revelar, o servidor mantém o resultado e o cartão passa a informar nome/status do brinde, com acesso aos detalhes. Revelação e retirada física continuam separadas. Retornar/recarregar não abre automaticamente um presente já revelado.
+- Diálogo permite Escape, fechamento explícito e retorno de foco; rolagem de fundo bloqueada. A revelação também possui botão acessível como alternativa ao gesto de raspar.
+- Validação: build, 103 testes PHP (1.382 assertions), navegador desktop e 390 × 844; boas-vindas → abertura automática → fechar/reabrir → revelar → recarregar sem pop-up; navegação do álbum, avaliação salva e evento sem recursos opcionais. Alterações e dados de QA exclusivamente locais.
