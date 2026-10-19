@@ -72,3 +72,18 @@ test('pairing QR requires authentication and stays internal', async t => {
   const response = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
   assert.deepEqual(await response.json(), { connected: false, qr: 'pairing-secret' });
 });
+
+test('delivery is reported only after receipt, including persistence', async t => {
+  const server = createGateway({ token, database: ':memory:', adapter: { ready: () => true } });
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  t.after(() => new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }));
+  const url = `http://127.0.0.1:${server.address().port}/messages/wa-id`;
+  const read = async () => (await fetch(url, { headers: { authorization: `Bearer ${token}` } })).json();
+  assert.deepEqual(await read(), { status: 'accepted' });
+  server.recordReceipt('wa-id', 2);
+  assert.deepEqual(await read(), { status: 'server_ack' });
+  server.recordReceipt('wa-id', 3);
+  server.recordReceipt('wa-id', 2);
+  assert.deepEqual(await read(), { status: 'delivered' });
+});

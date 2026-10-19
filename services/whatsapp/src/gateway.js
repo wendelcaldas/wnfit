@@ -6,7 +6,8 @@ export function createGateway({ token, database, adapter }) {
   if (!token || token.length < 32) throw new Error('BRIDGE_TOKEN must have at least 32 characters');
   const db = new DatabaseSync(database);
   db.exec(`PRAGMA journal_mode=WAL;
-    CREATE TABLE IF NOT EXISTS sends (key TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, state TEXT NOT NULL, id TEXT)`);
+    CREATE TABLE IF NOT EXISTS sends (key TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, state TEXT NOT NULL, id TEXT);
+    CREATE TABLE IF NOT EXISTS receipts (id TEXT PRIMARY KEY, status INTEGER NOT NULL)`);
   let busy = false;
   const digest = value => createHash('sha256').update(value).digest();
   const server = createServer(async (req, res) => {
@@ -15,6 +16,11 @@ export function createGateway({ token, database, adapter }) {
       res.end(JSON.stringify(body));
     };
     if (!timingSafeEqual(digest(req.headers.authorization || ''), digest(`Bearer ${token}`))) return reply(401, { error: 'unauthorized' });
+    if (req.method === 'GET' && /^\/messages\/[A-Za-z0-9_-]{1,128}$/.test(req.url)) {
+      const receipt = db.prepare('SELECT status FROM receipts WHERE id = ?').get(req.url.slice('/messages/'.length));
+      const status = receipt?.status;
+      return reply(200, { status: status === undefined ? 'accepted' : status === 0 ? 'error' : status >= 4 ? 'read' : status >= 3 ? 'delivered' : status >= 2 ? 'server_ack' : 'pending' });
+    }
     if (req.method === 'GET' && req.url === '/pairing') return reply(200, { connected: adapter.ready(), qr: adapter.pairing?.() || null });
     if (req.method === 'GET' && req.url === '/health') return reply(adapter.ready() ? 200 : 503, { connected: adapter.ready() });
     if (req.method !== 'POST' || req.url !== '/welcome') return reply(404, { error: 'not_found' });
@@ -27,7 +33,7 @@ export function createGateway({ token, database, adapter }) {
       let data;
       try { data = JSON.parse(raw); } catch { return reply(400, { error: 'invalid_json' }); }
       const { key, to, body } = data || {};
-      if (typeof key !== 'string' || !/^welcome:\d+:\d+$/.test(key) || key.length > 100 ||
+      if (typeof key !== 'string' || !/^(?:welcome:\d+:\d+|welcome-test:\d+:[A-Za-z0-9_-]+)$/.test(key) || key.length > 100 ||
           typeof to !== 'string' || !/^\+55[1-9]\d{9,10}$/.test(to) ||
           typeof body !== 'string' || !body.trim() || body.length > 2000) return reply(422, { error: 'invalid_welcome' });
       const fingerprint = digest(`${to}\n${body}`).toString('hex');
@@ -60,6 +66,10 @@ export function createGateway({ token, database, adapter }) {
       if (!res.headersSent) reply(500, { error: 'internal' });
     }
   });
+  server.recordReceipt = (id, status) => {
+    if (typeof id !== 'string' || typeof status !== 'number') return;
+    db.prepare('INSERT INTO receipts (id, status) VALUES (?, ?) ON CONFLICT(id) DO UPDATE SET status = CASE WHEN excluded.status = 0 THEN 0 ELSE MAX(receipts.status, excluded.status) END').run(id, status);
+  };
   server.requestTimeout = 15000;
   server.headersTimeout = 10000;
   server.on('close', () => db.close());

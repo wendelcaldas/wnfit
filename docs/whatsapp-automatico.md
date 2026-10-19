@@ -70,3 +70,9 @@ npm test
 ```
 
 Os testes usam HTTP falso e adaptador falso, sem contato com alunos reais. Um teste com o numero vinculado e necessario antes da ativacao em producao.
+
+### Diagnostico de entrega
+
+O bridge resolve o JID canonico por `onWhatsApp` antes do envio. `GET /messages/{id}` (privado, Bearer token) informa `accepted`, `server_ack`, `delivered`, `read` ou `error`, a partir dos recibos persistidos. Um ID local nao comprova entrega. A interface Laravel continua mostrando o historico de envio; os recibos deste endpoint sao usados para diagnostico nesta etapa. Testes pontuais usam chaves `welcome-test:<organizacao>:<identificador>` para nao colidir com alunos reais.
+
+Se o WhatsApp revogar explicitamente a sessao, o bridge descarta somente a autenticacao revogada e disponibiliza novo QR. O banco de deduplicacao permanece intacto. Objetos de sessao da dependencia libsignal sao removidos das chamadas diretas ao console para impedir registro de chaves.
