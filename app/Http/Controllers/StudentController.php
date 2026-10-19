@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Aluno;
 use App\Models\Cobranca;
 use App\Models\Plano;
-use App\Models\StudentWorkoutPlan;
 use App\Models\StudentPhysicalAssessment;
+use App\Models\StudentWorkoutPlan;
 use App\Models\StudentWorkoutSession;
 use App\Models\Treino;
 use App\Services\BillingService;
@@ -554,6 +554,7 @@ class StudentController extends Controller
                 'enviado', 'sent' => 'Enviada',
                 'entregue', 'delivered' => 'Entregue',
                 'falhou', 'failed' => 'Falhou',
+                'incerto' => 'Conferir envio',
                 default => ucfirst(str_replace('_', ' ', $message->status)),
             },
             'provider' => $message->provedor,

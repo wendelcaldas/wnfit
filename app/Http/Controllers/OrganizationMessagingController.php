@@ -12,9 +12,7 @@ class OrganizationMessagingController extends Controller
     public function __construct(
         private readonly MessagingService $messaging,
         private readonly TwilioContentTemplateService $twilioTemplates,
-    )
-    {
-    }
+    ) {}
 
     public function show(Request $request): JsonResponse
     {
@@ -94,6 +92,8 @@ class OrganizationMessagingController extends Controller
     private function payload($settings): array
     {
         return [
+            'welcomeAutomatic' => config('services.messaging.welcome_driver') === 'baileys'
+                && in_array((string) $settings->organizacao_id, array_map('trim', config('services.messaging.baileys.organization_ids', [])), true),
             'provider' => $settings->provedor,
             'whatsappFrom' => $settings->whatsapp_from,
             'chargeTemplateKey' => $settings->charge_template_key,
