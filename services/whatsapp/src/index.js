@@ -14,7 +14,16 @@ for (const method of ['log', 'info', 'warn', 'error']) {
 process.umask(0o077);
 const directory = resolve(process.env.WHATSAPP_DATA_DIR || './data');
 await mkdir(directory, { recursive: true, mode: 0o700 });
-const logger = pino({ level: 'silent' });
+const logger = pino({
+  level: 'warn',
+  hooks: {
+    logMethod(args, method) {
+      // Protocol descriptions only; never serialize keys, messages or credentials.
+      const description = typeof args.at(-1) === 'string' ? args.at(-1) : 'WhatsApp protocol warning';
+      method.call(this, description);
+    },
+  },
+});
 let socket;
 let connected = false;
 let pairingQr = null;
