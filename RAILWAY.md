@@ -104,3 +104,7 @@ Em producao, mantenha `TWILIO_VALIDATE_WEBHOOK_SIGNATURE=true` para validar a as
 ## Álbum dos eventos
 
 Configure um bucket privado S3 compatível e as variáveis AWS do disco `s3`. Use `EVENT_PHOTO_DISK=s3`. Depois de conferir upload, leitura autenticada e permanência dos arquivos após um novo deploy, defina `EVENT_PHOTO_STORAGE_PERSISTENT=true`. Até essa confirmação, uploads em produção retornam indisponibilidade; a base local usa o disco local. Não use um bucket público: as fotos são servidas por endpoints que verificam o vínculo do participante ou papel da equipe. A imagem é reprocessada sem metadados, com miniatura.
+
+## Boas-vindas automaticas (piloto Baileys)
+
+Para envio automatico exclusivamente no cadastro de novos alunos, consulte [docs/whatsapp-automatico.md](docs/whatsapp-automatico.md). O piloto usa um servico Node.js separado, sessao persistente em volume e worker Laravel na fila `whatsapp`. Manter `MESSAGING_MODE=manual`; ativar apenas `WHATSAPP_WELCOME_DRIVER=baileys` e os IDs de organizacoes autorizadas. Cobrancas permanecem manuais.

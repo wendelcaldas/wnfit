@@ -2,6 +2,7 @@
 
 namespace App\Services\Messaging;
 
+use App\Jobs\SendWelcomeWhatsApp;
 use App\Models\Aluno;
 use App\Models\Cobranca;
 use App\Models\Mensagem;
@@ -21,7 +22,7 @@ class MessagingService
     {
         $charge->loadMissing(['aluno', 'assinatura.plano', 'organizacao']);
 
-        if ($charge->origem === 'evento' || $this->isManualMode()) {
+        if ($charge->origem === 'evento' || $this->isManualMode() || config('services.messaging.welcome_driver') === 'baileys') {
             return $this->prepareManualChargeReminder($charge, 'Envio manual configurado para esta organizacao.');
         }
 
@@ -79,6 +80,36 @@ class MessagingService
     public function sendWelcomeMessage(Aluno $student): Mensagem
     {
         $student->loadMissing(['organizacao', 'assinatura.plano']);
+
+        if (config('services.messaging.welcome_driver') === 'baileys') {
+            if (! in_array((string) $student->organizacao_id, array_map('trim', config('services.messaging.baileys.organization_ids', [])), true)) {
+                return $this->prepareManualWelcomeMessage($student, 'Organizacao fora do piloto automatico.');
+            }
+
+            return DB::transaction(function () use ($student) {
+                Aluno::whereKey($student->id)->lockForUpdate()->firstOrFail();
+                $existing = $student->mensagens()->where('tipo', 'boas_vindas')->first();
+                if ($existing) {
+                    return $existing;
+                }
+                $settings = $this->settingsForOrganization($student->organizacao);
+                $message = Mensagem::create([
+                    'organizacao_id' => $student->organizacao_id,
+                    'aluno_id' => $student->id,
+                    'canal' => 'whatsapp', 'provedor' => 'baileys', 'tipo' => 'boas_vindas',
+                    'status' => $settings->ativo ? 'pendente' : 'falhou',
+                    'destinatario' => $this->normalizeBrazilianPhone($student->telefone),
+                    'conteudo' => $this->renderTemplate($settings->welcome_message_body, $this->welcomeTemplateVariables($student)),
+                    'erro' => $settings->ativo ? null : 'Envio desativado para esta organizacao.',
+                ]);
+                if ($settings->ativo) {
+                    // Always asynchronous, even when the default queue uses sync.
+                    SendWelcomeWhatsApp::dispatch($message->id)->onConnection('database')->onQueue('whatsapp')->afterCommit();
+                }
+
+                return $message;
+            });
+        }
 
         if ($this->isManualMode()) {
             return $this->prepareManualWelcomeMessage($student, 'Envio manual configurado para esta organizacao.');

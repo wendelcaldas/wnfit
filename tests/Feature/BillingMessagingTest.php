@@ -2,14 +2,18 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\SendWelcomeWhatsApp;
+use App\Models\Aluno;
 use App\Models\Cobranca;
 use App\Models\Mensagem;
 use App\Models\MensagemConfiguracao;
 use App\Models\Organizacao;
 use App\Models\User;
+use App\Services\Messaging\MessagingService;
 use App\Services\Messaging\TwilioWhatsAppDriver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class BillingMessagingTest extends TestCase
@@ -636,5 +640,103 @@ class BillingMessagingTest extends TestCase
         }
 
         return base64_encode(hash_hmac('sha1', $base, $token, true));
+    }
+
+    public function test_baileys_welcome_is_queued_once_and_charges_stay_manual(): void
+    {
+        Queue::fake();
+        [$user, $organization] = $this->organizationWithUser('studio-baileys');
+        config([
+            'services.messaging.mode' => 'manual',
+            'services.messaging.welcome_driver' => 'baileys',
+            'services.messaging.baileys.organization_ids' => [(string) $organization->id],
+        ]);
+        $response = $this->actingAs($user)->postJson('/api/students', [
+            'nome' => 'Bianca Ramos', 'telefone' => '(71) 99988-7766',
+            'plano' => 'Plano Mensal', 'status' => 'ativo',
+            'data_inicio' => '2026-08-01', 'data_vencimento' => '2026-09-01',
+        ])->assertCreated()->assertJsonPath('student.communications.0.status', 'pendente');
+        $student = Aluno::findOrFail($response->json('student.id'));
+        $service = app(MessagingService::class);
+        $service->sendWelcomeMessage($student);
+        $this->assertSame(1, $student->mensagens()->where('tipo', 'boas_vindas')->count());
+        Queue::assertPushed(SendWelcomeWhatsApp::class, 1);
+        Queue::assertPushed(SendWelcomeWhatsApp::class,
+            fn ($job) => $job->connection === 'database' && $job->queue === 'whatsapp');
+        $charge = $student->cobrancas()->firstOrFail();
+        $this->assertSame('whatsapp_link', $service->sendChargeReminder($charge)->provedor);
+        $job = new SendWelcomeWhatsApp($student->mensagens()->where('tipo', 'boas_vindas')->value('id'));
+        config(['services.messaging.baileys.url' => 'http://bridge', 'services.messaging.baileys.token' => 'secret']);
+        Http::fake(['bridge/welcome' => Http::response(['id' => 'wa-id'])]);
+        $job->handle();
+        $job->handle();
+        Http::assertSentCount(1);
+        $this->assertDatabaseHas('mensagens', ['provedor' => 'baileys', 'status' => 'enviado', 'provider_message_id' => 'wa-id']);
+    }
+
+    public function test_baileys_does_not_send_for_other_organizations(): void
+    {
+        Queue::fake();
+        config(['services.messaging.welcome_driver' => 'baileys', 'services.messaging.baileys.organization_ids' => []]);
+        [$user] = $this->organizationWithUser('studio-outside-pilot');
+        $this->actingAs($user)->postJson('/api/students', [
+            'nome' => 'Bianca Ramos', 'telefone' => '(71) 99988-7766',
+            'plano' => 'Plano Mensal', 'status' => 'ativo',
+            'data_inicio' => '2026-08-01', 'data_vencimento' => '2026-09-01',
+        ])->assertCreated()->assertJsonPath('student.communications.0.provider', 'whatsapp_link');
+        Queue::assertNothingPushed();
+    }
+
+    public function test_baileys_uncertain_result_is_not_marked_sent_or_retried(): void
+    {
+        $message = $this->createBaileysMessage();
+        Http::fake(['bridge/welcome' => Http::response(['error' => 'uncertain'], 409)]);
+        $job = new SendWelcomeWhatsApp($message->id);
+        $job->handle();
+        $job->handle();
+        Http::assertSentCount(1);
+        $this->assertSame('incerto', $message->fresh()->status);
+        $this->assertNull($message->fresh()->enviado_em);
+    }
+
+    public function test_baileys_checks_kill_switch_before_sending(): void
+    {
+        $message = $this->createBaileysMessage();
+        config(['services.messaging.welcome_driver' => 'default']);
+        Http::fake();
+        (new SendWelcomeWhatsApp($message->id))->handle();
+        Http::assertNothingSent();
+        $this->assertSame('falhou', $message->fresh()->status);
+    }
+
+    public function test_baileys_disconnect_is_retryable(): void
+    {
+        $message = $this->createBaileysMessage();
+        Http::fake(['bridge/welcome' => Http::response(['error' => 'disconnected'], 503)]);
+        try {
+            (new SendWelcomeWhatsApp($message->id))->handle();
+            $this->fail('Expected retryable exception');
+        } catch (\RuntimeException $exception) {
+            $this->assertSame('pendente', $message->fresh()->status);
+        }
+    }
+
+    private function createBaileysMessage(): Mensagem
+    {
+        Queue::fake();
+        [$user, $organization] = $this->organizationWithUser('studio-job');
+        config([
+            'services.messaging.welcome_driver' => 'baileys',
+            'services.messaging.baileys.organization_ids' => [(string) $organization->id],
+            'services.messaging.baileys.url' => 'http://bridge',
+            'services.messaging.baileys.token' => 'secret',
+        ]);
+        $this->actingAs($user)->postJson('/api/students', [
+            'nome' => 'Bianca Ramos', 'telefone' => '(71) 99988-7766',
+            'plano' => 'Plano Mensal', 'status' => 'ativo',
+            'data_inicio' => '2026-08-01', 'data_vencimento' => '2026-09-01',
+        ])->assertCreated();
+
+        return Mensagem::where('provedor', 'baileys')->firstOrFail();
     }
 }
