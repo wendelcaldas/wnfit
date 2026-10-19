@@ -11,10 +11,12 @@ await mkdir(directory, { recursive: true, mode: 0o700 });
 const logger = pino({ level: 'silent' });
 let socket;
 let connected = false;
+let pairingQr = null;
 let reconnect;
 let stopping = false;
 const adapter = {
   ready: () => connected,
+  pairing: () => pairingQr,
   async send(to, body) {
     const result = await socket.sendMessage(`${to.replace(/\D/g, '')}@s.whatsapp.net`, { text: body });
     return result?.key?.id;
@@ -27,16 +29,19 @@ async function connect() {
   socket = makeWASocket({ auth: state, logger, markOnlineOnConnect: false, syncFullHistory: false });
   socket.ev.on('creds.update', saveCreds);
   socket.ev.on('connection.update', update => {
+    if (update.qr) pairingQr = update.qr;
     if (update.qr && process.env.BRIDGE_SHOW_QR === 'true') {
       // Enable only while pairing; the QR grants account access.
       qr.generate(update.qr, { small: true });
     }
     if (update.connection === 'open') {
       connected = true;
+      pairingQr = null;
       console.info('WhatsApp connected');
     }
     if (update.connection === 'close') {
       connected = false;
+      pairingQr = null;
       const loggedOut = update.lastDisconnect?.error?.output?.statusCode === DisconnectReason.loggedOut;
       console.info(loggedOut ? 'WhatsApp logged out: pairing required' : 'WhatsApp disconnected');
       if (!loggedOut && !stopping) reconnect = setTimeout(() => connect().catch(() => process.exit(1)), 5000);

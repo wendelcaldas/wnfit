@@ -15,6 +15,7 @@ export function createGateway({ token, database, adapter }) {
       res.end(JSON.stringify(body));
     };
     if (!timingSafeEqual(digest(req.headers.authorization || ''), digest(`Bearer ${token}`))) return reply(401, { error: 'unauthorized' });
+    if (req.method === 'GET' && req.url === '/pairing') return reply(200, { connected: adapter.ready(), qr: adapter.pairing?.() || null });
     if (req.method === 'GET' && req.url === '/health') return reply(adapter.ready() ? 200 : 503, { connected: adapter.ready() });
     if (req.method !== 'POST' || req.url !== '/welcome') return reply(404, { error: 'not_found' });
     try {

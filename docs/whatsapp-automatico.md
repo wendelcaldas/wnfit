@@ -6,7 +6,7 @@ Baileys e uma integracao nao oficial, com risco de desconexao, quebra de compati
 
 ## 1. Servico separado
 
-No Railway, criar um servico com Root Directory `services/whatsapp` e o Dockerfile desse diretorio. Usar apenas uma replica e volume persistente montado em `/data`. Manter `sends.sqlite` e `auth/` no mesmo volume, com backup protegido. Nao compartilhar esse volume entre processos/replicas.
+No Railway, criar um servico com Root Directory `services/whatsapp` e o Dockerfile desse diretorio. Configurar Dockerfile `Dockerfile`, sem healthcheck HTTP e sem pre-deploy. Definir `RAILWAY_RUN_UID=0` para acesso ao volume montado pelo Railway. Usar apenas uma replica e volume persistente montado em `/data`. Manter `sends.sqlite` e `auth/` no mesmo volume, com backup protegido. Nao compartilhar esse volume entre processos/replicas.
 
 Variaveis do servico:
 
@@ -18,7 +18,7 @@ BRIDGE_SHOW_QR=true
 
 Gerar o segredo com `openssl rand -hex 32`. A aplicacao deve acessar esse servico exclusivamente por rede privada; nao criar dominio publico. Se usar IPv6 privado do Railway, definir `HOST=::`; caso contrario o padrao e `0.0.0.0`. `PORT` e fornecida pelo ambiente (padrao 3000).
 
-Na primeira inicializacao, ler o QR nos logs restritos e vincular pelo WhatsApp Business da WNFit em **Dispositivos conectados > Conectar dispositivo**. Depois, definir `BRIDGE_SHOW_QR=false` e reiniciar. O QR e uma credencial temporaria: restringir acesso e limpar os logs de pareamento conforme os recursos do provedor. O QR nao e exposto por HTTP.
+Na primeira inicializacao, ler o QR nos logs restritos e vincular pelo WhatsApp Business da WNFit em **Dispositivos conectados > Conectar dispositivo**. Depois, definir `BRIDGE_SHOW_QR=false` e reiniciar. O QR e uma credencial temporaria: restringir acesso e limpar os logs de pareamento conforme os recursos do provedor. O QR tambem pode ser consultado em `GET /pairing`, exclusivamente na rede privada e com o mesmo Bearer token; nunca criar dominio publico para a ponte.
 
 A sessao sobrevive a deploys pelo volume; o computador pessoal pode ficar desligado. Logout exige novo pareamento. Parar o servico, remover somente `/data/auth` se necessario e repetir o pareamento; **nunca apagar `sends.sqlite` para reconectar**, pois ele impede envios duplicados.
 
@@ -37,7 +37,7 @@ QUEUE_CONNECTION=database
 
 Aceita IDs separados por virgula; lista vazia nao habilita nenhum studio. Todos os studios habilitados compartilham o numero WNFit. Os demais continuam com o fluxo manual. `ativo` em Comunicacoes deve estar habilitado. O texto existente e reutilizado; esta etapa nao altera o mecanismo de login nem envia senha ou link de redefinicao. O gestor continua entregando as credenciais pelo fluxo atual.
 
-Executar as migrations habituais. O projeto ja possui tabelas de jobs. Criar um worker separado, usando a imagem Laravel e o comando:
+Executar as migrations habituais. O projeto ja possui tabelas de jobs. Criar um worker separado, usando a imagem Laravel, sem healthcheck HTTP nem pre-deploy, com o comando abaixo configurado diretamente no servico. Nao herdar o healthcheck `/up` do servico web:
 
 ```sh
 php artisan queue:work database --queue=whatsapp --sleep=3 --tries=5 --timeout=45

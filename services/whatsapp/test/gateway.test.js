@@ -61,3 +61,14 @@ test('concurrent request for same key cannot duplicate', async t => {
   release('id');
   assert.equal((await first).status, 200);
 });
+
+test('pairing QR requires authentication and stays internal', async t => {
+  const server = createGateway({ token, database: ':memory:', adapter: { ready: () => false, pairing: () => 'pairing-secret' } });
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  t.after(() => new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }));
+  const url = `http://127.0.0.1:${server.address().port}/pairing`;
+  assert.equal((await fetch(url)).status, 401);
+  const response = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
+  assert.deepEqual(await response.json(), { connected: false, qr: 'pairing-secret' });
+});
