@@ -1,0 +1,21 @@
+const { chromium } = require('playwright');
+const fs=require('fs');
+(async()=>{
+ const browser=await chromium.launch({headless:true,channel:'chrome'});
+ const page=await browser.newPage({viewport:{width:1440,height:1000}});
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(process.env.WNFIT_GRAFANA_URL+'/login',{waitUntil:'domcontentloaded'});
+ await page.locator('input[name="user"]').fill('wnfit-admin');
+ await page.locator('input[name="password"]').fill(process.env.WNFIT_GRAFANA_PASSWORD);
+ await page.getByRole('button',{name:/log in/i}).click();
+ await page.waitForURL(url=>!url.pathname.includes('/login'));
+ await page.goto(process.env.WNFIT_GRAFANA_URL+'/d/wnfit-clientes',{waitUntil:'domcontentloaded'});
+ await page.getByText('Clientes cadastrados',{exact:true}).waitFor();
+ await page.getByText('Alunos cadastrados',{exact:true}).waitFor();
+ await page.getByText('23',{exact:true}).first().waitFor({timeout:45000});
+ await page.waitForFunction(()=>!Array.from(document.querySelectorAll('[aria-label]')).some(e=>e.getAttribute('aria-label')?.includes('Loading panel')),{timeout:30000});
+ fs.mkdirSync('storage/app/grafana-preview',{recursive:true});
+ await page.screenshot({path:'storage/app/grafana-preview/dashboard.png',fullPage:true});
+ console.log('LOGIN_AND_DASHBOARD_RENDERED',JSON.stringify({title:await page.title(),pageErrors:errors}));
+ await browser.close();
+})().catch(e=>{console.error(e.message);process.exit(1)});

@@ -1,0 +1,23 @@
+apiVersion: 1
+datasources:
+  - name: WNFit Metrics
+    uid: wnfit-mysql
+    type: mysql
+    access: proxy
+    url: $METRICS_DB_ADDRESS
+    user: wnfit_grafana_reader
+    isDefault: true
+    editable: false
+    jsonData:
+      database: wnfit_analytics
+      mysqlVersion: 90000
+      maxOpenConns: 3
+      maxIdleConns: 1
+      connMaxLifetime: 14400
+      timeInterval: 5m
+      timezone: '+00:00'
+      tlsAuth: true
+      tlsSkipVerify: true
+      tlsAuthWithCACert: false
+    secureJsonData:
+      password: $METRICS_PASSWORD

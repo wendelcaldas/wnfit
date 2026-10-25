@@ -1,0 +1,21 @@
+const assert=require('node:assert/strict');
+(async()=>{
+ const root=process.env.WNFIT_GRAFANA_URL;
+ const headers={Authorization:'Basic '+Buffer.from('wnfit-admin:'+process.env.WNFIT_GRAFANA_PASSWORD).toString('base64'),'Content-Type':'application/json'};
+ const health=await fetch(root+'/api/health');assert.equal(health.status,200);console.log('Grafana health:',await health.json());
+ const anon=await fetch(root+'/api/search');assert.equal(anon.status,401);console.log('Anonymous dashboard access: denied');
+ const dh=await fetch(root+'/api/datasources/uid/wnfit-mysql/health',{headers});const dhbody=await dh.json();console.log('Datasource:',dh.status,dhbody);assert.equal(dh.status,200);
+ const dr=await fetch(root+'/api/dashboards/uid/wnfit-clientes',{headers});const data=await dr.json();assert.equal(dr.status,200);
+ const to=Date.now(),from=to-90*86400000;
+ const execute=async queries=>{const r=await fetch(root+'/api/ds/query',{method:'POST',headers,body:JSON.stringify({from:String(from),to:String(to),queries})});const result=await r.json();return {status:r.status,result};};
+ const ids=await execute([{refId:'IDS',datasource:{uid:'wnfit-mysql',type:'mysql'},rawSql:'SELECT id FROM clients',format:'table',rawQuery:true,intervalMs:86400000,maxDataPoints:100}]);assert.equal(ids.status,200);
+ const frames=ids.result.results.IDS.frames;const values=frames.flatMap(f=>f.data.values[0]);
+ const selection=values.length?values.map(v=>"'"+Number(v)+"'").join(','):"'0'";
+ const queries=data.dashboard.panels.flatMap(p=>(p.targets||[]).map(t=>({...t,refId:'P'+p.id,rawSql:t.rawSql.replaceAll('${client:sqlstring}',selection),intervalMs:86400000,maxDataPoints:100})));
+ const executed=await execute(queries);
+ const errors=Object.entries(executed.result.results||{}).filter(([k,v])=>v.error).map(([k,v])=>({panel:k,error:v.error}));
+ console.log('Dashboard queries:',queries.length,'HTTP',executed.status,'errors',JSON.stringify(errors));
+ assert.equal(executed.status,200);assert.deepEqual(errors,[]);
+ console.log('CLIENTS',values.length);
+ console.log('ALL_CHECKS_PASSED');
+})().catch(e=>{console.error(e.message);process.exit(1)});
