@@ -56,7 +56,7 @@ Ao continuar na primeira tela, os campos são validados e POST /api/register/che
 
 ### Validação desta versão
 
-- Suíte Laravel: 114 testes, 1.587 assertions. Novos casos cobrem persistência após login, compatibilidade, enums, limites, duplicatas, chaves desconhecidas, transação e isolamento entre contas.
+- Suíte Laravel: 120 testes, 1.622 assertions (incluindo a main atualizada e o teste de preservação da migração). Novos casos cobrem persistência após login, compatibilidade, enums, limites, duplicatas, chaves desconhecidas, transação e isolamento entre contas.
 - Build Vite concluído.
 - Navegador com API simulada: sete telas, validação, teclado, foco, limite de três prioridades, retorno com dados, termos, erros 422 na conta/perfil/ambiente, falha de rede, nova tentativa, envio único e convite no painel; nenhuma conta criada no banco persistente pelo teste.
 - Capturas desktop/mobile das seis telas e welcome.png em storage/app/register-preview, sem overflow horizontal a 390px.
