@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Aluno;
 use App\Models\StudentWorkoutSession;
+use App\Services\WorkoutNotificationService;
 use App\Services\WorkoutPublishingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -93,6 +94,10 @@ class StudentPortalController extends Controller
                 'status' => $request->boolean('abandon') ? 'abandoned' : ($request->boolean('finish') ? 'completed' : 'in_progress'),
                 'finished_at' => ($request->boolean('finish') || $request->boolean('abandon')) ? now() : null,
             ]);
+
+            if ($locked->status === 'completed') {
+                app(WorkoutNotificationService::class)->completed($locked);
+            }
 
             return $locked;
         });
