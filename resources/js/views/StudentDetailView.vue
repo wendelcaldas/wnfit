@@ -114,7 +114,7 @@
                         <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Comunicações</h2>
                         <p class="mt-1 text-sm text-[var(--wn-muted)]">Mensagens preparadas para WhatsApp e historico de envio.</p>
                     </div>
-                    <span class="badge-success">WhatsApp manual</span>
+                    <span class="badge-success">WhatsApp</span>
                 </div>
 
                 <div v-if="student.communications?.length" class="divide-y divide-[var(--wn-line)]">
@@ -165,8 +165,16 @@
 
             <aside class="space-y-5">
                 <section class="panel-card">
-                    <h2 class="text-lg font-semibold text-[var(--wn-ink)]">Fila manual</h2>
+                    <h2 class="text-lg font-semibold text-[var(--wn-ink)]">Acompanhamento</h2>
                     <div class="mt-5 space-y-4 text-sm">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-[var(--wn-muted)]">Em processamento</span>
+                            <strong>{{ communicationCount(['pendente', 'queued']) }}</strong>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-[var(--wn-muted)]">Conferir envio</span>
+                            <strong>{{ communicationCount(['incerto']) }}</strong>
+                        </div>
                         <div class="flex items-center justify-between gap-3">
                             <span class="text-[var(--wn-muted)]">Prontas para envio</span>
                             <strong>{{ communicationCount(['manual_preparado']) }}</strong>

@@ -2,15 +2,15 @@
     <AppShell
         eyebrow="Configuracoes > Mensagens"
         title="Mensagens e cobrancas"
-        description="Configure os textos que serao preparados para envio manual pelo WhatsApp."
+        description="Configure as mensagens de boas-vindas e cobranca pelo WhatsApp."
         search-placeholder="Buscar configuracoes..."
     >
         <div class="grid gap-5 xl:grid-cols-[1fr_390px]">
             <form class="panel-card" @submit.prevent="saveSettings">
                 <div class="flex flex-col gap-4 border-b border-[var(--wn-line)] pb-5 md:flex-row md:items-start md:justify-between">
                     <div>
-                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Mensagens manuais no WhatsApp</h2>
-                        <p class="mt-1 text-sm text-[var(--wn-muted)]">O WNFit abre o WhatsApp Web com a mensagem pronta e registra o acompanhamento no aluno.</p>
+                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Mensagens no WhatsApp</h2>
+                        <p class="mt-1 text-sm text-[var(--wn-muted)]">{{ welcomeAutomatic ? 'Boas-vindas sao enviadas automaticamente aos novos alunos. Cobrancas continuam com envio manual.' : 'O WNFit abre o WhatsApp com a mensagem pronta e registra o acompanhamento no aluno.' }}</p>
                     </div>
                     <button class="btn-primary justify-center" :disabled="saving">
                         {{ saving ? 'Salvando...' : 'Salvar configuracao' }}
@@ -43,8 +43,8 @@
                     <label class="flex items-center gap-3 rounded-lg border border-[var(--wn-line)] bg-white p-4">
                         <input v-model="form.ativo" type="checkbox" class="h-4 w-4" />
                         <span>
-                            <span class="block text-sm font-semibold text-[var(--wn-ink)]">Preparar mensagens automaticamente</span>
-                            <span class="mt-1 block text-sm text-[var(--wn-muted)]">Quando ativo, cadastro de aluno e cobrancas geram mensagens prontas para WhatsApp.</span>
+                            <span class="block text-sm font-semibold text-[var(--wn-ink)]">Ativar mensagens</span>
+                            <span class="mt-1 block text-sm text-[var(--wn-muted)]">{{ welcomeAutomatic ? 'Novos cadastros entram na fila de boas-vindas. Desativar tambem interrompe os envios pendentes.' : 'Quando ativo, cadastro de aluno e cobrancas geram mensagens prontas para WhatsApp.' }}</span>
                         </span>
                     </label>
 
@@ -60,7 +60,7 @@
                     <div class="mt-4 space-y-3 text-sm text-[var(--wn-muted)]">
                         <div class="flex items-center gap-3">
                             <CheckCircle2 class="h-4 w-4 shrink-0 text-[var(--wn-primary-strong)]" />
-                            <span>Aluno novo gera boas-vindas pronta para envio.</span>
+                            <span>{{ welcomeAutomatic ? 'Aluno novo recebe boas-vindas automaticamente; acompanhe o resultado no cadastro.' : 'Aluno novo gera boas-vindas pronta para envio.' }}</span>
                         </div>
                         <div class="flex items-center gap-3">
                             <CheckCircle2 class="h-4 w-4 shrink-0 text-[var(--wn-primary-strong)]" />
@@ -126,6 +126,7 @@ import { CheckCircle2, MessageSquareText } from 'lucide-vue-next';
 import AppShell from '../components/AppShell.vue';
 
 const loading = ref(true);
+const welcomeAutomatic = ref(false);
 const saving = ref(false);
 const message = ref('');
 const messageType = ref('success');
@@ -169,6 +170,7 @@ const loadSettings = async () => {
         welcome_message_body: data.settings.welcomeMessageBody,
         ativo: data.settings.active,
     });
+    welcomeAutomatic.value = data.settings.welcomeAutomatic ?? false;
     variables.value = data.variables;
     Object.assign(serverPreviews, data.previews ?? { charge: data.preview, welcome: '' });
 };
