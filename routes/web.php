@@ -15,6 +15,7 @@ use App\Http\Controllers\OrganizationMessagingController;
 use App\Http\Controllers\OrganizationUserController;
 use App\Http\Controllers\PublicEventController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\StaffNotificationController;
 use App\Http\Controllers\StudentAccessController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentEventController;
@@ -89,6 +90,8 @@ Route::prefix('api')->group(function () {
         Route::get('/events/{event}/registrations/{registration}/students', [EventParticipantController::class, 'candidates']);
         Route::post('/events/{event}/registrations/{registration}/access', [EventParticipantController::class, 'access']);
         Route::patch('/events/{event}/registrations/{registration}', [EventController::class, 'attendance']);
+        Route::get('/notifications', [StaffNotificationController::class, 'index']);
+        Route::patch('/notifications/{notification}/read', [StaffNotificationController::class, 'read'])->whereNumber('notification');
         Route::get('/dashboard', DashboardController::class);
         Route::get('/finance', FinanceController::class);
         Route::get('/collections', [CollectionsController::class, 'index']);

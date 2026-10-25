@@ -51,6 +51,8 @@ const fs = require('node:fs');
             organization = { name: payload.company, type: null, onboarding_profile: payload.onboarding_profile };
             return route.fulfill({ status: 201, json: { csrf: 'test', user: { name: payload.name }, organization } });
         }
+        if (path === '/api/notifications')
+            return route.fulfill({ json: { notifications: [], unreadCount: 0, nextCursor: null } });
         if (path === '/api/dashboard')
             return route.fulfill({
                 json: { stats: [{ label: 'Alunos', value: '0' }], chart: [], classes: [], clients: [], incomeBars: [] },
@@ -274,7 +276,23 @@ const fs = require('node:fs');
     assert.equal(await page.getByRole('button', { name: 'Criando...' }).isDisabled(), true);
     await page.waitForURL('**/painel');
     assert.equal(requests, before + 1);
-    await page.getByRole('link', { name: 'Organizar treinos' }).waitFor();
+    await page.locator('.admin-stat-grid').waitFor();
+    assert.equal(await page.locator('.admin-hero').count(), 0);
+    await page.getByRole('button', { name: 'Abrir notificações' }).click();
+    await page.getByRole('dialog', { name: 'Notificações', exact: true }).waitFor();
+    await page.getByText('Nenhuma notificação por enquanto', { exact: true }).waitFor();
+    const notificationsBox = await page.getByRole('dialog', { name: 'Notificações', exact: true }).boundingBox();
+    assert.ok(notificationsBox.x >= 0 && notificationsBox.x + notificationsBox.width <= 390);
+    await page.getByRole('button', { name: 'Fechar notificações' }).click();
+    await page.getByRole('dialog', { name: 'Notificações', exact: true }).waitFor({ state: 'hidden' });
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.getByRole('button', { name: 'Abrir notificações' }).click();
+    await page.getByRole('dialog', { name: 'Notificações', exact: true }).waitFor();
+    await page.screenshot({ path: output + '/notifications-desktop.png', fullPage: true });
+    await page.keyboard.press('Escape');
+    await page.getByRole('dialog', { name: 'Notificações', exact: true }).waitFor({ state: 'hidden' });
+    assert.equal(await page.getByRole('button', { name: 'Abrir notificações' }).getAttribute('aria-expanded'), 'false');
+
     assert.equal(
         await page.evaluate(() =>
             [...Object.values(localStorage), ...Object.values(sessionStorage)].some((v) => v.includes('Senha123!')),
