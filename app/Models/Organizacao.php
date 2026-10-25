@@ -14,6 +14,11 @@ class Organizacao extends Model
 
     protected $table = 'organizacoes';
 
+    protected function casts(): array
+    {
+        return ['onboarding_profile' => 'array'];
+    }
+
     /**
      * @var list<string>
      */
@@ -22,6 +27,7 @@ class Organizacao extends Model
         'razao_social',
         'slug',
         'tipo',
+        'onboarding_profile',
         'email_contato',
         'telefone_contato',
         'ativa',

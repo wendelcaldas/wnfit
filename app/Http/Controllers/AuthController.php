@@ -69,6 +69,16 @@ class AuthController extends Controller
         return response()->json($this->sessionPayload($request->user()));
     }
 
+    public function checkRegistrationEmail(Request $request): JsonResponse
+    {
+        $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
+        $data = $request->validate(['email' => ['required', 'email', 'max:255']]);
+
+        return response()->json([
+            'available' => ! User::query()->where('email', $data['email'])->exists(),
+        ])->header('Cache-Control', 'no-store');
+    }
+
     public function register(Request $request): JsonResponse
     {
         $request->merge([
@@ -78,14 +88,24 @@ class AuthController extends Controller
         ]);
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'min:2', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'company' => ['required', 'string', 'max:255'],
-            'company_type' => ['required', 'string', 'in:academia,studio,personal'],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'company' => ['required', 'string', 'min:2', 'max:255'],
+            'company_type' => ['nullable', 'required_without:onboarding_profile', 'string', 'in:academia,studio,personal'],
+            'onboarding_profile' => ['sometimes', 'required', 'array:student_range,service_mode,team,priorities'],
+            'onboarding_profile.student_range' => ['required_with:onboarding_profile', 'string', 'in:starting,1_20,21_50,51_100,100_plus'],
+            'onboarding_profile.service_mode' => ['required_with:onboarding_profile', 'string', 'in:in_person,online,hybrid'],
+            'onboarding_profile.team' => ['required_with:onboarding_profile', 'string', 'in:solo,team'],
+            'onboarding_profile.priorities' => ['required_with:onboarding_profile', 'array', 'min:1', 'max:3'],
+            'onboarding_profile.priorities.*' => ['required', 'string', 'distinct', 'in:workouts,schedule,finance,progress,events'],
+            'phone' => ['nullable', 'string', 'regex:/\A[0-9]{10,15}\z/'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'terms' => ['accepted'],
         ], [
+            'name.min' => 'Informe seu nome com pelo menos dois caracteres.',
+            'company.min' => 'Informe um nome com pelo menos dois caracteres.',
+            'phone.regex' => 'Informe de 10 a 15 números, incluindo o DDD.',
+            'phone.string' => 'Informe o telefone como uma sequência de números.',
             'name.required' => 'Informe seu nome completo.',
             'email.required' => 'Informe seu e-mail.',
             'email.email' => 'Informe um e-mail valido.',
@@ -109,7 +129,8 @@ class AuthController extends Controller
             $organization = Organizacao::query()->create([
                 'nome_fantasia' => $data['company'],
                 'slug' => $this->uniqueOrganizationSlug($data['company']),
-                'tipo' => $data['company_type'],
+                'tipo' => $data['company_type'] ?? null,
+                'onboarding_profile' => $data['onboarding_profile'] ?? null,
                 'email_contato' => $data['email'],
                 'telefone_contato' => $data['phone'] ?? null,
             ]);
@@ -167,6 +188,7 @@ class AuthController extends Controller
                 'type' => $organization->tipo,
                 'email' => $organization->email_contato,
                 'phone' => $organization->telefone_contato,
+                'onboarding_profile' => $organization->onboarding_profile,
             ] : null,
         ];
     }

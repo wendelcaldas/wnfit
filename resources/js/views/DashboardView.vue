@@ -6,7 +6,10 @@
         :description="`Bem-vindo(a) de volta ao painel operacional ${auth.organization?.name ? `da ${auth.organization.name}` : 'do WNFit'}.`"
         search-placeholder="Buscar alunos, treinos ou aulas..."
     >
-        <AdminHero title="Seu estúdio em movimento" description="Mais pessoas, mais progresso, todos os dias.">
+        <AdminHero v-if="onboardingStart" :title="onboardingStart.title" :description="onboardingStart.description">
+            <RouterLink :to="onboardingStart.href" class="btn-primary">{{ onboardingStart.action }} <ArrowRight :size="18" /></RouterLink>
+        </AdminHero>
+        <AdminHero v-else title="Seu estúdio em movimento" description="Mais pessoas, mais progresso, todos os dias.">
             <RouterLink to="/agenda" class="btn-primary">Ver agenda <ArrowRight :size="18" /></RouterLink>
         </AdminHero>
         <section class="admin-stat-grid grid grid-cols-2 gap-4 xl:grid-cols-4">
@@ -157,6 +160,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { getFirstStep } from '../onboarding/profile';
 import { RouterLink } from 'vue-router';
 import {
     ArrowRight,
@@ -200,6 +204,7 @@ const statMeta = {
 };
 
 const stats = ref([]);
+const onboardingStart = computed(() => stats.value[0]?.value === '0' ? getFirstStep(auth.organization?.onboarding_profile) : null);
 const chart = ref([]);
 const classes = ref([]);
 const clients = ref([]);
