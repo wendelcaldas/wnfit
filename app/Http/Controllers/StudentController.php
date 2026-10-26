@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class StudentController extends Controller
 {
@@ -29,6 +30,7 @@ class StudentController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $request->validate(['modalidade' => ['nullable', Rule::in(['todos', 'nao_informado', ...array_keys(Aluno::MODALIDADES)])]]);
         $organization = $request->user()->organizacoes()->firstOrFail();
         $this->billing->refreshOverdueCharges($organization->id);
 
@@ -57,6 +59,12 @@ class StudentController extends Controller
             $query->where('plano', $request->plano);
         }
 
+        if ($request->modalidade === 'nao_informado') {
+            $query->whereNull('modalidade');
+        } elseif ($request->filled('modalidade') && $request->modalidade !== 'todos') {
+            $query->where('modalidade', $request->modalidade);
+        }
+
         $students = $query->latest()->get();
 
         $allStudents = Aluno::query()->where('perfil_tipo', 'aluno')
@@ -74,6 +82,11 @@ class StudentController extends Controller
             && $student->vencimento->between(today(), today()->addDays(7)));
 
         return response()->json([
+            'modalitySummary' => collect([...Aluno::MODALIDADES, 'nao_informado' => 'Não informado'])
+                ->map(fn ($label, $value) => [
+                    'value' => $value, 'label' => $label,
+                    'count' => $allStudents->where('status', 'ativo')->filter(fn ($student) => $student->modalidade === ($value === 'nao_informado' ? null : $value))->count(),
+                ])->values(),
             'summary' => [
                 ['label' => 'Total de alunos', 'value' => (string) $allStudents->count(), 'caption' => 'Base cadastrada', 'badge' => '+12%', 'type' => 'students'],
                 ['label' => 'Alunos ativos', 'value' => (string) $allStudents->where('status', 'ativo')->count(), 'caption' => '77% do total', 'badge' => 'Ativos', 'type' => 'active'],
@@ -289,6 +302,7 @@ class StudentController extends Controller
     private function validationRules(): array
     {
         return [
+            'modalidade' => ['required', Rule::in(array_keys(Aluno::MODALIDADES))],
             'username' => ['nullable', 'string', 'min:3', 'max:60', 'regex:/^[a-z0-9][a-z0-9._-]+$/', 'unique:student_accounts,username'],
             'nome' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -325,6 +339,7 @@ class StudentController extends Controller
     private function profileValidationRules(): array
     {
         return [
+            'modalidade' => ['sometimes', 'nullable', Rule::in(array_keys(Aluno::MODALIDADES))],
             'nome' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'telefone' => ['sometimes', 'required', 'string', 'max:20'],
@@ -355,6 +370,7 @@ class StudentController extends Controller
     private function studentPayload(array $data): array
     {
         return collect($data)->only([
+            'modalidade',
             'nome',
             'email',
             'telefone',
@@ -398,6 +414,8 @@ class StudentController extends Controller
             'statusClass' => $overdue ? 'badge-danger' : ($expiring ? 'badge-warning' : 'badge-success'),
             'dueDate' => optional($student->vencimento)->format('d/m/Y') ?: '-',
             'lastWorkout' => $student->completed_workout_sessions_max_finished_at ? Carbon::parse($student->completed_workout_sessions_max_finished_at)->format('d/m/Y H:i') : 'Ainda não treinou',
+            'modality' => $student->modalidade,
+            'modalityLabel' => Aluno::MODALIDADES[$student->modalidade] ?? 'Não informado',
         ];
     }
 
@@ -423,6 +441,8 @@ class StudentController extends Controller
             'email' => $student->email,
             'phone' => $student->telefone,
             'profileCompletion' => $this->profileCompletion($student),
+            'modality' => $student->modalidade,
+            'modalityLabel' => Aluno::MODALIDADES[$student->modalidade] ?? 'Não informado',
             'recentActivity' => collect(range(6, 0))->map(function ($offset) use ($completedByDay) {
                 $day = today()->subDays($offset);
                 $count = $completedByDay->get($day->toDateString(), collect())->count();

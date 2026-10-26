@@ -13,6 +13,7 @@
                     <div class="student-identity-tags"><span class="badge-success">{{ student.status }}</span><span v-if="student.plan" class="student-plan-tag">{{ student.plan }}</span></div>
                     <p class="student-identity-meta"><strong>Nascimento:</strong> {{ student.birthDate || 'Não informado' }}<template v-if="student.age !== null && student.age !== undefined"> ({{ student.age }} anos)</template></p>
                     <p v-if="student.teacher" class="student-identity-meta">Professor: {{ student.teacher }}</p>
+                    <p class="student-identity-meta">Modalidade: {{ student.modalityLabel || 'Não informado' }}</p>
                     <p v-if="student.goal" class="student-identity-meta"><strong>Objetivo:</strong> {{ student.goal }}</p>
                 </div>
             </div>

@@ -54,7 +54,7 @@ class StudentPortalTest extends TestCase
     public function test_registration_creates_unique_access_atomically_and_only_returns_temporary_password_once(): void
     {
         [$owner] = $this->setupStudent();
-        $data = ['nome' => 'Wendel Souza Caldas', 'telefone' => '(71) 99999-0000', 'plano' => 'Mensal', 'status' => 'ativo', 'data_inicio' => today()->toDateString(), 'data_vencimento' => today()->addMonth()->toDateString()];
+        $data = ['modalidade' => 'presencial', 'nome' => 'Wendel Souza Caldas', 'telefone' => '(71) 99999-0000', 'plano' => 'Mensal', 'status' => 'ativo', 'data_inicio' => today()->toDateString(), 'data_vencimento' => today()->addMonth()->toDateString()];
         $first = $this->actingAs($owner)->postJson('/api/students', $data)->assertCreated();
         $second = $this->postJson('/api/students', $data)->assertCreated();
         $this->assertSame('wendel', $first->json('credentials.username'));

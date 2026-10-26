@@ -33,6 +33,7 @@
                     </div>
                     <div class="mt-6 space-y-4">
                         <SelectField label="Plano *" v-model="form.plano" :options="planNames" />
+                        <label class="block space-y-2"><span class="text-sm font-medium text-[var(--wn-muted)]">Modalidade de acompanhamento *</span><select v-model="form.modalidade" class="form-control" required><option disabled value="">Selecione a modalidade</option><option v-for="option in studentModalities" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
                         <div class="grid gap-4 sm:grid-cols-2">
                             <Field label="Data de inicio *" v-model="form.data_inicio" type="date" required />
                             <Field label="Vencimento *" v-model="form.data_vencimento" type="date" required />
@@ -59,6 +60,7 @@ import { computed, defineComponent, h, onMounted, reactive, ref, watch } from 'v
 import { RouterLink, useRouter } from 'vue-router';
 import { CalendarDays, Sparkles, UserRound } from 'lucide-vue-next';
 import AppShell from '../components/AppShell.vue';
+import { studentModalities } from '../data/studentModalities';
 import { useStudentCredentialsStore } from '../stores/studentCredentials';
 const usernameEdited = ref(false);
 
@@ -92,7 +94,7 @@ const today = new Date();
 const nextMonth = new Date();
 nextMonth.setMonth(today.getMonth() + 1);
 const toInputDate = (date) => date.toISOString().slice(0, 10);
-const form = reactive({ nome: '', telefone: '', email: '', data_nascimento: '', plano: 'Plano Mensal', data_inicio: toInputDate(today), data_vencimento: toInputDate(nextMonth), treinador: '', unidade: '', status: 'ativo', objetivo: 'Saude', auto_renovacao: true, metodo_pagamento: 'PIX' });
+const form = reactive({ modalidade: '', nome: '', telefone: '', email: '', data_nascimento: '', plano: 'Plano Mensal', data_inicio: toInputDate(today), data_vencimento: toInputDate(nextMonth), treinador: '', unidade: '', status: 'ativo', objetivo: 'Saude', auto_renovacao: true, metodo_pagamento: 'PIX' });
 const planNames = computed(() => options.plans.length ? options.plans.map((plan) => plan.nome) : ['Plano Mensal']);
 let usernameTimer; let suggestionRequest = 0;
 watch(() => form.nome, () => { clearTimeout(usernameTimer); const request = ++suggestionRequest; if (usernameEdited.value || !form.nome.trim()) return; usernameTimer = setTimeout(async () => { try { const { data } = await window.axios.get('/api/student-access/suggest', { params: { name: form.nome } }); if (request === suggestionRequest && !usernameEdited.value) form.username = data.username; } catch { /* Server also generates a unique username on save. */ } }, 300); });

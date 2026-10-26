@@ -13,7 +13,12 @@
             </RouterLink>
         </template>
 
-        <AdminHero :title="`${summary.find(item => item.type === 'active')?.value ?? '—'} alunos ativos`" :description="`${summary[0]?.value ?? '—'} alunos cadastrados no seu estúdio`" />
+        <AdminHero :title="`${summary.find(item => item.type === 'active')?.value ?? '—'} alunos ativos`" :description="`${summary[0]?.value ?? '—'} alunos cadastrados no seu estúdio`">
+            <div class="student-modality-summary" aria-label="Modalidades dos alunos ativos da academia">
+                <p>Alunos ativos por modalidade</p>
+                <dl><div v-for="item in modalitySummary.filter(item => item.value !== 'nao_informado' || item.count > 0)" :key="item.value"><dt>{{ item.label }}</dt><dd>{{ item.count }}</dd></div></dl>
+            </div>
+        </AdminHero>
 
         <section class="admin-stat-grid grid grid-cols-2 gap-4 xl:grid-cols-4">
             <article v-for="item in summary" :key="item.label" class="stat-card">
@@ -30,12 +35,14 @@
             </article>
         </section>
 
-        <label class="mt-6 mb-4 block text-sm font-semibold">Exibir<select v-model="filters.tipo" class="form-control mt-2" @change="filters.status='todos';loadStudents()"><option value="aluno">Alunos</option><option value="participante">Participantes de eventos</option></select></label><section class="panel-card mt-6 !p-0">
-            <div class="admin-student-filters grid gap-4 border-b border-[var(--wn-line)] p-5 xl:grid-cols-[1.6fr_repeat(3,0.9fr)_auto]">
+        <section class="panel-card mt-6 !p-0">
+            <div class="admin-student-filters grid gap-4 border-b border-[var(--wn-line)] p-5 xl:grid-cols-[1.6fr_repeat(4,minmax(0,0.9fr))_auto]">
                 <label class="input-shell self-end">
                     <Search class="h-5 w-5 text-[var(--wn-muted)]" />
                     <input v-model="filters.q" type="text" class="auth-input" aria-label="Buscar aluno" placeholder="Buscar por nome, e-mail ou telefone..." @input="loadStudents" />
                 </label>
+
+                <label class="block text-sm font-medium">Modalidade<select v-model="filters.modalidade" class="form-control mt-2" @change="loadStudents"><option value="todos">Todas</option><option v-for="option in studentModalities" :key="option.value" :value="option.value">{{ option.label }}</option><option value="nao_informado">Não informado</option></select></label>
 
                 <label class="space-y-1">
                     <span class="text-xs font-semibold text-[var(--wn-muted)]">Status</span>
@@ -43,7 +50,7 @@
                         <option value="todos">Todos</option>
                         <option value="ativo">Ativo</option>
                         <option value="avaliacao">Em avaliação</option>
-                        <option value="pausado">Pausado</option><option v-if="filters.tipo==='participante'" value="participante">Participante</option>
+                        <option value="pausado">Pausado</option>
                     </select>
                 </label>
 
@@ -97,7 +104,7 @@
                                     </div>
                                 </RouterLink>
                             </td>
-                            <td class="px-5 py-4 text-sm text-[var(--wn-ink)]">{{ student.plan }}</td>
+                            <td class="px-5 py-4 text-sm text-[var(--wn-ink)]">{{ student.plan }}<small class="block text-xs text-[var(--wn-muted)]">{{ student.modalityLabel }}</small></td>
                             <td class="px-5 py-4 text-sm text-[var(--wn-ink)]">{{ student.teacher }}</td>
                             <td class="px-5 py-4"><span :class="student.statusClass">{{ student.status }}</span></td>
                             <td class="px-5 py-4 text-sm text-[var(--wn-muted)]">{{ student.dueDate }}</td>
@@ -121,6 +128,7 @@
                 </div>
                 <dl class="admin-mobile-details">
                     <div><dt>Plano</dt><dd>{{ student.plan }}</dd></div>
+                    <div><dt>Modalidade</dt><dd>{{ student.modalityLabel }}</dd></div>
                     <div><dt>Professor</dt><dd>{{ student.teacher }}</dd></div>
                     <div><dt>Vencimento</dt><dd>{{ student.dueDate }}</dd></div>
                     <div><dt>Último treino</dt><dd>{{ student.lastWorkout }}</dd></div>
@@ -147,6 +155,7 @@ import { ArrowRight, AlertTriangle, Hourglass, MoreVertical, Plus, Search, Slide
 
 import AppShell from '../components/AppShell.vue';
 import AdminHero from '../components/AdminHero.vue';
+import { studentModalities } from '../data/studentModalities';
 
 const summaryMeta = {
     students: { icon: Users, iconWrapClass: 'bg-[var(--wn-primary-soft)]', iconClass: 'text-[var(--wn-primary-strong)]' },
@@ -156,20 +165,23 @@ const summaryMeta = {
 };
 
 const summary = ref([]);
+const modalitySummary = ref([]);
 const students = ref([]);
 const options = reactive({ plans: [], teachers: [] });
-const filters = reactive({ tipo:'aluno', q: '', status: 'todos', plano: 'todos', professor: 'todos' });
+const filters = reactive({ tipo:'aluno', modalidade: 'todos', q: '', status: 'todos', plano: 'todos', professor: 'todos' });
 
 const loadStudents = async () => {
     const { data } = await window.axios.get('/api/students', { params: filters });
     summary.value = data.summary.map((item) => ({ ...item, ...(summaryMeta[item.type] ?? summaryMeta.students) }));
     students.value = data.students;
+    modalitySummary.value = data.modalitySummary ?? [];
     options.plans = data.filters.plans;
     options.teachers = data.filters.teachers;
 };
 
 const resetFilters = () => {
     filters.q = '';
+    filters.modalidade = 'todos';
     filters.status = 'todos';
     filters.plano = 'todos';
     filters.professor = 'todos';
@@ -178,3 +190,12 @@ const resetFilters = () => {
 
 onMounted(loadStudents);
 </script>
+
+<style scoped>
+.student-modality-summary { min-width: 0; max-width: 100%; }
+.student-modality-summary > p { font-size: .7rem; color: #ffffffb3; margin-bottom: .6rem; }
+.student-modality-summary dl { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; }
+.student-modality-summary dl > div { display: flex; align-items: baseline; gap: .45rem; }
+.student-modality-summary dt { color: #d7dbd3; font-size: .8rem; }
+.student-modality-summary dd { color: #a3e635; font-size: 1.1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+</style>
