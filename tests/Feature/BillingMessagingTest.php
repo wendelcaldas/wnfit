@@ -39,6 +39,7 @@ class BillingMessagingTest extends TestCase
         [$user] = $this->organizationWithUser('studio-boas-vindas');
 
         $response = $this->actingAs($user)->postJson('/api/students', [
+            'modalidade' => 'presencial',
             'nome' => 'Bianca Ramos',
             'email' => 'bianca@example.com',
             'telefone' => '(71) 99988-7766',
@@ -74,6 +75,7 @@ class BillingMessagingTest extends TestCase
         [$user] = $this->organizationWithUser('studio-manual-boas-vindas');
 
         $response = $this->actingAs($user)->postJson('/api/students', [
+            'modalidade' => 'presencial',
             'nome' => 'Bianca Ramos',
             'email' => 'bianca@example.com',
             'telefone' => '(71) 99988-7766',
@@ -116,6 +118,7 @@ class BillingMessagingTest extends TestCase
         [$user] = $this->organizationWithUser('studio-producao');
 
         $response = $this->actingAs($user)->postJson('/api/students', [
+            'modalidade' => 'presencial',
             'nome' => 'Laura Prado',
             'telefone' => '(71) 98877-6655',
             'plano' => 'Plano Mensal',
@@ -168,6 +171,7 @@ class BillingMessagingTest extends TestCase
         [$user] = $this->organizationWithUser();
 
         $studentResponse = $this->actingAs($user)->postJson('/api/students', [
+            'modalidade' => 'presencial',
             'nome' => 'Mariana Alves',
             'email' => 'mariana@example.com',
             'telefone' => '(71) 99999-1234',
@@ -221,6 +225,7 @@ class BillingMessagingTest extends TestCase
         [$user] = $this->organizationWithUser('studio-fallback-manual');
 
         $this->actingAs($user)->postJson('/api/students', [
+            'modalidade' => 'presencial',
             'nome' => 'Mariana Alves',
             'telefone' => '(71) 99999-1234',
             'plano' => 'Plano Mensal',
@@ -261,6 +266,7 @@ class BillingMessagingTest extends TestCase
         [$user] = $this->organizationWithUser('studio-manual-cobranca');
 
         $this->actingAs($user)->postJson('/api/students', [
+            'modalidade' => 'presencial',
             'nome' => 'Mariana Alves',
             'telefone' => '(71) 99999-1234',
             'plano' => 'Plano Mensal',
@@ -293,6 +299,7 @@ class BillingMessagingTest extends TestCase
         [$user] = $this->organizationWithUser('studio-manual-status');
 
         $this->actingAs($user)->postJson('/api/students', [
+            'modalidade' => 'presencial',
             'nome' => 'Mariana Alves',
             'telefone' => '(71) 99999-1234',
             'plano' => 'Plano Mensal',
@@ -330,6 +337,7 @@ class BillingMessagingTest extends TestCase
         [$user] = $this->organizationWithUser('studio-manual-cobranca-status');
 
         $this->actingAs($user)->postJson('/api/students', [
+            'modalidade' => 'presencial',
             'nome' => 'Mariana Alves',
             'telefone' => '(71) 99999-1234',
             'plano' => 'Plano Mensal',
@@ -368,6 +376,7 @@ class BillingMessagingTest extends TestCase
         [$otherUser] = $this->organizationWithUser('studio-manual-outra');
 
         $this->actingAs($owner)->postJson('/api/students', [
+            'modalidade' => 'presencial',
             'nome' => 'Mariana Alves',
             'telefone' => '(71) 99999-1234',
             'plano' => 'Plano Mensal',
@@ -389,6 +398,7 @@ class BillingMessagingTest extends TestCase
         [$user] = $this->organizationWithUser('studio-webhook');
 
         $this->actingAs($user)->postJson('/api/students', [
+            'modalidade' => 'presencial',
             'nome' => 'Carlos Lima',
             'telefone' => '(71) 98888-1234',
             'plano' => 'Plano Mensal',
@@ -597,6 +607,7 @@ class BillingMessagingTest extends TestCase
         ]);
 
         $this->actingAs($user)->postJson('/api/students', [
+            'modalidade' => 'presencial',
             'nome' => 'Joana Teste',
             'telefone' => '(71) 97777-1234',
             'plano' => 'Plano Mensal',
@@ -652,6 +663,7 @@ class BillingMessagingTest extends TestCase
             'services.messaging.baileys.organization_ids' => [(string) $organization->id],
         ]);
         $response = $this->actingAs($user)->postJson('/api/students', [
+            'modalidade' => 'presencial',
             'nome' => 'Bianca Ramos', 'telefone' => '(71) 99988-7766',
             'plano' => 'Plano Mensal', 'status' => 'ativo',
             'data_inicio' => '2026-08-01', 'data_vencimento' => '2026-09-01',
@@ -680,6 +692,7 @@ class BillingMessagingTest extends TestCase
         config(['services.messaging.welcome_driver' => 'baileys', 'services.messaging.baileys.organization_ids' => []]);
         [$user] = $this->organizationWithUser('studio-outside-pilot');
         $this->actingAs($user)->postJson('/api/students', [
+            'modalidade' => 'presencial',
             'nome' => 'Bianca Ramos', 'telefone' => '(71) 99988-7766',
             'plano' => 'Plano Mensal', 'status' => 'ativo',
             'data_inicio' => '2026-08-01', 'data_vencimento' => '2026-09-01',
@@ -732,6 +745,7 @@ class BillingMessagingTest extends TestCase
             'services.messaging.baileys.token' => 'secret',
         ]);
         $this->actingAs($user)->postJson('/api/students', [
+            'modalidade' => 'presencial',
             'nome' => 'Bianca Ramos', 'telefone' => '(71) 99988-7766',
             'plano' => 'Plano Mensal', 'status' => 'ativo',
             'data_inicio' => '2026-08-01', 'data_vencimento' => '2026-09-01',

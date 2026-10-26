@@ -61,6 +61,7 @@
                     <ProfileField label="Complemento" v-model="profileForm.complemento" /><ProfileField label="Bairro" v-model="profileForm.bairro" />
                     <ProfileField label="Cidade" v-model="profileForm.cidade" /><ProfileField label="Estado" v-model="profileForm.estado" maxlength="2" />
                     <ProfileField label="CEP" v-model="profileForm.cep" />
+                    <label class="block text-sm font-medium">Modalidade de acompanhamento<select v-model="profileForm.modalidade" class="form-control mt-2"><option value="">Não informado</option><option v-for="option in studentModalities" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
                 </div>
                 <FormMessage :text="formMessage" />
             </form>
@@ -306,6 +307,7 @@ import StudentContext from '../components/StudentContext.vue';
 import StudentPhysicalAssessmentPanel from '../components/StudentPhysicalAssessmentPanel.vue';
 import '../../css/student-detail.css';
 import AppShell from '../components/AppShell.vue';
+import { studentModalities } from '../data/studentModalities';
 import ChargeActionDialog from '../components/ChargeActionDialog.vue';
 import SubscriptionRecurrence from '../components/SubscriptionRecurrence.vue';
 import StudentAccessPanel from '../components/StudentAccessPanel.vue';
@@ -437,7 +439,7 @@ const loadStudent = async () => {
     const { data } = await window.axios.get(`/api/students/${route.params.id}`);
     student.value = data.student;
     Object.assign(profileForm, {
-        nome: data.student.profile.name, email: data.student.profile.email, telefone: data.student.profile.phone,
+        nome: data.student.profile.name, email: data.student.profile.email, telefone: data.student.profile.phone, modalidade: data.student.modality ?? '',
         data_nascimento: data.student.profile.birthDateInput, genero: data.student.profile.gender, cpf: data.student.profile.cpf,
         rg: data.student.profile.rg, profissao: data.student.profile.profession, endereco: data.student.profile.address,
         numero: data.student.profile.number, complemento: data.student.profile.complement, bairro: data.student.profile.neighborhood,

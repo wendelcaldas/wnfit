@@ -13,8 +13,11 @@ class Aluno extends Model
 {
     use HasFactory;
 
+    public const MODALIDADES = ['presencial' => 'Presencial', 'online' => 'Online', 'hibrido' => 'Híbrido'];
+
     protected $fillable = [
         'organizacao_id',
+        'modalidade',
         'perfil_tipo',
         'nome',
         'email',
