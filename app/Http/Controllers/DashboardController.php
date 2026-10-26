@@ -5,24 +5,42 @@ namespace App\Http\Controllers;
 use App\Models\Aluno;
 use App\Models\Agendamento;
 use App\Models\Checkin;
-use App\Models\Cobranca;
-use App\Models\Receita;
-use App\Services\BillingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function __construct(private readonly BillingService $billing)
+    public function calendar(Request $request): JsonResponse
     {
+        $data = $request->validate(['month' => ['nullable', 'date_format:Y-m']]);
+        $organization = $request->user()->organizacoes()->firstOrFail();
+        $start = Carbon::createFromFormat('!Y-m', $data['month'] ?? now()->format('Y-m'));
+        $events = Agendamento::query()
+            ->where('organizacao_id', $organization->id)
+            ->where('status', '!=', 'cancelado')
+            ->where('inicio_em', '<', $start->copy()->addMonth())
+            ->where('fim_em', '>=', $start)
+            ->with('instrutor:id,name')
+            ->withCount(['alunos as reservas' => fn ($query) => $query->where('agendamento_aluno.status', 'confirmado')])
+            ->orderBy('inicio_em')->get()
+            ->map(fn (Agendamento $event) => [
+                'id' => $event->id, 'title' => $event->titulo,
+                'date' => $event->inicio_em->toDateString(), 'endDate' => $event->fim_em->toDateString(),
+                'time' => $event->inicio_em->format('H:i'), 'endTime' => $event->fim_em->format('H:i'),
+                'location' => $event->local ?: 'Sem local', 'instructor' => $event->instrutor?->name ?: 'Equipe',
+                'participants' => $event->reservas, 'capacity' => $event->capacidade,
+                'modality' => $event->modalidade,
+            ]);
+
+        return response()->json(['month' => $start->format('Y-m'), 'today' => today()->toDateString(), 'events' => $events]);
     }
 
     public function __invoke(Request $request): JsonResponse
     {
         $organization = $request->user()->organizacoes()->firstOrFail();
         $organizationId = $organization->id;
-        $this->billing->refreshOverdueCharges($organizationId);
         $today = Carbon::today();
 
         $activeStudents = Aluno::query()
@@ -41,23 +59,24 @@ class DashboardController extends Controller
             ->whereDate('inicio_em', $today)
             ->count();
 
-        $monthRevenue = (float) Cobranca::query()
-            ->where('organizacao_id', $organizationId)
-            ->where('status', 'pago')
-            ->whereBetween('pago_em', [$today->copy()->startOfMonth(), $today->copy()->endOfMonth()])
-            ->sum('valor');
+        $todayReservations = DB::table('agendamento_aluno')
+            ->join('agendamentos', 'agendamentos.id', '=', 'agendamento_aluno.agendamento_id')
+            ->where('agendamentos.organizacao_id', $organizationId)
+            ->where('agendamentos.status', '!=', 'cancelado')
+            ->whereDate('agendamentos.inicio_em', $today)
+            ->where('agendamento_aluno.status', 'confirmado')
+            ->count();
 
         return response()->json([
             'stats' => [
-                ['label' => 'Clientes ativos', 'value' => (string) $activeStudents, 'caption' => 'Base ativa agora', 'badge' => 'Crescimento', 'type' => 'students'],
+                ['label' => 'Alunos ativos', 'value' => (string) $activeStudents, 'caption' => 'Base ativa agora', 'badge' => 'Alunos', 'type' => 'students'],
                 ['label' => 'Check-ins hoje', 'value' => (string) $todayCheckins, 'caption' => 'Entradas registradas hoje', 'badge' => 'Frequencia', 'type' => 'checkins'],
                 ['label' => 'Aulas hoje', 'value' => (string) $todayClasses, 'caption' => $this->nextClassCaption($organizationId, $today), 'badge' => 'Agenda', 'type' => 'classes'],
-                ['label' => 'Faturamento', 'value' => 'R$ '.number_format($monthRevenue, 2, ',', '.'), 'caption' => 'Competencia atual', 'badge' => 'Receita', 'type' => 'revenue'],
+                ['label' => 'Reservas hoje', 'value' => (string) $todayReservations, 'caption' => 'Inscrições confirmadas nas aulas de hoje', 'badge' => 'Agenda', 'type' => 'reservations'],
             ],
             'chart' => $this->checkinsByDay($organizationId, $today),
             'classes' => $this->upcomingClasses($organizationId, $today),
             'clients' => $this->recentClients($organizationId),
-            'incomeBars' => $this->incomeByMonth($organizationId, $today),
             'organization' => [
                 'name' => $organization->nome_fantasia,
             ],
@@ -123,34 +142,6 @@ class DashboardController extends Controller
                 'status' => ucfirst($student->status),
             ])
             ->all();
-    }
-
-    private function incomeByMonth(int $organizationId, Carbon $today): array
-    {
-        $start = $today->copy()->subMonths(5)->startOfMonth();
-        $rows = Cobranca::query()
-            ->where('organizacao_id', $organizationId)
-            ->where('status', 'pago')
-            ->where('pago_em', '>=', $start)
-            ->get(['pago_em', 'valor'])
-            ->groupBy(fn (Cobranca $charge) => $charge->pago_em->format('Y-m'))
-            ->map(fn ($charges) => $charges->sum(fn (Cobranca $charge) => (float) $charge->valor));
-
-        $values = collect(range(0, 5))->map(function (int $offset) use ($start, $rows) {
-            $date = $start->copy()->addMonths($offset);
-
-            return [
-                'label' => ucfirst($date->translatedFormat('M')),
-                'raw' => (float) ($rows[$date->format('Y-m')] ?? 0),
-            ];
-        });
-
-        $max = max($values->max('raw'), 1);
-
-        return $values->map(fn ($item) => [
-            'label' => $item['label'],
-            'value' => max(12, (int) round(($item['raw'] / $max) * 92)),
-        ])->all();
     }
 
     private function nextClassCaption(int $organizationId, Carbon $today): string

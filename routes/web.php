@@ -93,6 +93,7 @@ Route::prefix('api')->group(function () {
         Route::get('/notifications', [StaffNotificationController::class, 'index']);
         Route::patch('/notifications/{notification}/read', [StaffNotificationController::class, 'read'])->whereNumber('notification');
         Route::get('/dashboard', DashboardController::class);
+        Route::get('/dashboard/calendar', [DashboardController::class, 'calendar']);
         Route::get('/finance', FinanceController::class);
         Route::get('/collections', [CollectionsController::class, 'index']);
         Route::get('/collections/{student}', [CollectionsController::class, 'show']);
