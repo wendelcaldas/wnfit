@@ -97,6 +97,56 @@ class ScheduleTest extends TestCase
             ->assertJsonPath('events.0.instructorId', $professor->id);
     }
 
+    public function test_dashboard_calendar_returns_complete_month_and_only_organization_active_events(): void
+    {
+        [$owner, $organization] = $this->organizationWithUser('proprietario', 'calendar');
+        [, $other] = $this->organizationWithUser('proprietario', 'other-calendar');
+        $make = fn ($org, $start, $end, $status = 'agendado') => Agendamento::create([
+            'organizacao_id' => $org->id, 'titulo' => 'Aula', 'inicio_em' => $start,
+            'fim_em' => $end, 'status' => $status, 'tipo' => 'coletiva', 'modalidade' => 'presencial',
+        ]);
+        $make($organization, '2026-09-30 23:00', '2026-10-01 01:00');
+        foreach ([1, 10, 20, 25, 30, 31] as $day) {
+            $make($organization, "2026-10-{$day} 09:00", "2026-10-{$day} 10:00");
+        }
+        $make($organization, '2026-11-01 09:00', '2026-11-01 10:00');
+        $make($organization, '2026-10-03 09:00', '2026-10-03 10:00', 'cancelado');
+        $make($other, '2026-10-03 09:00', '2026-10-03 10:00');
+        $this->actingAs($owner)->getJson('/api/dashboard/calendar?month=2026-10')
+            ->assertOk()->assertJsonPath('month', '2026-10')->assertJsonCount(7, 'events')
+            ->assertJsonPath('events.0.date', '2026-09-30')->assertJsonPath('events.6.date', '2026-10-31');
+        $this->getJson('/api/dashboard/calendar?month=2026-11')->assertOk()->assertJsonCount(1, 'events');
+        $this->getJson('/api/dashboard/calendar?month=2026-12')->assertOk()->assertJsonCount(0, 'events');
+        $this->getJson('/api/dashboard/calendar?month=2026-99')->assertUnprocessable();
+    }
+
+    public function test_dashboard_counts_confirmed_reservations_for_today_without_financial_data(): void
+    {
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-10-26 12:00:00'));
+        [$owner, $organization] = $this->organizationWithUser('proprietario', 'operations');
+        [, $other] = $this->organizationWithUser('proprietario', 'other-operations');
+        $student = Aluno::create(['organizacao_id' => $organization->id, 'nome' => 'Aluno ativo', 'status' => 'ativo']);
+        $inactive = Aluno::create(['organizacao_id' => $organization->id, 'nome' => 'Aluno inativo', 'status' => 'inativo']);
+        $make = function ($org, $date, $status = 'agendado') use ($student) {
+            $event = Agendamento::create(['organizacao_id' => $org->id, 'titulo' => 'Aula', 'inicio_em' => "$date 14:00", 'fim_em' => "$date 15:00", 'status' => $status]);
+            $event->alunos()->attach($student->id, ['status' => 'confirmado']);
+            return $event;
+        };
+        $first = $make($organization, '2026-10-26');
+        $first->alunos()->attach($inactive->id, ['status' => 'cancelado']);
+        $make($organization, '2026-10-26');
+        $make($organization, '2026-10-26', 'cancelado');
+        $make($organization, '2026-10-27');
+        $make($other, '2026-10-26');
+        $response = $this->actingAs($owner)->getJson('/api/dashboard')->assertOk()
+            ->assertJsonCount(4, 'stats')->assertJsonPath('stats.0.value', '1')
+            ->assertJsonPath('stats.1.value', '0')->assertJsonPath('stats.2.value', '2')
+            ->assertJsonPath('stats.3.type', 'reservations')->assertJsonPath('stats.3.value', '2')
+            ->assertJsonMissingPath('incomeBars');
+        $this->assertStringNotContainsString('Faturamento', $response->getContent());
+        $this->assertStringNotContainsString('R$', $response->getContent());
+    }
+
     private function payload(?int $instructorId, array $participantIds = []): array
     {
         return [

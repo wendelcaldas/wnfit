@@ -6,23 +6,19 @@
         :description="`Bem-vindo(a) de volta ao painel operacional ${auth.organization?.name ? `da ${auth.organization.name}` : 'do WNFit'}.`"
         search-placeholder="Buscar alunos, treinos ou aulas..."
     >
-        <section class="admin-stat-grid grid grid-cols-2 gap-4 xl:grid-cols-4">
-            <article v-for="stat in stats" :key="stat.label" class="stat-card">
-                <div class="flex items-center gap-4">
-                    <div class="admin-stats-icon grid h-10 w-10 shrink-0 place-items-center rounded-xl">
-                        <component :is="stat.icon" class="h-6 w-6" :class="stat.iconClass" />
-                    </div>
-                    <div class="min-w-0">
-                        <p class="truncate text-sm font-medium text-[var(--wn-muted)]">{{ stat.label }}</p>
-                        <p class="mt-1 text-3xl font-bold text-[var(--wn-ink)]">{{ stat.value }}</p>
-                        <p class="mt-1 text-sm font-semibold text-[var(--wn-primary-strong)]">{{ stat.caption }}</p>
-                    </div>
+        <section class="dashboard-metrics" aria-label="Indicadores operacionais">
+            <article v-for="stat in stats" :key="stat.label" class="stat-card dashboard-metric" :title="stat.caption">
+                <component :is="stat.icon" class="metric-icon" aria-hidden="true" />
+                <div class="metric-copy">
+                    <p class="metric-label">{{ stat.label }}</p>
+                    <p class="metric-value">{{ stat.value }}</p>
                 </div>
+                <span class="sr-only">{{ stat.caption }}</span>
             </article>
         </section>
 
-        <section class="mt-6 grid gap-6 xl:grid-cols-[1.45fr_0.95fr]">
-            <article class="panel-card">
+        <section class="dashboard-calendar-row mt-6 grid gap-4">
+            <article class="panel-card min-w-0">
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Frequência dos alunos</h2>
@@ -56,33 +52,10 @@
                 </div>
             </article>
 
-            <article class="panel-card">
-                <div class="flex items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Próximas aulas</h2>
-                        <p class="mt-2 text-sm text-[var(--wn-muted)]">Agenda resumida do dia para a operação.</p>
-                    </div>
-                    <RouterLink to="/agenda" class="text-sm font-semibold text-[var(--wn-neutral-strong)]">Ver agenda</RouterLink>
-                </div>
-
-                <div class="mt-8 space-y-4">
-                    <p v-if="!classes.length" class="rounded-xl bg-[var(--wn-surface-soft)] p-5 text-sm text-[var(--wn-muted)]">Nenhuma aula programada para hoje. Consulte a agenda para planejar os próximos dias.</p>
-                    <div v-for="classItem in classes" :key="classItem.time" class="flex items-center gap-4 rounded-[1.25rem] border border-[var(--wn-line)] bg-[var(--wn-surface-soft)] px-4 py-4">
-                        <div class="w-14 shrink-0 text-sm font-semibold text-[var(--wn-muted)]">{{ classItem.time }}</div>
-                        <div class="h-3 w-3 rounded-full" :class="classItem.dot"></div>
-                        <div class="min-w-0 flex-1">
-                            <p class="truncate font-semibold text-[var(--wn-ink)]">{{ classItem.name }}</p>
-                            <p class="truncate text-sm text-[var(--wn-muted)]">{{ classItem.room }}</p>
-                        </div>
-                        <span class="rounded-full bg-[var(--wn-neutral-soft)] px-3 py-1 text-xs font-semibold text-[var(--wn-neutral-strong)]">
-                            {{ classItem.slots }}
-                        </span>
-                    </div>
-                </div>
-            </article>
+            <DashboardCalendar />
         </section>
 
-        <section class="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <section class="mt-6 grid min-w-0 gap-6">
             <article class="panel-card">
                 <div class="flex items-center justify-between gap-4">
                     <div>
@@ -132,22 +105,7 @@
                 </article>
             </article>
 
-            <article class="panel-card">
-                <div class="flex items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Receitas</h2>
-                        <p class="mt-2 text-sm text-[var(--wn-muted)]">Evolução dos últimos 6 meses.</p>
-                    </div>
-                    <button class="btn-secondary">6 meses</button>
-                </div>
 
-                <div class="mt-10 flex h-72 items-end justify-between gap-4">
-                    <div v-for="income in incomeBars" :key="income.label" class="flex flex-1 flex-col items-center gap-3">
-                        <div class="income-column w-full max-w-14 rounded-t-[1.2rem]" :style="{ height: `${income.value}%` }"></div>
-                        <span class="text-sm text-[var(--wn-muted)]">{{ income.label }}</span>
-                    </div>
-                </div>
-            </article>
         </section>
     </AppShell>
 </template>
@@ -156,14 +114,15 @@
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import {
-    ArrowRight,
-    CircleDollarSign,
+
+    CalendarCheck,
     ClipboardList,
     Dumbbell,
     Users,
 } from 'lucide-vue-next';
 
 import AppShell from '../components/AppShell.vue';
+import DashboardCalendar from '../components/DashboardCalendar.vue';
 import { useAuthStore } from '../stores/auth';
 
 const auth = useAuthStore();
@@ -187,8 +146,8 @@ const statMeta = {
         iconClass: 'text-[var(--wn-primary-strong)]',
         badgeClass: 'bg-[var(--wn-neutral-soft)] text-[var(--wn-neutral-strong)]',
     },
-    revenue: {
-        icon: CircleDollarSign,
+    reservations: {
+        icon: CalendarCheck,
         iconWrapClass: 'bg-[var(--wn-primary-soft)]',
         iconClass: 'text-[var(--wn-primary-strong)]',
         badgeClass: 'bg-[var(--wn-neutral-soft)] text-[var(--wn-neutral-strong)]',
@@ -197,9 +156,9 @@ const statMeta = {
 
 const stats = ref([]);
 const chart = ref([]);
-const classes = ref([]);
+
 const clients = ref([]);
-const incomeBars = ref([]);
+
 
 const chartSvgPoints = computed(() => {
     if (!chart.value.length) {
@@ -227,8 +186,23 @@ onMounted(async () => {
         ...(statMeta[stat.type] ?? statMeta.students),
     }));
     chart.value = data.chart;
-    classes.value = data.classes;
+
     clients.value = data.clients;
-    incomeBars.value = data.incomeBars;
+
 });
 </script>
+
+<style scoped>
+.dashboard-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.dashboard-metrics .dashboard-metric { display: flex; align-items: center; gap: .75rem; min-width: 0; min-height: 4.5rem; padding: 1rem; border-radius: 1rem; }
+.metric-icon { flex-shrink: 0; width: 1.15rem; height: 1.15rem; color: var(--wn-primary-strong); }
+.metric-copy { display: flex; flex: 1; align-items: center; justify-content: space-between; gap: .5rem; min-width: 0; }
+.metric-label { color: var(--wn-muted); font-size: .75rem; font-weight: 500; }
+.metric-value { color: var(--wn-ink); font-size: 1.4rem; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
+@media (min-width: 768px) { .dashboard-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 359px) { .dashboard-metrics .dashboard-metric { gap: .4rem; padding: .8rem .65rem; } .metric-copy { gap: .3rem; } .metric-icon { width: 1rem; height: 1rem; } .metric-value { font-size: 1.2rem; } }
+.dashboard-calendar-row { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 768px) {
+    .dashboard-calendar-row { grid-template-columns: minmax(0, 1fr) minmax(15rem, 19rem); align-items: stretch; }
+}
+</style>

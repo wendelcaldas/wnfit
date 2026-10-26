@@ -1,5 +1,7 @@
 # Direção visual para o lançamento do WNFit
 
+Decisões mais recentes da gestão: [painel e experiência operacional aprovados em 26/10/2026](#painel-e-experiência-operacional-aprovados-em-26102026). A restrição inicial ao portal do aluno, descrita abaixo, é histórica; a identidade foi posteriormente aplicada à gestão conforme [validação administrativa](VALIDACAO_UI_ADMIN.md).
+
 Pesquisa em 03/10/2026, com a primeira aplicação aprovada para o portal do aluno.
 
 ## Aplicação aprovada em 03/10/2026
@@ -69,3 +71,30 @@ Critério de conclusão: identidade consistente nas telas prioritárias, ações
 ## Ajuste para uso mobile e PWA
 
 Divisões de treino agora usam uma grade que se reorganiza em duas ou três colunas, sem rolagem lateral. O login acompanha a altura dinâmica do viewport e reduz a apresentação em telas baixas, sem fixar uma altura que corte controles. O formulário foi conferido sem rolagem em 320 × 568, 375 × 667 e 390 × 844. Campos mantêm fonte de 16 px para evitar zoom automático em navegadores móveis. Conteúdo adicional, teclado, ampliação de texto e sessões longas podem exigir rolagem vertical; não há bloqueio que impeça acessar campos ou mensagens. A tela de senha também recebeu espaçamento compacto para aparelhos baixos. Estas alterações continuam restritas ao portal do aluno.
+
+## Painel e experiência operacional aprovados em 26/10/2026
+
+Direção aprovada pelo usuário após revisão do painel e do modal de compromissos: descomplicar a operação, mostrar primeiro o que ajuda a decidir e revelar os detalhes quando solicitados. Esta orientação complementa a identidade existente; não autoriza retirar indiscriminadamente textos, indicadores ou orientações úteis.
+
+### Princípios para os próximos trabalhos
+
+- Priorizar informações reais e relevantes à tarefa e à operação do negócio, com definições claras; não inventar números para preencher a interface.
+- Manter hierarquia clara: contexto, informação principal e ação. Reduzir decoração, repetição e mensagens transitórias que competem com o conteúdo.
+- Buscar densidade equilibrada. Compactar sem sacrificar leitura, respiro, alvos de interação ou descoberta das ações. A revisão das pastilhas passou por versões mais altas e mais finas antes da aprovação do meio-termo.
+- Usar divulgação progressiva: resumo no painel, detalhes na data selecionada e gestão completa na agenda. Evitar acrescentar ações que o fluxo não oferece.
+- Preservar os padrões de acessibilidade: nomes acessíveis, semântica coerente, foco visível, teclado, fechamento de diálogos e retorno do foco. A revisão não substitui uma auditoria completa de acessibilidade.
+- Tratar responsividade como comportamento do conteúdo: alinhar blocos lado a lado; empilhar quando necessário; permitir rolagem vertical normal da página. Evitar cortes, sobreposição e overflow horizontal, inclusive com nomes longos.
+- Carregamento discreto não significa erro oculto. Manter feedback acessível de carregamento e erros relevantes visíveis, com possibilidade de tentar novamente.
+
+### Decisões concretas do painel
+
+1. **Indicadores operacionais:** quatro pastilhas de altura intermediária, atualmente cerca de 72 px: Alunos ativos, Check-ins hoje, Aulas hoje e Reservas hoje. Reservas são inscrições confirmadas em agendamentos não cancelados que começam no dia; uma pessoa em duas aulas conta como duas reservas. Não representam alunos únicos nem presença efetiva. As contagens respeitam a organização e a data local da aplicação.
+2. **Privacidade financeira:** retirados o indicador de faturamento, o gráfico de receitas e os dados financeiros correspondentes do payload do painel. O Financeiro permanece na área própria. Esta mudança não implementou nem garante permissões ou restrições novas de acesso ao Financeiro.
+3. **Calendário compacto:** navegação mensal e pontos nas datas com compromissos; consulta de todo o mês exibido. Somente datas com eventos são botões e abrem o modal. Dias vazios são informativos. Manter o botão “Ir para a agenda”, sem restaurar o título e as instruções redundantes removidos.
+4. **Estabilidade e alinhamento:** calendário e frequência têm topo/base e altura alinhados quando lado a lado. Os dias permanecem compactos; o espaço extra pertence ao contêiner. Reservar espaço para até seis linhas de datas evita variação de altura entre meses. Não mostrar aviso visual piscando durante a navegação; manter `aria-busy`, aviso para leitores de tela e tratamento de erro.
+5. **Conta no cabeçalho:** somente avatar no gatilho, com foto quando a URL estiver disponível e iniciais como fallback, inclusive em falha da imagem. Menu com Configurações e Sair, preservando as rotas e autenticação existentes. Sem nome, cargo ou seta adicionais no gatilho. Suportar teclado, Esc, clique fora e saída do foco.
+6. **Compromissos do dia:** agenda por horário, com cartões leves e hierarquia para título, modalidade, professor, local e reservas/capacidade. Cabeçalho com data e fechar; rodapé com acesso à agenda completa. Estilos próprios do diálogo, sem depender do modal de edição da agenda. Margens de viewport, quebra de nomes longos e corpo com rolagem vertical contida quando necessária; cabeçalho e rodapé permanecem acessíveis, sem overflow horizontal.
+
+Implementação principal: `DashboardView.vue`, `DashboardCalendar.vue`, `HeaderAccount.vue`, `AppShell.vue` e `DashboardController.php`. Validar mudanças nesses componentes com os fluxos existentes; não desfazer as decisões aprovadas ao ajustar apenas um detalhe visual.
+
+Evidências e limites desta sessão: [validação administrativa — revisão de 26/10/2026](VALIDACAO_UI_ADMIN.md#revisão-do-painel-em-26102026).
