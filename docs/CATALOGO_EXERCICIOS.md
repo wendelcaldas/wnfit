@@ -1,5 +1,9 @@
 # Catálogo de exercícios e biblioteca visual
 
+## Expansão Team Peu — outubro de 2026
+
+O catálogo atual contém 275 exercícios. O lote de 75 aprovado pelo estúdio está em `database/data/exercises-team-peu.json`, com o mesmo formato de cadastro e ilustrações próprias no padrão existente. Os 200 registros e arquivos anteriores foram preservados. O índice estrito confirma 275 imagens e nenhuma ausente. A aplicação ao banco local foi concluída após backup; a entrega inclui sincronização e verificação do catálogo no pré-deploy de produção. Detalhes e validação em [Expansão para 275 exercícios](design/exercises/EXPANSAO_275.md).
+
 ## Diagnóstico e implementação
 
 Antes desta etapa, o banco configurado tinha 24 exercícios globais e nenhuma imagem. Era uma seleção básica, com apenas uma opção para glúteos e uma para panturrilhas, poucas variações de equipamento e sem instruções no seeder original.
@@ -12,7 +16,7 @@ Executado no banco local configurado e na demonstração isolada. Para outros am
 
 ## Biblioteca de demonstrações
 
-A biblioteca própria segue o padrão visual aprovado: manequim cinza, posições de início e execução, seta de movimento e principais músculos em verde. Os 200 exercícios da base têm arquivos WebP específicos, em `public/media/exercises/v1`, e um índice versionado em `resources/js/data/exerciseIllustrations.json`.
+A biblioteca própria segue o padrão visual aprovado: manequim cinza, posições de início e execução, seta de movimento e principais músculos em verde. Os 275 exercícios da base têm arquivos WebP específicos, em `public/media/exercises/v1`, e um índice versionado em `resources/js/data/exerciseIllustrations.json`.
 
 - [Agachamento sem carga — protótipo](design/exercises/agachamento-sem-carga-prototipo.png)
 - [Elevação lateral — protótipo](design/exercises/elevacao-lateral-prototipo.png)
@@ -25,7 +29,7 @@ O seeder associa a imagem ao exercício global apenas quando não há mídia cad
 
 Fichas e sessões publicadas continuam com snapshots intactos: quando uma imagem já foi registrada, ela é preferida; versões antigas sem imagem podem usar o índice de ilustrações pela correspondência exata do nome normalizado, sem reescrever a prescrição ou o histórico. Exercícios personalizados identificados como tais não recebem esse fallback. Arquivos finalizados de uma versão não devem ser substituídos por uma nova versão de conteúdo; criar `v2` para futuras revisões publicadas.
 
-Galeria local: `/media/exercises/`. Para reconstruir e verificar a cobertura, executar `php scripts/build-exercise-library.php --strict`. O teste de catálogo verifica a cobertura dos 200 itens, o formato dos arquivos e a preservação da mídia anterior.
+Galeria local: `/media/exercises/`. Para reconstruir e verificar a cobertura, executar `php scripts/build-exercise-library.php --strict`. O teste de catálogo verifica a cobertura dos 275 itens, o formato dos arquivos e a preservação da mídia anterior.
 
 Como alternativa externa, [wger](https://github.com/wger-project/wger#license) disponibiliza dados sob licenças Creative Commons específicas de cada entrada; verificar cada imagem e registrar autoria/licença antes de integrar. As imagens de terceiros não foram copiadas.
 

@@ -1598,5 +1598,605 @@
         "height": 800,
         "muscle": "Core",
         "alt": "Demonstração de Mountain climber com apoio elevado, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "agachamento com calcanhares elevados": {
+        "name": "Agachamento com calcanhares elevados",
+        "url": "/media/exercises/v1/agachamento-com-calcanhares-elevados.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Quadriceps",
+        "alt": "Demonstração de Agachamento com calcanhares elevados, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "agachamento com caixa": {
+        "name": "Agachamento com caixa",
+        "url": "/media/exercises/v1/agachamento-com-caixa.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Quadriceps",
+        "alt": "Demonstração de Agachamento com caixa, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "leg press vertical": {
+        "name": "Leg press vertical",
+        "url": "/media/exercises/v1/leg-press-vertical.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Quadriceps",
+        "alt": "Demonstração de Leg press vertical, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "afundo com halteres": {
+        "name": "Afundo com halteres",
+        "url": "/media/exercises/v1/afundo-com-halteres.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Quadriceps",
+        "alt": "Demonstração de Afundo com halteres, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "passada para frente": {
+        "name": "Passada para frente",
+        "url": "/media/exercises/v1/passada-para-frente.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Quadriceps",
+        "alt": "Demonstração de Passada para frente, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "passada caminhando": {
+        "name": "Passada caminhando",
+        "url": "/media/exercises/v1/passada-caminhando.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Quadriceps",
+        "alt": "Demonstração de Passada caminhando, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "sissy squat": {
+        "name": "Sissy squat",
+        "url": "/media/exercises/v1/sissy-squat.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Quadriceps",
+        "alt": "Demonstração de Sissy squat, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "belt squat": {
+        "name": "Belt squat",
+        "url": "/media/exercises/v1/belt-squat.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Quadriceps",
+        "alt": "Demonstração de Belt squat, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "levantamento terra convencional com barra": {
+        "name": "Levantamento terra convencional com barra",
+        "url": "/media/exercises/v1/levantamento-terra-convencional-com-barra.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Gluteos",
+        "alt": "Demonstração de Levantamento terra convencional com barra, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "good morning com barra": {
+        "name": "Good morning com barra",
+        "url": "/media/exercises/v1/good-morning-com-barra.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Posteriores de coxa",
+        "alt": "Demonstração de Good morning com barra, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "nordic curl": {
+        "name": "Nordic curl",
+        "url": "/media/exercises/v1/nordic-curl.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Posteriores de coxa",
+        "alt": "Demonstração de Nordic curl, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "nordic curl assistido": {
+        "name": "Nordic curl assistido",
+        "url": "/media/exercises/v1/nordic-curl-assistido.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Posteriores de coxa",
+        "alt": "Demonstração de Nordic curl assistido, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "pull-through na polia": {
+        "name": "Pull-through na polia",
+        "url": "/media/exercises/v1/pull-through-na-polia.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Gluteos",
+        "alt": "Demonstração de Pull-through na polia, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "elevacao pelvica no smith": {
+        "name": "Elevacao pelvica no Smith",
+        "url": "/media/exercises/v1/elevacao-pelvica-no-smith.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Gluteos",
+        "alt": "Demonstração de Elevacao pelvica no Smith, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "elevacao pelvica unilateral com costas no banco": {
+        "name": "Elevacao pelvica unilateral com costas no banco",
+        "url": "/media/exercises/v1/elevacao-pelvica-unilateral-com-costas-no-banco.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Gluteos",
+        "alt": "Demonstração de Elevacao pelvica unilateral com costas no banco, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "frog pump": {
+        "name": "Frog pump",
+        "url": "/media/exercises/v1/frog-pump.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Gluteos",
+        "alt": "Demonstração de Frog pump, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "coice com caneleira": {
+        "name": "Coice com caneleira",
+        "url": "/media/exercises/v1/coice-com-caneleira.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Gluteos",
+        "alt": "Demonstração de Coice com caneleira, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "panturrilha em pe com halteres": {
+        "name": "Panturrilha em pe com halteres",
+        "url": "/media/exercises/v1/panturrilha-em-pe-com-halteres.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Panturrilhas",
+        "alt": "Demonstração de Panturrilha em pe com halteres, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "panturrilha no hack": {
+        "name": "Panturrilha no hack",
+        "url": "/media/exercises/v1/panturrilha-no-hack.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Panturrilhas",
+        "alt": "Demonstração de Panturrilha no hack, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "panturrilha no degrau": {
+        "name": "Panturrilha no degrau",
+        "url": "/media/exercises/v1/panturrilha-no-degrau.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Panturrilhas",
+        "alt": "Demonstração de Panturrilha no degrau, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "panturrilha donkey": {
+        "name": "Panturrilha donkey",
+        "url": "/media/exercises/v1/panturrilha-donkey.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Panturrilhas",
+        "alt": "Demonstração de Panturrilha donkey, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "supino declinado com barra": {
+        "name": "Supino declinado com barra",
+        "url": "/media/exercises/v1/supino-declinado-com-barra.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Peitoral",
+        "alt": "Demonstração de Supino declinado com barra, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "supino reto no smith": {
+        "name": "Supino reto no Smith",
+        "url": "/media/exercises/v1/supino-reto-no-smith.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Peitoral",
+        "alt": "Demonstração de Supino reto no Smith, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "flexao de bracos declinada": {
+        "name": "Flexao de bracos declinada",
+        "url": "/media/exercises/v1/flexao-de-bracos-declinada.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Peitoral",
+        "alt": "Demonstração de Flexao de bracos declinada, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "crucifixo declinado com halteres": {
+        "name": "Crucifixo declinado com halteres",
+        "url": "/media/exercises/v1/crucifixo-declinado-com-halteres.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Peitoral",
+        "alt": "Demonstração de Crucifixo declinado com halteres, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "remada curvada com barra e pegada supinada": {
+        "name": "Remada curvada com barra e pegada supinada",
+        "url": "/media/exercises/v1/remada-curvada-com-barra-e-pegada-supinada.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Costas",
+        "alt": "Demonstração de Remada curvada com barra e pegada supinada, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "remada baixa com pegada aberta": {
+        "name": "Remada baixa com pegada aberta",
+        "url": "/media/exercises/v1/remada-baixa-com-pegada-aberta.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Costas",
+        "alt": "Demonstração de Remada baixa com pegada aberta, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "remada no smith": {
+        "name": "Remada no Smith",
+        "url": "/media/exercises/v1/remada-no-smith.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Costas",
+        "alt": "Demonstração de Remada no Smith, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "remada invertida na barra": {
+        "name": "Remada invertida na barra",
+        "url": "/media/exercises/v1/remada-invertida-na-barra.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Costas",
+        "alt": "Demonstração de Remada invertida na barra, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "seal row com barra": {
+        "name": "Seal row com barra",
+        "url": "/media/exercises/v1/seal-row-com-barra.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Costas",
+        "alt": "Demonstração de Seal row com barra, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "encolhimento escapular na barra fixa": {
+        "name": "Encolhimento escapular na barra fixa",
+        "url": "/media/exercises/v1/encolhimento-escapular-na-barra-fixa.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Costas",
+        "alt": "Demonstração de Encolhimento escapular na barra fixa, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "desenvolvimento arnold": {
+        "name": "Desenvolvimento Arnold",
+        "url": "/media/exercises/v1/desenvolvimento-arnold.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Ombros",
+        "alt": "Demonstração de Desenvolvimento Arnold, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "desenvolvimento no smith": {
+        "name": "Desenvolvimento no Smith",
+        "url": "/media/exercises/v1/desenvolvimento-no-smith.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Ombros",
+        "alt": "Demonstração de Desenvolvimento no Smith, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "elevacao frontal com barra": {
+        "name": "Elevacao frontal com barra",
+        "url": "/media/exercises/v1/elevacao-frontal-com-barra.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Ombros",
+        "alt": "Demonstração de Elevacao frontal com barra, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "elevacao frontal na polia": {
+        "name": "Elevacao frontal na polia",
+        "url": "/media/exercises/v1/elevacao-frontal-na-polia.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Ombros",
+        "alt": "Demonstração de Elevacao frontal na polia, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "elevacao frontal com anilha": {
+        "name": "Elevacao frontal com anilha",
+        "url": "/media/exercises/v1/elevacao-frontal-com-anilha.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Ombros",
+        "alt": "Demonstração de Elevacao frontal com anilha, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "elevacao lateral na polia atras do corpo": {
+        "name": "Elevacao lateral na polia atras do corpo",
+        "url": "/media/exercises/v1/elevacao-lateral-na-polia-atras-do-corpo.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Ombros",
+        "alt": "Demonstração de Elevacao lateral na polia atras do corpo, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "crucifixo inverso na polia": {
+        "name": "Crucifixo inverso na polia",
+        "url": "/media/exercises/v1/crucifixo-inverso-na-polia.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Ombros",
+        "alt": "Demonstração de Crucifixo inverso na polia, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "remada alta com barra": {
+        "name": "Remada alta com barra",
+        "url": "/media/exercises/v1/remada-alta-com-barra.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Ombros",
+        "alt": "Demonstração de Remada alta com barra, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "rosca direta com halteres": {
+        "name": "Rosca direta com halteres",
+        "url": "/media/exercises/v1/rosca-direta-com-halteres.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Biceps",
+        "alt": "Demonstração de Rosca direta com halteres, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "rosca martelo cruzada": {
+        "name": "Rosca martelo cruzada",
+        "url": "/media/exercises/v1/rosca-martelo-cruzada.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Biceps",
+        "alt": "Demonstração de Rosca martelo cruzada, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "rosca scott na maquina": {
+        "name": "Rosca Scott na maquina",
+        "url": "/media/exercises/v1/rosca-scott-na-maquina.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Biceps",
+        "alt": "Demonstração de Rosca Scott na maquina, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "rosca unilateral na polia": {
+        "name": "Rosca unilateral na polia",
+        "url": "/media/exercises/v1/rosca-unilateral-na-polia.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Biceps",
+        "alt": "Demonstração de Rosca unilateral na polia, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "rosca bayesian na polia": {
+        "name": "Rosca bayesian na polia",
+        "url": "/media/exercises/v1/rosca-bayesian-na-polia.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Biceps",
+        "alt": "Demonstração de Rosca bayesian na polia, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "rosca spider com halteres": {
+        "name": "Rosca spider com halteres",
+        "url": "/media/exercises/v1/rosca-spider-com-halteres.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Biceps",
+        "alt": "Demonstração de Rosca spider com halteres, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "rosca zottman": {
+        "name": "Rosca Zottman",
+        "url": "/media/exercises/v1/rosca-zottman.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Biceps",
+        "alt": "Demonstração de Rosca Zottman, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "rosca martelo com corda na polia": {
+        "name": "Rosca martelo com corda na polia",
+        "url": "/media/exercises/v1/rosca-martelo-com-corda-na-polia.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Biceps",
+        "alt": "Demonstração de Rosca martelo com corda na polia, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "triceps coice com halteres": {
+        "name": "Triceps coice com halteres",
+        "url": "/media/exercises/v1/triceps-coice-com-halteres.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Triceps",
+        "alt": "Demonstração de Triceps coice com halteres, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "triceps coice na polia": {
+        "name": "Triceps coice na polia",
+        "url": "/media/exercises/v1/triceps-coice-na-polia.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Triceps",
+        "alt": "Demonstração de Triceps coice na polia, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "paralelas": {
+        "name": "Paralelas",
+        "url": "/media/exercises/v1/paralelas.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Triceps",
+        "alt": "Demonstração de Paralelas, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "mergulho no banco": {
+        "name": "Mergulho no banco",
+        "url": "/media/exercises/v1/mergulho-no-banco.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Triceps",
+        "alt": "Demonstração de Mergulho no banco, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "tate press": {
+        "name": "Tate press",
+        "url": "/media/exercises/v1/tate-press.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Triceps",
+        "alt": "Demonstração de Tate press, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "jm press": {
+        "name": "JM press",
+        "url": "/media/exercises/v1/jm-press.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Triceps",
+        "alt": "Demonstração de JM press, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "flexao de punhos com barra": {
+        "name": "Flexao de punhos com barra",
+        "url": "/media/exercises/v1/flexao-de-punhos-com-barra.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Antebracos",
+        "alt": "Demonstração de Flexao de punhos com barra, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "extensao de punhos com barra": {
+        "name": "Extensao de punhos com barra",
+        "url": "/media/exercises/v1/extensao-de-punhos-com-barra.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Antebracos",
+        "alt": "Demonstração de Extensao de punhos com barra, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "sustentacao estatica com halteres": {
+        "name": "Sustentacao estatica com halteres",
+        "url": "/media/exercises/v1/sustentacao-estatica-com-halteres.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Antebracos",
+        "alt": "Demonstração de Sustentacao estatica com halteres, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "dead hang na barra": {
+        "name": "Dead hang na barra",
+        "url": "/media/exercises/v1/dead-hang-na-barra.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Antebracos",
+        "alt": "Demonstração de Dead hang na barra, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "pinca de anilhas": {
+        "name": "Pinca de anilhas",
+        "url": "/media/exercises/v1/pinca-de-anilhas.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Antebracos",
+        "alt": "Demonstração de Pinca de anilhas, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "wrist roller": {
+        "name": "Wrist roller",
+        "url": "/media/exercises/v1/wrist-roller.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Antebracos",
+        "alt": "Demonstração de Wrist roller, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "abdominal declinado": {
+        "name": "Abdominal declinado",
+        "url": "/media/exercises/v1/abdominal-declinado.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Core",
+        "alt": "Demonstração de Abdominal declinado, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "elevacao de joelhos na barra": {
+        "name": "Elevacao de joelhos na barra",
+        "url": "/media/exercises/v1/elevacao-de-joelhos-na-barra.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Core",
+        "alt": "Demonstração de Elevacao de joelhos na barra, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "elevacao de pernas na barra": {
+        "name": "Elevacao de pernas na barra",
+        "url": "/media/exercises/v1/elevacao-de-pernas-na-barra.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Core",
+        "alt": "Demonstração de Elevacao de pernas na barra, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "v-up": {
+        "name": "V-up",
+        "url": "/media/exercises/v1/v-up.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Core",
+        "alt": "Demonstração de V-up, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "sit-up": {
+        "name": "Sit-up",
+        "url": "/media/exercises/v1/sit-up.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Core",
+        "alt": "Demonstração de Sit-up, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "abdominal bicicleta": {
+        "name": "Abdominal bicicleta",
+        "url": "/media/exercises/v1/abdominal-bicicleta.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Core",
+        "alt": "Demonstração de Abdominal bicicleta, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "hollow body hold": {
+        "name": "Hollow body hold",
+        "url": "/media/exercises/v1/hollow-body-hold.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Core",
+        "alt": "Demonstração de Hollow body hold, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "prancha frontal com carga": {
+        "name": "Prancha frontal com carga",
+        "url": "/media/exercises/v1/prancha-frontal-com-carga.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Core",
+        "alt": "Demonstração de Prancha frontal com carga, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "woodchopper na polia": {
+        "name": "Woodchopper na polia",
+        "url": "/media/exercises/v1/woodchopper-na-polia.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Core",
+        "alt": "Demonstração de Woodchopper na polia, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "body saw": {
+        "name": "Body saw",
+        "url": "/media/exercises/v1/body-saw.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Core",
+        "alt": "Demonstração de Body saw, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "agachamento com salto": {
+        "name": "Agachamento com salto",
+        "url": "/media/exercises/v1/agachamento-com-salto.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Quadriceps",
+        "alt": "Demonstração de Agachamento com salto, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "salto vertical com contramovimento": {
+        "name": "Salto vertical com contramovimento",
+        "url": "/media/exercises/v1/salto-vertical-com-contramovimento.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Quadriceps",
+        "alt": "Demonstração de Salto vertical com contramovimento, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "box jump": {
+        "name": "Box jump",
+        "url": "/media/exercises/v1/box-jump.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Quadriceps",
+        "alt": "Demonstração de Box jump, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "salto horizontal": {
+        "name": "Salto horizontal",
+        "url": "/media/exercises/v1/salto-horizontal.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Quadriceps",
+        "alt": "Demonstração de Salto horizontal, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "kettlebell swing": {
+        "name": "Kettlebell swing",
+        "url": "/media/exercises/v1/kettlebell-swing.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Gluteos",
+        "alt": "Demonstração de Kettlebell swing, com posição inicial, execução e destaque dos principais músculos."
+    },
+    "arremesso de medicine ball a frente a partir do peito": {
+        "name": "Arremesso de medicine ball a frente a partir do peito",
+        "url": "/media/exercises/v1/arremesso-de-medicine-ball-a-frente-a-partir-do-peito.webp",
+        "width": 1200,
+        "height": 800,
+        "muscle": "Peitoral",
+        "alt": "Demonstração de Arremesso de medicine ball a frente a partir do peito, com posição inicial, execução e destaque dos principais músculos."
     }
 }
