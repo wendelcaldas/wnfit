@@ -13,38 +13,27 @@
             </RouterLink>
         </template>
 
-        <AdminHero :title="`${summary.find(item => item.type === 'active')?.value ?? '—'} alunos ativos`" :description="`${summary[0]?.value ?? '—'} alunos cadastrados no seu estúdio`">
-            <div class="student-modality-summary" aria-label="Modalidades dos alunos ativos da academia">
-                <p>Alunos ativos por modalidade</p>
-                <dl><div v-for="item in modalitySummary.filter(item => item.value !== 'nao_informado' || item.count > 0)" :key="item.value"><dt>{{ item.label }}</dt><dd>{{ item.count }}</dd></div></dl>
-            </div>
-        </AdminHero>
-
-        <section class="admin-stat-grid grid grid-cols-2 gap-4 xl:grid-cols-4">
-            <article v-for="item in summary" :key="item.label" class="stat-card">
-                <div class="flex items-center gap-4">
-                    <div class="admin-stats-icon grid h-10 w-10 place-items-center rounded-xl">
-                        <component :is="item.icon" class="h-6 w-6" :class="item.iconClass" />
-                    </div>
-                    <div>
-                        <p class="text-sm text-[var(--wn-muted)]">{{ item.label }}</p>
-                        <p class="mt-1 text-3xl font-bold text-[var(--wn-ink)]">{{ item.value }}</p>
-                        <p class="mt-1 text-sm text-[var(--wn-muted)]">{{ item.type === 'active' ? 'Com cadastro ativo' : item.caption }}</p>
-                    </div>
+        <section class="student-metrics" aria-label="Indicadores dos alunos">
+            <article v-for="item in summary" :key="item.label" class="stat-card student-metric" :title="item.type === 'active' ? 'Com cadastro ativo' : item.caption">
+                <component :is="item.icon" class="metric-icon" :class="item.iconClass" aria-hidden="true" />
+                <div class="metric-copy">
+                    <p class="metric-label">{{ item.label }}</p>
+                    <p class="metric-value">{{ item.value }}</p>
                 </div>
+                <span class="sr-only">{{ item.type === 'active' ? 'Com cadastro ativo' : item.caption }}</span>
             </article>
         </section>
 
         <section class="panel-card mt-6 !p-0">
-            <div class="admin-student-filters grid gap-4 border-b border-[var(--wn-line)] p-5 xl:grid-cols-[1.6fr_repeat(4,minmax(0,0.9fr))_auto]">
+            <div class="admin-student-filters grid items-end gap-4 border-b border-[var(--wn-line)] p-5 xl:grid-cols-[1.6fr_repeat(4,minmax(0,0.9fr))_auto]">
                 <label class="input-shell self-end">
                     <Search class="h-5 w-5 text-[var(--wn-muted)]" />
                     <input v-model="filters.q" type="text" class="auth-input" aria-label="Buscar aluno" placeholder="Buscar por nome, e-mail ou telefone..." @input="loadStudents" />
                 </label>
 
-                <label class="block text-sm font-medium">Modalidade<select v-model="filters.modalidade" class="form-control mt-2" @change="loadStudents"><option value="todos">Todas</option><option v-for="option in studentModalities" :key="option.value" :value="option.value">{{ option.label }}</option><option value="nao_informado">Não informado</option></select></label>
+                <label class="student-filter"><span class="text-xs font-semibold text-[var(--wn-muted)]">Modalidade</span><select v-model="filters.modalidade" class="form-control" @change="loadStudents"><option value="todos">Todas</option><option v-for="option in studentModalities" :key="option.value" :value="option.value">{{ option.label }}</option><option value="nao_informado">Não informado</option></select></label>
 
-                <label class="space-y-1">
+                <label class="student-filter">
                     <span class="text-xs font-semibold text-[var(--wn-muted)]">Status</span>
                     <select v-model="filters.status" class="form-control" @change="loadStudents">
                         <option value="todos">Todos</option>
@@ -54,7 +43,7 @@
                     </select>
                 </label>
 
-                <label class="space-y-1">
+                <label class="student-filter">
                     <span class="text-xs font-semibold text-[var(--wn-muted)]">Plano</span>
                     <select v-model="filters.plano" class="form-control" @change="loadStudents">
                         <option value="todos">Todos</option>
@@ -62,7 +51,7 @@
                     </select>
                 </label>
 
-                <label class="space-y-1">
+                <label class="student-filter">
                     <span class="text-xs font-semibold text-[var(--wn-muted)]">Professor</span>
                     <select v-model="filters.professor" class="form-control" @change="loadStudents">
                         <option value="todos">Todos</option>
@@ -154,7 +143,6 @@ import { RouterLink } from 'vue-router';
 import { ArrowRight, AlertTriangle, Hourglass, MoreVertical, Plus, Search, SlidersHorizontal, UserCheck, Users } from 'lucide-vue-next';
 
 import AppShell from '../components/AppShell.vue';
-import AdminHero from '../components/AdminHero.vue';
 import { studentModalities } from '../data/studentModalities';
 
 const summaryMeta = {
@@ -165,7 +153,6 @@ const summaryMeta = {
 };
 
 const summary = ref([]);
-const modalitySummary = ref([]);
 const students = ref([]);
 const options = reactive({ plans: [], teachers: [] });
 const filters = reactive({ tipo:'aluno', modalidade: 'todos', q: '', status: 'todos', plano: 'todos', professor: 'todos' });
@@ -174,7 +161,6 @@ const loadStudents = async () => {
     const { data } = await window.axios.get('/api/students', { params: filters });
     summary.value = data.summary.map((item) => ({ ...item, ...(summaryMeta[item.type] ?? summaryMeta.students) }));
     students.value = data.students;
-    modalitySummary.value = data.modalitySummary ?? [];
     options.plans = data.filters.plans;
     options.teachers = data.filters.teachers;
 };
@@ -192,10 +178,18 @@ onMounted(loadStudents);
 </script>
 
 <style scoped>
-.student-modality-summary { min-width: 0; max-width: 100%; }
-.student-modality-summary > p { font-size: .7rem; color: #ffffffb3; margin-bottom: .6rem; }
-.student-modality-summary dl { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; }
-.student-modality-summary dl > div { display: flex; align-items: baseline; gap: .45rem; }
-.student-modality-summary dt { color: #d7dbd3; font-size: .8rem; }
-.student-modality-summary dd { color: #a3e635; font-size: 1.1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.student-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.student-metrics .student-metric { display: flex; align-items: center; gap: .75rem; min-width: 0; min-height: 4.5rem; padding: 1rem; border-radius: 1rem; }
+.metric-icon { flex-shrink: 0; width: 1.15rem; height: 1.15rem; color: var(--wn-primary-strong); }
+.metric-copy { display: flex; flex: 1; align-items: center; justify-content: space-between; gap: .5rem; min-width: 0; }
+.metric-label { color: var(--wn-muted); font-size: .75rem; font-weight: 500; }
+.metric-value { color: var(--wn-ink); font-size: 1.4rem; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
+@media (min-width: 768px) { .student-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 359px) { .student-metrics .student-metric { gap: .4rem; padding: .8rem .65rem; } .metric-copy { gap: .3rem; } .metric-icon { width: 1rem; height: 1rem; } .metric-value { font-size: 1.2rem; } }
+
+.student-filter { display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.admin-student-filters > .input-shell,
+.admin-student-filters .form-control,
+.admin-student-filters > button { height: 3.125rem; min-height: 3.125rem; }
+.admin-student-filters > button { white-space: nowrap; }
 </style>
