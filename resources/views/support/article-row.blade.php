@@ -1,0 +1,1 @@
+<a class="article-row" href="{{ $base }}/artigos/{{ $item['slug'] }}"><span class="article-row-icon">@include('support.icon', ['icon' => 'book'])</span><div><h3>{{ $item['title'] }}</h3><p>{{ $item['summary'] }}</p><span class="reading-time">{{ $item['minutes'] }} min de leitura</span></div>@include('support.icon', ['icon' => 'chevron'])</a>

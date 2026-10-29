@@ -61,6 +61,8 @@ class StudentPortalTest extends TestCase
         $this->assertSame('wendel', $first->json('credentials.username'));
         $this->assertSame('wendel2', $second->json('credentials.username'));
         $password = $first->json('credentials.temporaryPassword');
+        $this->assertMatchesRegularExpression('/^[1-9][0-9]{7}$/', $password);
+        $this->assertMatchesRegularExpression('/^[1-9][0-9]{7}$/', $second->json('credentials.temporaryPassword'));
         $this->assertNotSame('123456', $password);
         $account = StudentAccount::where('aluno_id', $first->json('student.id'))->firstOrFail();
         $this->assertTrue(Hash::check($password, $account->password));
@@ -97,8 +99,11 @@ class StudentPortalTest extends TestCase
         $account = StudentAccount::where('aluno_id', $student->id)->firstOrFail();
         $oldVersion = $account->credential_version;
         $reset = $this->postJson("/api/students/{$student->id}/access", ['reset' => true])->assertOk();
+        $this->assertMatchesRegularExpression('/^[1-9][0-9]{7}$/', $reset->json('credentials.temporaryPassword'));
         $this->assertNotSame($issued->json('credentials.temporaryPassword'), $reset->json('credentials.temporaryPassword'));
         $account->refresh();
+        $this->assertTrue($account->must_change_password);
+        $this->assertTrue(Hash::check($reset->json('credentials.temporaryPassword'), $account->password));
         $this->assertGreaterThan($oldVersion, $account->credential_version);
         $this->withSession(['student_credential_version' => $oldVersion]);
         Auth::guard('student')->login($account);

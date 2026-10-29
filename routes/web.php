@@ -27,6 +27,8 @@ use App\Http\Controllers\WorkoutController;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 
+require __DIR__.'/support.php';
+
 Route::prefix('api')->group(function () {
     Route::get('/public/booking/{token}', [\App\Http\Controllers\PublicBookingController::class, 'show'])->middleware('throttle:60,1');
     Route::get('/public/booking/{token}/availability', [\App\Http\Controllers\PublicBookingController::class, 'availability'])->middleware('throttle:60,1');
