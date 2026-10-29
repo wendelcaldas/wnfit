@@ -110,7 +110,9 @@ class StudentController extends Controller
 
         $credentials = null;
         $student = DB::transaction(function () use ($data, $organization, &$credentials) {
-            $plan = Plano::query()->firstOrCreate(
+            $plan = isset($data['plan_id'])
+                ? Plano::where('organizacao_id', $organization->id)->where('ativo', true)->findOrFail($data['plan_id'])
+                : Plano::query()->firstOrCreate(
                 ['organizacao_id' => $organization->id, 'nome' => $data['plano']],
                 [
                     'valor_mensal' => $data['valor_mensal'] ?? 120,
@@ -118,6 +120,10 @@ class StudentController extends Controller
                     'ativo' => true,
                 ],
             );
+
+            if (! $plan->ativo) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['plan_id' => 'Selecione um plano ativo para cadastrar o aluno.']);
+            }
 
             $student = Aluno::query()->create([
                 ...$this->studentPayload($data),
@@ -259,6 +265,17 @@ class StudentController extends Controller
         return response()->json(['workout' => $publishing->payload($plan)]);
     }
 
+    public function renewWorkout(Request $request, Aluno $student, StudentWorkoutPlan $plan): JsonResponse
+    {
+        $organization = $request->user()->organizacoes()->firstOrFail();
+        abort_unless($student->organizacao_id === $organization->id && $plan->aluno_id === $student->id, 404);
+        $data = $request->validate(['endsOn' => ['nullable', 'date', 'after_or_equal:today']]);
+        $publishing = app(WorkoutPublishingService::class);
+        $renewed = $publishing->renew($student, $plan, $request->user()->id, $data['endsOn'] ?? null);
+
+        return response()->json(['workout' => $publishing->payload($renewed)]);
+    }
+
     public function generateCharge(Request $request, Aluno $student): JsonResponse
     {
         $organization = $request->user()->organizacoes()->firstOrFail();
@@ -326,7 +343,8 @@ class StudentController extends Controller
             'unidade' => ['nullable', 'string', 'max:255'],
             'como_conheceu' => ['nullable', 'string', 'max:255'],
             'observacoes' => ['nullable', 'string'],
-            'plano' => ['required', 'string', 'max:80'],
+            'plan_id' => ['nullable', 'integer', Rule::exists('planos', 'id')->where('organizacao_id', request()->user()->organizacoes()->firstOrFail()->id)->where('ativo', true)],
+            'plano' => ['required_without:plan_id', 'nullable', 'string', 'max:80'],
             'status' => ['required', 'string', 'max:30'],
             'data_inicio' => ['required', 'date'],
             'data_vencimento' => ['required', 'date'],

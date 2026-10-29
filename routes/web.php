@@ -95,6 +95,8 @@ Route::prefix('api')->group(function () {
         Route::get('/dashboard', DashboardController::class);
         Route::get('/dashboard/calendar', [DashboardController::class, 'calendar']);
         Route::get('/finance', FinanceController::class);
+        Route::get('/finance/income', [\App\Http\Controllers\FinanceIncomeController::class, 'index']);
+        Route::post('/finance/income', [\App\Http\Controllers\FinanceIncomeController::class, 'store']);
         Route::get('/collections', [CollectionsController::class, 'index']);
         Route::get('/collections/{student}', [CollectionsController::class, 'show']);
         Route::post('/collections/{student}/message', [CollectionsController::class, 'message']);
@@ -110,6 +112,9 @@ Route::prefix('api')->group(function () {
         Route::post('/workouts', [WorkoutController::class, 'store']);
         Route::get('/workouts/{workout}', [WorkoutController::class, 'show']);
         Route::put('/workouts/{workout}', [WorkoutController::class, 'update']);
+        Route::get('/organization/plans', [\App\Http\Controllers\OrganizationPlanController::class, 'index']);
+        Route::post('/organization/plans', [\App\Http\Controllers\OrganizationPlanController::class, 'save']);
+        Route::put('/organization/plans/{plan}', [\App\Http\Controllers\OrganizationPlanController::class, 'save']);
         Route::get('/organization/users', [OrganizationUserController::class, 'index']);
         Route::post('/organization/users', [OrganizationUserController::class, 'store']);
         Route::patch('/organization/users/{user}', [OrganizationUserController::class, 'update']);
@@ -129,6 +134,7 @@ Route::prefix('api')->group(function () {
         Route::put('/students/{student}/physical-assessments/{assessment}', [StudentPhysicalAssessmentController::class, 'update']);
         Route::get('/students/{student}/workouts', [StudentController::class, 'workouts']);
         Route::post('/students/{student}/workouts/{workout}', [StudentController::class, 'assignWorkout']);
+        Route::post('/students/{student}/workout-plans/{plan}/renew', [StudentController::class, 'renewWorkout']);
         Route::post('/students/{student}/charges', [StudentController::class, 'generateCharge']);
         Route::post('/charges/{charge}/send', [StudentController::class, 'sendCharge']);
         Route::post('/charges/{charge}/pay', [StudentController::class, 'payCharge']);

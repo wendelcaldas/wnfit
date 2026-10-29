@@ -10,6 +10,7 @@ use App\Models\StudentWorkoutPlan;
 use App\Models\StudentWorkoutSession;
 use App\Models\User;
 use App\Services\WorkoutNotificationService;
+use App\Services\WorkoutPublishingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use RuntimeException;
@@ -33,7 +34,7 @@ class StaffNotificationTest extends TestCase
         $owner = $this->member($organization, 'proprietario', 'Gestor');
         $teacher = $this->member($organization, 'professor', 'Professor Responsável');
         $student = Aluno::create(['organizacao_id' => $organization->id, 'nome' => 'Aluno de teste', 'treinador' => $teacher->name, 'status' => 'ativo']);
-        $plan = StudentWorkoutPlan::create(['aluno_id' => $student->id, 'snapshot' => [], 'starts_on' => today()]);
+        $plan = StudentWorkoutPlan::create(['aluno_id' => $student->id, 'snapshot' => [], 'starts_on' => today(), 'ends_on' => today()->addWeeks(4)]);
         $session = StudentWorkoutSession::create([
             'aluno_id' => $student->id, 'student_workout_plan_id' => $plan->id, 'day_index' => 0,
             'snapshot' => ['name' => 'Treino A', 'planName' => 'Programa ABC', 'focus' => 'Peito', 'exercises' => [['name' => 'Supino', 'sets' => 2]]],
@@ -54,6 +55,7 @@ class StaffNotificationTest extends TestCase
 
     public function test_completion_notifies_only_active_owner_admin_and_assigned_teacher_once(): void
     {
+        $this->freezeTime();
         $f = $this->fixture();
         $admin = $this->member($f['organization'], 'administrador', 'Administradora');
         $this->member($f['organization'], 'professor', 'Outro professor');
@@ -137,6 +139,116 @@ class StaffNotificationTest extends TestCase
         $first = $this->actingAs($f['owner'], 'web')->getJson('/api/notifications')->assertOk()->assertJsonCount(20, 'notifications')->assertJsonPath('unreadCount', 23);
         $second = $this->getJson('/api/notifications?before='.$first->json('nextCursor'))->assertOk()->assertJsonCount(3, 'notifications')->assertJsonPath('nextCursor', null)->assertJsonPath('unreadCount', 23);
         $this->assertEmpty(array_intersect(array_column($first->json('notifications'), 'id'), array_column($second->json('notifications'), 'id')));
+    }
+
+    public function test_deadline_alerts_appear_in_the_inbox_once_for_the_responsible_staff_only(): void
+    {
+        $f = $this->fixture();
+        $admin = $this->member($f['organization'], 'administrador', 'Administradora');
+        $otherTeacher = $this->member($f['organization'], 'professor', 'Professor sem vínculo');
+        $this->member($f['organization'], 'professor', 'Inativo', 'inativo');
+        $plan = StudentWorkoutPlan::findOrFail($f['session']->student_workout_plan_id);
+        $plan->update(['ends_on' => today(), 'snapshot' => ['name' => 'Programa ABC', 'durationWeeks' => 4]]);
+        $first = $this->actingAs($f['owner'], 'web')->getJson('/api/notifications')->assertOk()
+            ->assertJsonCount(1, 'notifications')->assertJsonPath('unreadCount', 1)
+            ->assertJsonPath('notifications.0.type', 'workout_plan_ends_today')
+            ->assertJsonPath('notifications.0.data.endsOn', today()->toDateString())
+            ->assertJsonPath('notifications.0.data.href', '/alunos/'.$f['student']->id.'?tab=workouts');
+        $this->assertEqualsCanonicalizing([$f['owner']->id, $f['teacher']->id, $admin->id], StaffNotification::pluck('user_id')->all());
+        $this->assertNull(StaffNotification::firstOrFail()->student_workout_session_id);
+        $this->assertSame($plan->id, StaffNotification::firstOrFail()->student_workout_plan_id);
+        $this->patchJson('/api/notifications/'.$first->json('notifications.0.id').'/read')->assertOk()->assertJsonPath('unreadCount', 0);
+        $this->getJson('/api/notifications')->assertJsonCount(1, 'notifications')->assertJsonPath('unreadCount', 0);
+        $this->actingAs($f['teacher'], 'web')->getJson('/api/notifications')->assertJsonPath('unreadCount', 1);
+        $this->actingAs($otherTeacher, 'web')->getJson('/api/notifications')->assertJsonCount(0, 'notifications');
+        $other = $this->fixture('deadline-other');
+        $this->actingAs($other['owner'], 'web')->getJson('/api/notifications')->assertJsonCount(0, 'notifications');
+        $this->patchJson('/api/notifications/'.$first->json('notifications.0.id').'/read')->assertNotFound();
+        $this->assertDatabaseCount('staff_notifications', 3);
+    }
+
+    public function test_deadline_transition_creates_one_expired_alert_without_daily_duplicates_or_resetting_read_state(): void
+    {
+        $this->freezeTime();
+        $f = $this->fixture();
+        $plan = StudentWorkoutPlan::findOrFail($f['session']->student_workout_plan_id);
+        $plan->update(['ends_on' => today()]);
+        $service = app(WorkoutNotificationService::class);
+        $this->assertSame(2, $service->syncDeadlines($f['organization']->id));
+        $due = StaffNotification::where('user_id', $f['owner']->id)->firstOrFail();
+        $due->update(['read_at' => now()]);
+        $readAt = $due->fresh()->read_at->toISOString();
+        $this->travel(1)->days();
+        $this->assertSame(2, $service->syncDeadlines($f['organization']->id));
+        $this->assertSame(0, $service->syncDeadlines($f['organization']->id));
+        $this->travel(2)->days();
+        $this->assertSame(0, $service->syncDeadlines($f['organization']->id));
+        $this->assertDatabaseCount('staff_notifications', 4);
+        $this->assertSame(2, StaffNotification::where('type', 'workout_plan_expired')->count());
+        $this->assertSame($readAt, $due->fresh()->read_at->toISOString());
+        $this->travelBack();
+    }
+
+    public function test_legacy_deadlines_use_the_snapshot_and_ambiguous_teachers_are_not_guessed(): void
+    {
+        $f = $this->fixture();
+        $plan = StudentWorkoutPlan::findOrFail($f['session']->student_workout_plan_id);
+        $service = app(WorkoutNotificationService::class);
+        $plan->update(['ends_on' => null, 'starts_on' => today()->subWeeks(5), 'snapshot' => ['durationWeeks' => 4]]);
+        $this->member($f['organization'], 'professor', $f['teacher']->name);
+        $this->assertSame(1, $service->syncDeadlines($f['organization']->id));
+        $notification = StaffNotification::firstOrFail();
+        $this->assertSame($f['owner']->id, $notification->user_id);
+        $this->assertSame('workout_plan_expired', $notification->type);
+        $this->assertSame(today()->subWeek()->toDateString(), $notification->data['endsOn']);
+        $this->assertArrayNotHasKey('exercises', $notification->data);
+        $this->assertArrayNotHasKey('load', $notification->data);
+        $this->assertSame(0, $service->syncDeadlines($f['organization']->id));
+    }
+
+    public function test_renewed_superseded_future_and_unresolvable_plans_do_not_create_stale_deadline_alerts(): void
+    {
+        $f = $this->fixture();
+        $plan = StudentWorkoutPlan::findOrFail($f['session']->student_workout_plan_id);
+        $service = app(WorkoutNotificationService::class);
+        $plan->update(['ends_on' => null, 'snapshot' => []]);
+        $this->assertSame(0, $service->syncDeadlines($f['organization']->id));
+        $plan->update(['ends_on' => today()->addDay()]);
+        $this->assertSame(0, $service->syncDeadlines($f['organization']->id));
+        $plan->update(['ends_on' => today()->subDay(), 'starts_on' => today()->addDay()]);
+        $this->assertSame(0, $service->syncDeadlines($f['organization']->id));
+        $plan->update(['starts_on' => today(), 'snapshot' => ['name' => 'Ficha', 'durationWeeks' => 4]]);
+        app(WorkoutPublishingService::class)->renew($f['student'], $plan, $f['owner']->id);
+        $plan->update(['status' => 'ativo']);
+        $this->assertSame(0, $service->syncDeadlines($f['organization']->id));
+        $this->assertDatabaseCount('staff_notifications', 0);
+    }
+
+    public function test_deadline_command_is_idempotent_and_ignores_inactive_organizations(): void
+    {
+        $f = $this->fixture();
+        StudentWorkoutPlan::findOrFail($f['session']->student_workout_plan_id)->update(['ends_on' => today()->subDay()]);
+        $f['organization']->update(['ativa' => false]);
+        $this->artisan('workouts:notify-deadlines')->expectsOutput('0 avisos de vigência de fichas criados.')->assertSuccessful();
+        $f['organization']->update(['ativa' => true]);
+        $this->artisan('workouts:notify-deadlines')->expectsOutput('2 avisos de vigência de fichas criados.')->assertSuccessful();
+        $this->artisan('workouts:notify-deadlines')->expectsOutput('0 avisos de vigência de fichas criados.')->assertSuccessful();
+        $this->assertDatabaseCount('staff_notifications', 2);
+    }
+
+    public function test_deadline_migration_round_trip_preserves_existing_completion_notifications(): void
+    {
+        $f = $this->fixture();
+        $this->finish($f)->assertOk();
+        $originalIds = StaffNotification::pluck('id')->all();
+        StudentWorkoutPlan::findOrFail($f['session']->student_workout_plan_id)->update(['ends_on' => today()]);
+        app(WorkoutNotificationService::class)->syncDeadlines($f['organization']->id);
+        $this->assertDatabaseCount('staff_notifications', 4);
+        $migration = require database_path('migrations/2026_10_27_000001_add_workout_plan_deadline_notifications.php');
+        $migration->down();
+        $this->assertEqualsCanonicalizing($originalIds, StaffNotification::pluck('id')->all());
+        $migration->up();
+        $this->assertEqualsCanonicalizing($originalIds, StaffNotification::pluck('id')->all());
     }
 
     public function test_notification_failure_rolls_back_completion_for_a_safe_retry(): void

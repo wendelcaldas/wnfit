@@ -32,7 +32,9 @@
                         <div><h2 class="text-xl font-semibold">Matricula</h2><p class="text-sm text-[var(--wn-muted)]">Plano, responsavel e datas principais.</p></div>
                     </div>
                     <div class="mt-6 space-y-4">
-                        <SelectField label="Plano *" v-model="form.plano" :options="planNames" />
+                        <label class="block space-y-2"><span class="text-sm font-medium text-[var(--wn-muted)]">Plano *</span><select v-model="form.plan_id" class="form-control" required><option disabled value="">Selecione um plano</option><option v-for="plan in options.plans" :key="plan.id" :value="plan.id">{{ plan.nome }} · {{ money(plan.valor_mensal) }} / {{ cycleUnits[plan.ciclo] }}</option></select></label>
+                        <RouterLink to="/configuracoes/planos" class="inline-block text-xs font-semibold text-[var(--wn-primary-strong)]">Gerenciar planos</RouterLink>
+                        <p v-if="plansLoaded && !options.plans.length" class="text-xs text-[var(--wn-muted)]">Nenhum plano ativo disponível. Cadastre ou ative um plano em Configurações.</p>
                         <label class="block space-y-2"><span class="text-sm font-medium text-[var(--wn-muted)]">Modalidade de acompanhamento *</span><select v-model="form.modalidade" class="form-control" required><option disabled value="">Selecione a modalidade</option><option v-for="option in studentModalities" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
                         <div class="grid gap-4 sm:grid-cols-2">
                             <Field label="Data de inicio *" v-model="form.data_inicio" type="date" required />
@@ -47,8 +49,8 @@
                 <p v-if="error" class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600 lg:col-span-2">{{ error }}</p>
                 <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end lg:col-span-2">
                     <RouterLink to="/alunos" class="btn-secondary justify-center">Cancelar</RouterLink>
-                    <button type="submit" class="btn-secondary justify-center" :disabled="loading" @click="intent = 'complete'">Salvar e completar ficha</button>
-                    <button type="submit" class="btn-primary justify-center" :disabled="loading" @click="intent = 'view'">{{ loading ? 'Salvando...' : 'Salvar aluno' }}</button>
+                    <button type="submit" class="btn-secondary justify-center" :disabled="loading || !form.plan_id" @click="intent = 'complete'">Salvar e completar ficha</button>
+                    <button type="submit" class="btn-primary justify-center" :disabled="loading || !form.plan_id" @click="intent = 'view'">{{ loading ? 'Salvando...' : 'Salvar aluno' }}</button>
                 </div>
             </form>
         </div>
@@ -90,26 +92,31 @@ const loading = ref(false);
 const error = ref('');
 const intent = ref('view');
 const options = reactive({ plans: [], teachers: [], units: [] });
+const plansLoaded = ref(false);
 const today = new Date();
 const nextMonth = new Date();
 nextMonth.setMonth(today.getMonth() + 1);
 const toInputDate = (date) => date.toISOString().slice(0, 10);
-const form = reactive({ modalidade: '', nome: '', telefone: '', email: '', data_nascimento: '', plano: 'Plano Mensal', data_inicio: toInputDate(today), data_vencimento: toInputDate(nextMonth), treinador: '', unidade: '', status: 'ativo', objetivo: 'Saude', auto_renovacao: true, metodo_pagamento: 'PIX' });
-const planNames = computed(() => options.plans.length ? options.plans.map((plan) => plan.nome) : ['Plano Mensal']);
+const form = reactive({ modalidade: '', nome: '', telefone: '', email: '', data_nascimento: '', plan_id: '', data_inicio: toInputDate(today), data_vencimento: toInputDate(nextMonth), treinador: '', unidade: '', status: 'ativo', objetivo: 'Saude', auto_renovacao: true, metodo_pagamento: 'PIX' });
+const cycleUnits = { mensal: 'mês', trimestral: 'trimestre', semestral: 'semestre', anual: 'ano' };
+const money = value => Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 let usernameTimer; let suggestionRequest = 0;
 watch(() => form.nome, () => { clearTimeout(usernameTimer); const request = ++suggestionRequest; if (usernameEdited.value || !form.nome.trim()) return; usernameTimer = setTimeout(async () => { try { const { data } = await window.axios.get('/api/student-access/suggest', { params: { name: form.nome } }); if (request === suggestionRequest && !usernameEdited.value) form.username = data.username; } catch { /* Server also generates a unique username on save. */ } }, 300); });
 
 onMounted(async () => {
-    const { data } = await window.axios.get('/api/students/options');
-    Object.assign(options, data);
+    try {
+        const { data } = await window.axios.get('/api/students/options');
+        Object.assign(options, data);
+        form.plan_id = options.plans.find(plan => plan.nome === 'Plano Mensal')?.id ?? options.plans[0]?.id ?? '';
+        plansLoaded.value = true;
+    } catch { error.value = 'Não foi possível carregar os planos. Atualize a página para tentar novamente.'; }
 });
 
 const submit = async () => {
     loading.value = true;
     error.value = '';
     try {
-        const selectedPlan = options.plans.find((plan) => plan.nome === form.plano);
-        const { data } = await window.axios.post('/api/students', { ...form, valor_mensal: selectedPlan?.valor_mensal ?? 120 });
+        const { data } = await window.axios.post('/api/students', { ...form });
         useStudentCredentialsStore().set(data.student.id, data.credentials);
         router.push({ path: `/alunos/${data.student.id}`, query: intent.value === 'complete' ? { tab: 'profile', edit: '1' } : { tab: 'access' } });
     } catch (exception) {

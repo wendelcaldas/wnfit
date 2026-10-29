@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Aluno;
+use App\Models\StudentWorkoutPlan;
 use App\Models\StudentWorkoutSession;
 use App\Services\WorkoutNotificationService;
 use App\Services\WorkoutPublishingService;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,12 +17,16 @@ class StudentPortalController extends Controller
     public function home(WorkoutPublishingService $service)
     {
         $studentId = Auth::guard('student')->user()->aluno_id;
-        $plan = $service->current($studentId);
+        $latest = $service->latest($studentId);
+        $planAccess = $service->access($latest);
+        $plan = $planAccess['status'] === 'available' ? $latest : null;
         $sessions = StudentWorkoutSession::where('aluno_id', $studentId)->latest('id')->limit(30)->get();
 
         return response()->json([
             'plan' => $plan ? $service->payload($plan) : null,
-            'activeSession' => $sessions->firstWhere('status', 'in_progress'),
+            'planAccess' => $planAccess,
+            'activeSession' => $plan ? StudentWorkoutSession::where('aluno_id', $studentId)
+                ->where('student_workout_plan_id', $plan->id)->where('status', 'in_progress')->latest('id')->first() : null,
             'history' => $sessions->where('status', 'completed')->values(),
             'weekCompleted' => StudentWorkoutSession::where('aluno_id', $studentId)->where('status', 'completed')->where('finished_at', '>=', now()->startOfWeek())->count(),
         ]);
@@ -32,12 +38,15 @@ class StudentPortalController extends Controller
         $studentId = Auth::guard('student')->user()->aluno_id;
         $session = DB::transaction(function () use ($studentId, $service, $data) {
             Aluno::whereKey($studentId)->lockForUpdate()->firstOrFail();
-            $active = StudentWorkoutSession::where('aluno_id', $studentId)->where('status', 'in_progress')->first();
+            $plan = $service->current($studentId);
+            if (! $plan) {
+                $this->denyPlanAccess($service->access($service->latest($studentId)), 422);
+            }
+            $active = StudentWorkoutSession::where('aluno_id', $studentId)
+                ->where('student_workout_plan_id', $plan->id)->where('status', 'in_progress')->first();
             if ($active) {
                 return $active;
             }
-            $plan = $service->current($studentId);
-            abort_unless($plan, 422, 'Você ainda não tem uma ficha vigente. Fale com seu professor.');
             $day = $plan->snapshot['days'][$data['dayIndex']] ?? null;
             abort_unless($day && count($day['exercises']) > 0, 422, 'Este dia não possui exercícios.');
 
@@ -50,14 +59,17 @@ class StudentPortalController extends Controller
         return response()->json(['session' => $this->sessionPayload($session)]);
     }
 
-    public function show(StudentWorkoutSession $session)
+    public function show(StudentWorkoutSession $session, WorkoutPublishingService $service)
     {
         $this->authorizeSession($session);
+        if ($session->status !== 'completed') {
+            $this->assertSessionAvailable($session, $service);
+        }
 
         return response()->json(['session' => $this->sessionPayload($session)]);
     }
 
-    public function update(Request $request, StudentWorkoutSession $session)
+    public function update(Request $request, StudentWorkoutSession $session, WorkoutPublishingService $service)
     {
         $this->authorizeSession($session);
         $data = $request->validate([
@@ -75,8 +87,13 @@ class StudentPortalController extends Controller
             abort_unless($exercise && $item['setIndex'] < $exercise['sets'] && ! isset($keys[$key]), 422, 'Série inválida ou repetida.');
             $keys[$key] = true;
         }
-        $session = DB::transaction(function () use ($session, $data, $request) {
+        $session = DB::transaction(function () use ($session, $data, $request, $service) {
+            // Publication and session writes serialize on the same student lock.
+            Aluno::whereKey($session->aluno_id)->lockForUpdate()->firstOrFail();
             $locked = StudentWorkoutSession::whereKey($session->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status !== 'completed') {
+                $this->assertSessionAvailable($locked, $service);
+            }
             // Repeated finish requests return the same completed session; history is never overwritten.
             if ($locked->status !== 'in_progress') {
                 abort_unless($request->boolean('finish') || $request->boolean('abandon'), 409, 'Esta sessão já foi encerrada. Carregue o registro salvo.');
@@ -109,7 +126,34 @@ class StudentPortalController extends Controller
     {
         $session->refresh();
 
-        return [...$session->toArray(), 'revision' => hash('sha256', json_encode($session->progress).$session->status.$session->updated_at->toISOString())];
+        $plan = $session->status === 'in_progress' ? StudentWorkoutPlan::find($session->student_workout_plan_id) : null;
+
+        return [...$session->toArray(), 'expiresAt' => $plan?->expiresAt(),
+            'planAccess' => $plan ? app(WorkoutPublishingService::class)->access($plan) : null,
+            'revision' => hash('sha256', json_encode($session->progress).$session->status.$session->updated_at->toISOString())];
+    }
+
+    private function assertSessionAvailable(StudentWorkoutSession $session, WorkoutPublishingService $service): void
+    {
+        $current = $service->current($session->aluno_id);
+        if ($current?->id === $session->student_workout_plan_id) {
+            return;
+        }
+
+        $plan = StudentWorkoutPlan::whereKey($session->student_workout_plan_id)->where('aluno_id', $session->aluno_id)->first();
+        $access = $service->access($plan);
+        if ($access['status'] === 'available') {
+            $access['status'] = 'closed';
+            $access['message'] = 'Esta ficha foi substituída ou encerrada. Consulte seus treinos ou fale com seu professor.';
+        }
+        $this->denyPlanAccess($access);
+    }
+
+    private function denyPlanAccess(array $access, int $status = 403): never
+    {
+        throw new HttpResponseException(response()->json([
+            'code' => 'workout_unavailable', 'message' => $access['message'], 'planAccess' => $access,
+        ], $status));
     }
 
     private function authorizeSession(StudentWorkoutSession $session): void

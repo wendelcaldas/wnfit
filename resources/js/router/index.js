@@ -29,6 +29,8 @@ export const router = createRouter({
         { path: '/aluno/sessao/:id', component: () => import('../views/StudentSessionView.vue'), meta: { studentPortal: true } },
         { path: '/evento/:slug', component: () => import('../views/PublicEventView.vue'), meta: { public: true } },
         { path: '/eventos', component: () => import('../views/EventsView.vue'), meta: { requiresAuth: true } },
+        { path: '/configuracoes', redirect: '/configuracoes/usuarios' },
+        { path: '/configuracoes/planos', component: () => import('../views/PlansSettingsView.vue'), meta: { requiresAuth: true } },
         { path: '/financeiro', name: 'financeiro', component: FinanceView, meta: { requiresAuth: true } },
         {
             path: '/',

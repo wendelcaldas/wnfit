@@ -75,9 +75,9 @@ class BillingService
         return $charge;
     }
 
-    public function refreshOverdueCharges(int $organizationId): void
+    public function refreshOverdueCharges(int $organizationId, ?Carbon $through = null): void
     {
-        app(RecurringBillingService::class)->sync($organizationId);
+        app(RecurringBillingService::class)->sync($organizationId, $through);
         Cobranca::query()
             ->where('organizacao_id', $organizationId)
             ->where('status', 'pendente')

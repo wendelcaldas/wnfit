@@ -17,5 +17,5 @@ export const appNavigation = [
     { label: 'Agenda', to: '/agenda', icon: CalendarRange },
     { label: 'Eventos', to: '/eventos', icon: CalendarRange },
     { label: 'Comunicacoes', to: '/configuracoes/mensagens', icon: MessageSquareText },
-    { label: 'Configuracoes', to: '/configuracoes/usuarios', icon: Settings },
+    { label: 'Configurações', to: '/configuracoes', icon: Settings, activePaths: ['/configuracoes/usuarios', '/configuracoes/planos'] },
 ];

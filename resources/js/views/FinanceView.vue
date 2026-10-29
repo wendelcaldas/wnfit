@@ -1,5 +1,5 @@
 <template>
-    <AppShell visual-refresh eyebrow="Gestão do estúdio" title="Financeiro" description="Acompanhe mensalidades, inscrições e recebimentos por mês.">
+    <AppShell visual-refresh eyebrow="Financeiro" title="Financeiro" description="Seu estúdio em números. Acompanhe entradas e mensalidades.">
         <FinancialResults />
     </AppShell>
 </template>
@@ -8,3 +8,5 @@
 import AppShell from '../components/AppShell.vue';
 import FinancialResults from './FinancialResults.vue';
 </script>
+
+<style src="../../css/finance.css"></style>

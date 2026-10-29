@@ -49,16 +49,17 @@ class CollectionsTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_legacy_recurrence_is_previewed_and_requires_an_unchanged_quote(): void
+    public function test_legacy_recurrence_is_generated_automatically_without_duplicate_charges(): void
     {
         [$user, , $student, $subscription] = $this->account();
         $subscription->update(['recorrencia_inicio' => null]);
-        $this->actingAs($user)->getJson('/api/collections')->assertJsonPath('summary.review', 1)->assertJsonPath('summary.overdue', 150);
-        $preview = $this->postJson("/api/collections/{$student->id}/recurrence", [])->assertOk()->assertJsonCount(2, 'items');
-        $this->assertSame(1, $student->cobrancas()->count());
-        $this->postJson("/api/collections/{$student->id}/recurrence", ['confirm' => true, 'quote' => 'invalid'])->assertConflict();
-        $this->postJson("/api/collections/{$student->id}/recurrence", ['start' => $preview->json('start'), 'confirm' => true, 'quote' => $preview->json('quote')])->assertOk();
-        $this->getJson('/api/collections')->assertJsonPath('summary.review', 0)->assertJsonPath('summary.overdue', 450);
+        $this->actingAs($user)->getJson('/api/collections')->assertOk()
+            ->assertJsonPath('summary.review', 0)->assertJsonPath('summary.overdue', 450);
+        $this->assertSame('2026-07-10', $subscription->fresh()->recorrencia_inicio->toDateString());
+        $this->getJson('/api/collections')->assertOk();
+        $this->assertSame(3, $student->cobrancas()->count());
+        $this->assertSame(0, Mensagem::count());
+        Http::assertNothingSent();
     }
 
     public function test_recurrence_respects_pause_end_cycle_and_month_end_anchor(): void

@@ -26,6 +26,6 @@ defineProps({ eyebrow: { type: String, default: 'Painel' }, title: { type: Strin
 const route = useRoute(); const router = useRouter(); const auth = useAuthStore();
 const currentPath = computed(() => route.path);
 const mobileNavigation = computed(() => appNavigation.filter((item) => ['Painel', 'Alunos', 'Financeiro', 'Treinos', 'Agenda'].includes(item.label)));
-const isActive = (item) => item.to !== '#' && currentPath.value.startsWith(item.to);
+const isActive = (item) => item.activePaths ? item.activePaths.includes(currentPath.value) : item.to !== '#' && currentPath.value.startsWith(item.to);
 const handleLogout = async () => { await auth.logout(); router.push('/entrar'); };
 </script>

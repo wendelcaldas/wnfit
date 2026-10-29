@@ -65,12 +65,20 @@
                             }}
                             ·
                             {{
-                                plan.status === "ativo"
+                                plan.accessStatus === "expired" ? "Vencida" : plan.status === "ativo"
                                     ? "Publicada"
                                     : "Substituída"
                             }}</span
                         >
                     </summary>
+                    <div v-if="plan.accessStatus === 'expired'" class="mt-4 flex flex-wrap gap-3">
+                        <button v-if="plan.durationWeeks > 0" class="btn-secondary" :disabled="busy" @click="$emit('renew', plan)">
+                            Renovar por {{ plan.durationWeeks }} semanas
+                        </button>
+                        <button class="student-detail-link" :disabled="busy" @click="$emit('personalize', plan)">
+                            Personalizar nova versão
+                        </button>
+                    </div>
                     <div v-for="day in plan.days" :key="day.id" class="mt-4">
                         <h3 class="text-sm font-bold">
                             {{ day.name }} · {{ day.focus }}
@@ -96,7 +104,9 @@
 defineProps({
     plans: { type: Array, default: () => [] },
     sessions: { type: Array, default: () => [] },
+    busy: { type: Boolean, default: false },
 });
+defineEmits(['renew', 'personalize']);
 const date = (value) =>
     new Date(
         value?.length === 10 ? `${value}T12:00:00` : value,
