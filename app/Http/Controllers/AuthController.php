@@ -135,6 +135,8 @@ class AuthController extends Controller
                 'telefone_contato' => $data['phone'] ?? null,
             ]);
 
+            app(\App\Services\OrganizationUnitService::class)->defaultFor($organization->id);
+
             $organization->usuarios()->attach($user->id, [
                 'papel' => 'proprietario',
                 'status' => 'ativo',

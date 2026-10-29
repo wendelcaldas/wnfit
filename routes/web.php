@@ -112,6 +112,10 @@ Route::prefix('api')->group(function () {
         Route::post('/workouts', [WorkoutController::class, 'store']);
         Route::get('/workouts/{workout}', [WorkoutController::class, 'show']);
         Route::put('/workouts/{workout}', [WorkoutController::class, 'update']);
+        Route::get('/organization/units', [\App\Http\Controllers\OrganizationUnitController::class, 'index']);
+        Route::post('/organization/units', [\App\Http\Controllers\OrganizationUnitController::class, 'save']);
+        Route::delete('/organization/units/{unit}', [\App\Http\Controllers\OrganizationUnitController::class, 'destroy']);
+        Route::put('/organization/units/{unit}', [\App\Http\Controllers\OrganizationUnitController::class, 'save']);
         Route::get('/organization/plans', [\App\Http\Controllers\OrganizationPlanController::class, 'index']);
         Route::post('/organization/plans', [\App\Http\Controllers\OrganizationPlanController::class, 'save']);
         Route::put('/organization/plans/{plan}', [\App\Http\Controllers\OrganizationPlanController::class, 'save']);

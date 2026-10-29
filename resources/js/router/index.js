@@ -30,6 +30,7 @@ export const router = createRouter({
         { path: '/evento/:slug', component: () => import('../views/PublicEventView.vue'), meta: { public: true } },
         { path: '/eventos', component: () => import('../views/EventsView.vue'), meta: { requiresAuth: true } },
         { path: '/configuracoes', redirect: '/configuracoes/usuarios' },
+        { path: '/configuracoes/unidades', component: () => import('../views/UnitsSettingsView.vue'), meta: { requiresAuth: true } },
         { path: '/configuracoes/planos', component: () => import('../views/PlansSettingsView.vue'), meta: { requiresAuth: true } },
         { path: '/financeiro', name: 'financeiro', component: FinanceView, meta: { requiresAuth: true } },
         {
