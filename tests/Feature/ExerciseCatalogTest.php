@@ -66,9 +66,15 @@ class ExerciseCatalogTest extends TestCase
 
         $this->actingAs($user)->getJson('/api/exercises')->assertOk()
             ->assertJsonPath('pagination.total', 275)->assertJsonCount(40, 'exercises');
-        $this->getJson('/api/exercises?page=2')->assertOk()->assertJsonCount(40, 'exercises');
-        $this->getJson('/api/exercises?page=5')->assertOk()->assertJsonCount(40, 'exercises');
-        $this->getJson('/api/exercises?page=7')->assertOk()->assertJsonCount(35, 'exercises');
+        $this->getJson('/api/exercises?page=2')->assertOk()
+            ->assertJsonPath('pagination.page', 2)->assertJsonPath('pagination.total', 275)
+            ->assertJsonCount(40, 'exercises');
+        $this->getJson('/api/exercises?page=5')->assertOk()
+            ->assertJsonPath('pagination.page', 5)->assertJsonPath('pagination.total', 275)
+            ->assertJsonCount(40, 'exercises');
+        $this->getJson('/api/exercises?page=7')->assertOk()
+            ->assertJsonPath('pagination.page', 7)->assertJsonPath('pagination.total', 275)
+            ->assertJsonCount(35, 'exercises');
         $this->getJson('/api/exercises?q=Adutor')->assertOk()->assertJsonPath('pagination.total', 5);
         $this->getJson('/api/exercises?equipment=Elastico')->assertOk()->assertJsonPath('pagination.total', 16);
         $this->getJson('/api/exercises?equipment=Bicicleta')->assertOk()

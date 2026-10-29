@@ -346,7 +346,7 @@
                             Catálogo de exercícios
                         </h2>
                         <p class="mt-1 text-xs text-[var(--wn-muted)]">
-                            Adicione vários exercícios sem fechar esta janela.
+                            Marque os exercícios desejados e confirme ao final.
                         </p>
                     </div>
                     <button
@@ -387,36 +387,30 @@
                             Tentar novamente
                         </button>
                     </p>
-                    <div v-else class="space-y-2">
+                    <div v-else class="exercise-picker-grid">
                         <button
                             v-for="e in catalog"
                             :key="e.id"
-                            class="flex w-full items-center gap-3 rounded-xl border p-4 text-left"
+                            class="exercise-picker-card"
                             :class="
-                                isSelected(e.id)
-                                    ? 'border-lime-300 bg-[var(--wn-primary-soft)]'
+                                (isSelected(e.id) || pendingExercises.has(e.id))
+                                    ? (pendingExercises.has(e.id) ? 'exercise-picker-selected' : 'border-lime-300 bg-[var(--wn-primary-soft)]')
                                     : 'border-[var(--wn-line)]'
                             "
                             :disabled="isSelected(e.id)"
-                            @click="selectExercise(e)"
+                            :aria-pressed="isSelected(e.id) || pendingExercises.has(e.id)"
+                            @click="toggleExercise(e)"
                         >
-                            <span class="student-icon !h-10 !w-10"
-                                ><Dumbbell :size="18" /></span
-                            ><span class="flex-1"
-                                ><strong class="text-sm">{{ e.name }}</strong
-                                ><span
-                                    class="mt-1 block text-xs text-[var(--wn-muted)]"
-                                    >{{ e.muscleGroup }} ·
-                                    {{ e.equipment || "Sem equipamento" }}</span
-                                ></span
-                            ><Check v-if="isSelected(e.id)" :size="20" /><Plus
-                                v-else
-                                :size="20"
-                            />
+                            <span class="exercise-picker-image">
+                                <img v-if="exerciseImage(e) && !failedCatalogImages[exerciseImage(e)]" :src="exerciseImage(e)" :alt="'Demonstração de ' + e.name" loading="lazy" decoding="async" @error="failedCatalogImages[exerciseImage(e)] = true" />
+                                <span v-else class="exercise-picker-placeholder"><Dumbbell :size="28" /><span>Imagem indisponível</span></span>
+                            </span>
+                            <span class="exercise-picker-copy"><strong>{{ e.name }}</strong><span>{{ e.muscleGroup }} · {{ e.equipment || 'Sem equipamento' }}</span></span>
+                            <span class="exercise-picker-action"><Check v-if="isSelected(e.id) || pendingExercises.has(e.id)" :size="16" /><Plus v-else :size="16" />{{ isSelected(e.id) ? 'Já está no treino' : pendingExercises.has(e.id) ? 'Selecionado · desmarcar' : 'Selecionar exercício' }}</span>
                         </button>
                         <p
                             v-if="!catalog.length"
-                            class="p-8 text-center text-sm"
+                            class="col-span-full p-8 text-center text-sm"
                         >
                             Nenhum exercício encontrado.
                         </p>
@@ -455,9 +449,11 @@
                             <ArrowRight :size="16" />
                         </button>
                     </div>
-                    <button class="btn-primary" @click="pickerOpen = false">
-                        Concluir seleção
-                    </button>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="text-xs text-[var(--wn-muted)]" aria-live="polite">{{ pendingExercises.size }} selecionados</span>
+                        <button class="btn-secondary" @click="pickerOpen = false">Cancelar</button>
+                        <button class="btn-primary" :disabled="!pendingExercises.size" @click="addSelectedExercises">Adicionar selecionados ({{ pendingExercises.size }})</button>
+                    </div>
                 </footer>
             </section>
         </div>
@@ -643,6 +639,19 @@ const formState = () => JSON.stringify({ form, target: targetStudent.value });
 const dirty = computed(() => !loading.value && baseline.value !== formState());
 const currentDay = computed(() => form.days[activeDay.value]);
 const pickerOpen = ref(false);
+const pendingExercises = reactive(new Map());
+function toggleExercise(exercise) {
+    if (isSelected(exercise.id)) return;
+    if (pendingExercises.has(exercise.id)) pendingExercises.delete(exercise.id);
+    else pendingExercises.set(exercise.id, exercise);
+}
+function addSelectedExercises() {
+    for (const exercise of pendingExercises.values()) selectExercise(exercise);
+    pendingExercises.clear();
+    pickerOpen.value = false;
+}
+watch(pickerOpen, (open) => { if (!open) pendingExercises.clear(); });
+const failedCatalogImages = reactive({});
 const search = ref("");
 const muscle = ref("todos");
 const muscleOptions = ref([]);
@@ -714,6 +723,7 @@ function selectExercise(e) {
     });
 }
 function openPicker() {
+    pendingExercises.clear();
     pickerOpen.value = true;
     page.value = 1;
     loadCatalog();
@@ -863,3 +873,20 @@ onUnmounted(() => {
     window.removeEventListener("beforeunload", beforeUnload);
 });
 </script>
+
+<style scoped>
+.exercise-picker-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.exercise-picker-card { display:flex; flex-direction:column; overflow:hidden; min-width:0; border:1px solid var(--wn-line); border-radius:12px; text-align:left; background:white; transition:border-color .15s,box-shadow .15s; }
+.exercise-picker-card:not(:disabled):hover { border-color:#90af6b; box-shadow:0 3px 12px #36531412; }
+.exercise-picker-card.exercise-picker-selected { border-color:#65a30d; box-shadow:0 0 0 2px #65a30d; background:#f7fee7; }
+.exercise-picker-card:focus-visible { outline:2px solid var(--wn-primary-strong); outline-offset:3px; }
+.exercise-picker-card:disabled { opacity:1; cursor:default; border-color:#a3c779; background:var(--wn-primary-soft); }
+.exercise-picker-image { display:flex; align-items:center; justify-content:center; width:100%; aspect-ratio:3 / 2; overflow:hidden; background:#fafbf8; border-bottom:1px solid var(--wn-line); }
+.exercise-picker-image img { display:block; width:100%; height:100%; object-fit:contain; }
+.exercise-picker-placeholder { display:flex; flex-direction:column; align-items:center; gap:8px; color:var(--wn-muted); font-size:11px; }
+.exercise-picker-copy { display:flex; flex:1; flex-direction:column; gap:5px; padding:14px 14px 10px; }
+.exercise-picker-copy strong { font-size:14px; line-height:1.45; }
+.exercise-picker-copy > span { font-size:12px; line-height:1.5; color:var(--wn-muted); }
+.exercise-picker-action { display:flex; align-items:center; gap:6px; margin:0 14px 14px; color:var(--wn-primary-strong); font-size:12px; font-weight:600; }
+@media(max-width:420px) { .exercise-picker-grid { grid-template-columns:1fr; } }
+</style>

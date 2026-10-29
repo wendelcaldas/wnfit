@@ -27,9 +27,11 @@ class ExerciseController extends Controller
             $query->where('equipamento', $request->equipment);
         }
 
+        $exercises = $query->orderBy('nome')->paginate(40);
+
         return response()->json([
-            'exercises' => $query->orderBy('nome')->paginate(40)->through(fn (Exercicio $exercise) => $this->payload($exercise))->items(),
-            'pagination' => ['page' => $request->integer('page', 1), 'total' => (clone $query)->count(), 'perPage' => 40],
+            'exercises' => $exercises->through(fn (Exercicio $exercise) => $this->payload($exercise))->items(),
+            'pagination' => ['page' => $exercises->currentPage(), 'total' => $exercises->total(), 'perPage' => $exercises->perPage()],
             'filters' => [
                 'muscles' => Exercicio::query()->where('ativo', true)->where(fn ($q) => $q->whereNull('organizacao_id')->orWhere('organizacao_id', $organization->id))->distinct()->orderBy('grupo_muscular')->pluck('grupo_muscular'),
                 'equipment' => Exercicio::query()->where('ativo', true)->where(fn ($q) => $q->whereNull('organizacao_id')->orWhere('organizacao_id', $organization->id))->whereNotNull('equipamento')->distinct()->orderBy('equipamento')->pluck('equipamento'),
