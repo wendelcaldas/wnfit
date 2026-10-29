@@ -1,10 +1,11 @@
 <template>
     <AppShell
-        eyebrow="Configuracoes > Usuarios"
-        title="Usuarios e professores"
-        description="Gerencie quem acessa o sistema e quais professores ficam disponiveis no cadastro de alunos."
-        search-placeholder="Buscar configuracoes..."
+        eyebrow="Configurações > Usuários"
+        title="Usuários e professores"
+        description="Gerencie quem acessa o sistema e quais professores ficam disponíveis no cadastro de alunos."
+        search-placeholder="Buscar configurações..."
     >
+        <SettingsNavigation />
         <div class="grid gap-5 xl:grid-cols-[1fr_390px]">
             <section class="panel-card !p-0 overflow-hidden">
                 <div class="flex items-center justify-between gap-4 border-b border-[var(--wn-line)] p-5">
@@ -12,11 +13,11 @@
                         <h2 class="text-lg font-semibold">Equipe cadastrada</h2>
                         <p class="mt-1 text-sm text-[var(--wn-muted)]">Professores ativos aparecem automaticamente no cadastro de aluno.</p>
                     </div>
-                    <span class="badge-muted">{{ users.length }} usuarios</span>
+                    <span class="badge-muted">{{ users.length }} usuários</span>
                 </div>
 
                 <div v-if="loading" class="p-8 text-center text-sm text-[var(--wn-muted)]">Carregando equipe...</div>
-                <div v-else-if="!users.length" class="p-8 text-center text-sm text-[var(--wn-muted)]">Nenhum usuario cadastrado.</div>
+                <div v-else-if="!users.length" class="p-8 text-center text-sm text-[var(--wn-muted)]">Nenhum usuário cadastrado.</div>
                 <div v-else class="divide-y divide-[var(--wn-line)]">
                     <article v-for="user in users" :key="user.id" class="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
                         <div class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[var(--wn-primary-soft)] font-semibold text-[var(--wn-primary-strong)]">
@@ -50,7 +51,7 @@
                         <UserPlus class="h-5 w-5" />
                     </div>
                     <div>
-                        <h2 class="text-lg font-semibold">Novo usuario</h2>
+                        <h2 class="text-lg font-semibold">Novo usuário</h2>
                         <p class="text-sm text-[var(--wn-muted)]">Cadastre um membro da equipe.</p>
                     </div>
                 </div>
@@ -78,7 +79,7 @@
                     </label>
                     <p v-if="error" class="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-600">{{ error }}</p>
                     <button class="btn-primary w-full justify-center" :disabled="saving">
-                        {{ saving ? 'Salvando...' : 'Cadastrar usuario' }}
+                        {{ saving ? 'Salvando...' : 'Cadastrar usuário' }}
                     </button>
                 </form>
             </aside>
@@ -87,6 +88,7 @@
 </template>
 
 <script setup>
+import SettingsNavigation from '../components/SettingsNavigation.vue';
 import { onMounted, reactive, ref } from 'vue';
 import { UserPlus } from 'lucide-vue-next';
 import AppShell from '../components/AppShell.vue';
@@ -116,7 +118,7 @@ const createUser = async () => {
         Object.assign(form, { name: '', email: '', role: 'professor', password: '' });
     } catch (exception) {
         const errors = exception.response?.data?.errors;
-        error.value = errors ? Object.values(errors).flat()[0] : 'Nao foi possivel cadastrar o usuario.';
+        error.value = errors ? Object.values(errors).flat()[0] : 'Nao foi possivel cadastrar o usuário.';
     } finally { saving.value = false; }
 };
 
@@ -126,7 +128,7 @@ const updateUser = async (user, changes) => {
         const { data } = await window.axios.patch(`/api/organization/users/${user.id}`, changes);
         Object.assign(user, data.user);
     } catch (exception) {
-        error.value = exception.response?.data?.message ?? 'Nao foi possivel atualizar o usuario.';
+        error.value = exception.response?.data?.message ?? 'Nao foi possivel atualizar o usuário.';
         await loadUsers();
     }
 };

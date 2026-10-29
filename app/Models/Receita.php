@@ -13,6 +13,7 @@ class Receita extends Model
         'valor',
         'competencia',
         'descricao',
+        'origem', 'metodo', 'request_id', 'external_id',
     ];
 
     protected function casts(): array

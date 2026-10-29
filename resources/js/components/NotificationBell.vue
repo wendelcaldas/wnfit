@@ -43,15 +43,16 @@
             <button type="button" class="notification-back" @click="backToList">
                 <ArrowLeft :size="16" aria-hidden="true" />Voltar à lista
             </button>
-            <span class="notification-kind">Treino concluído</span>
+            <span class="notification-kind">{{ kind(selected) }}</span>
             <h3 ref="detailHeading" tabindex="-1">
-                {{ selected.data.studentName }} finalizou {{ selected.data.dayName }}
+                {{ headline(selected) }}
             </h3>
             <p>
                 {{ selected.data.workoutName }}<span v-if="selected.data.focus"> · {{ selected.data.focus }}</span>
             </p>
-            <p class="notification-completed-date">{{ date(selected.data.completedAt) }}</p>
-            <dl>
+            <p class="notification-completed-date">{{ isDeadline(selected) ? 'Vigência até ' + planDate(selected.data.endsOn) : date(selected.data.completedAt) }}</p>
+            <p v-if="isDeadline(selected)">Confira os treinos do aluno para renovar a vigência ou preparar uma nova versão da ficha.</p>
+            <dl v-else>
                 <div>
                     <dt>Tempo decorrido</dt>
                     <dd>{{ duration(selected.data.durationSeconds) }}</dd>
@@ -87,13 +88,13 @@
                     type="button"
                     class="notification-row"
                     :class="{ 'is-unread': !notification.readAt }"
-                    :aria-label="'Abrir treino concluído de ' + notification.data.studentName"
+                    :aria-label="'Abrir ' + kind(notification).toLowerCase() + ' de ' + notification.data.studentName"
                     @click="openNotification(notification)"
                 >
                     <span class="notification-row-icon"><Dumbbell :size="20" aria-hidden="true" /></span>
                     <span class="notification-row-text"
-                        ><strong>Treino concluído</strong
-                        ><span>{{ notification.data.studentName }} finalizou {{ notification.data.dayName }}.</span
+                        ><strong>{{ kind(notification) }}</strong
+                        ><span>{{ headline(notification) }}.</span
                         ><small
                             >{{ isPreview ? 'Há 5 minutos' : date(notification.createdAt) }} ·
                             {{ notification.readAt ? 'Lida' : 'Não lida' }}</small
@@ -173,6 +174,19 @@ const date = (value) =>
     new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(
         new Date(value),
     );
+const isDeadline = (notification) => ['workout_plan_ends_today', 'workout_plan_expired'].includes(notification?.type);
+const planDate = (value) => new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR');
+const isDueToday = (notification) => notification.data.endsOn === new Date().toLocaleDateString('en-CA');
+const kind = (notification) => notification.type === 'workout_plan_expired'
+    ? 'Ficha vencida'
+    : notification.type === 'workout_plan_ends_today'
+      ? (isDueToday(notification) ? 'Ficha vence hoje' : 'Vencimento da ficha')
+      : 'Treino concluído';
+const headline = (notification) => notification.type === 'workout_plan_expired'
+    ? `A ficha de ${notification.data.studentName} venceu em ${planDate(notification.data.endsOn)}`
+    : notification.type === 'workout_plan_ends_today'
+      ? (isDueToday(notification) ? `A ficha de ${notification.data.studentName} vence hoje` : `A ficha de ${notification.data.studentName} tinha vigência até ${planDate(notification.data.endsOn)}`)
+      : `${notification.data.studentName} finalizou ${notification.data.dayName}`;
 const duration = (seconds) => {
     const minutes = Math.floor(Number(seconds || 0) / 60);
     return minutes < 1

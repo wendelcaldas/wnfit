@@ -125,14 +125,7 @@
                     </p>
                 </div>
             </section>
-            <section v-else class="student-card mt-6">
-                <Dumbbell class="text-[var(--wn-primary-strong)]" :size="32" />
-                <h2 class="mt-4 text-xl font-bold">Ainda sem ficha vigente</h2>
-                <p class="mt-3 text-sm leading-6 text-[var(--wn-muted)]">
-                    Fale com seu professor para receber ou renovar seu programa
-                    de treino.
-                </p>
-            </section>
+            <WorkoutAvailabilityNotice v-else :access="data.planAccess" class="mt-6" />
             <section class="mt-9">
                 <h2 class="text-lg font-bold">Histórico de sessões</h2>
                 <div v-if="data.history.length" class="mt-4 space-y-3">
@@ -167,9 +160,11 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
-import { ArrowRight, ChevronRight, Dumbbell } from "lucide-vue-next";
+import { ArrowRight, ChevronRight } from "lucide-vue-next";
 import StudentShell from "../components/StudentShell.vue";
 import WorkoutExerciseInfo from "../components/WorkoutExerciseInfo.vue";
+import WorkoutAvailabilityNotice from "../components/WorkoutAvailabilityNotice.vue";
+import { useWorkoutExpiry, expiredWorkoutMessage } from "../composables/useWorkoutExpiry";
 const router = useRouter();
 const data = ref({ history: [] });
 const loading = ref(true);
@@ -203,11 +198,22 @@ async function start() {
         );
         router.push(`/aluno/sessao/${result.session.id}`);
     } catch (e) {
+        if (e.response?.data?.code === "workout_unavailable") {
+            data.value = { ...data.value, plan: null, activeSession: null, planAccess: e.response.data.planAccess };
+        }
         actionError.value =
             e.response?.data?.message ?? "Não foi possível iniciar o treino.";
     } finally {
         busy.value = false;
     }
 }
+useWorkoutExpiry({
+    expiresAt: () => data.value.plan?.expiresAt,
+    onExpire: () => {
+        data.value = { ...data.value, plan: null, activeSession: null,
+            planAccess: { ...data.value.planAccess, status: "expired", message: expiredWorkoutMessage } };
+    },
+    refresh: load,
+});
 onMounted(load);
 </script>

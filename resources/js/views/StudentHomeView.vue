@@ -47,16 +47,7 @@
                     }}<ArrowRight :size="18"
                 /></RouterLink>
             </section>
-            <section v-else class="student-card !p-7">
-                <div class="student-icon"><Dumbbell :size="24" /></div>
-                <h2 class="mt-5 text-xl font-bold">
-                    Seu treino está a caminho.
-                </h2>
-                <p class="mt-3 text-sm leading-6 text-[var(--wn-muted)]">
-                    Seu professor precisa publicar uma ficha vigente para você.
-                    Assim que estiver pronta, ela aparece aqui.
-                </p>
-            </section>
+            <WorkoutAvailabilityNotice v-else :access="data.planAccess" />
             <section class="student-week mt-7">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <h2 class="text-lg font-bold">Sua semana</h2>
@@ -128,9 +119,11 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
-import { ArrowRight, Check, ChevronRight, Dumbbell } from "lucide-vue-next";
+import { ArrowRight, Check, ChevronRight } from "lucide-vue-next";
 import StudentShell from "../components/StudentShell.vue";
 import { useStudentAuthStore } from "../stores/studentAuth";
+import WorkoutAvailabilityNotice from "../components/WorkoutAvailabilityNotice.vue";
+import { useWorkoutExpiry, expiredWorkoutMessage } from "../composables/useWorkoutExpiry";
 const auth = useStudentAuthStore();
 const firstName = computed(() => auth.student?.name.split(" ")[0]);
 const data = ref({ history: [] });
@@ -155,5 +148,13 @@ async function load() {
         loading.value = false;
     }
 }
+useWorkoutExpiry({
+    expiresAt: () => data.value.plan?.expiresAt,
+    onExpire: () => {
+        data.value = { ...data.value, plan: null, activeSession: null,
+            planAccess: { ...data.value.planAccess, status: "expired", message: expiredWorkoutMessage } };
+    },
+    refresh: load,
+});
 onMounted(load);
 </script>

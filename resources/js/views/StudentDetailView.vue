@@ -95,6 +95,7 @@
                 <div class="flex flex-wrap gap-3"><button class="btn-secondary" type="button" @click="workoutPickerOpen = true"><Library class="h-5 w-5" />Usar modelo existente</button><RouterLink :to="`/treinos/novo?student=${student.id}`" class="btn-primary"><Plus class="h-5 w-5" />Criar novo treino</RouterLink></div>
             </div>
 
+            <FormMessage :text="formMessage" />
             <p v-if="workoutsError" class="panel-card" role="alert">{{ workoutsError }} <button class="student-detail-link" @click="loadWorkouts">Tentar novamente</button></p>
             <div v-else-if="workoutsLoading" class="panel-card p-10 text-center text-sm text-[var(--wn-muted)]">Carregando treino...</div>
             <section v-else-if="currentWorkout" class="panel-card !p-0 overflow-hidden">
@@ -102,10 +103,10 @@
                 <div class="grid gap-4 border-b border-[var(--wn-line)] p-5 sm:grid-cols-3"><MiniKpi label="Frequencia" :value="`${currentWorkout.sessionsPerWeek}x por semana`" caption="Sessoes planejadas" /><MiniKpi label="Duracao" :value="`${currentWorkout.durationWeeks} semanas`" caption="Ciclo do programa" /><MiniKpi label="Divisao" :value="`${currentWorkout.days.length} dias`" caption="Rotinas cadastradas" /></div>
                 <div class="p-5"><h3 class="font-semibold">Dias do treino</h3><div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><article v-for="(day, index) in currentWorkout.days" :key="day.id" class="rounded-xl border border-[var(--wn-line)] bg-[var(--wn-surface-soft)] p-4"><div class="flex items-center justify-between"><span class="grid h-8 w-8 place-items-center rounded-lg bg-white text-sm font-bold">{{ index + 1 }}</span><span class="text-xs text-[var(--wn-muted)]">{{ day.exercisesCount }} exercicios</span></div><p class="mt-3 font-semibold">{{ day.name }}</p><p class="mt-1 text-sm text-[var(--wn-muted)]">{{ day.focus || 'Foco geral' }}</p></article></div></div>
             </section>
-            <section v-else class="panel-card grid place-items-center py-14 text-center"><div><div class="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[var(--wn-primary-soft)] text-[var(--wn-primary-strong)]"><Dumbbell class="h-7 w-7" /></div><h3 class="mt-4 text-lg font-semibold">Nenhum treino associado</h3><p class="mx-auto mt-2 max-w-md text-sm text-[var(--wn-muted)]">Crie um treino personalizado para {{ student.name }} ou aproveite um modelo da biblioteca.</p><div class="mt-5 flex flex-wrap justify-center gap-3"><button class="btn-secondary" @click="workoutPickerOpen = true">Usar modelo</button><RouterLink :to="`/treinos/novo?student=${student.id}`" class="btn-primary">Criar treino</RouterLink></div></div></section>
+            <section v-else class="panel-card grid place-items-center py-14 text-center"><div><div class="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[var(--wn-primary-soft)] text-[var(--wn-primary-strong)]"><Dumbbell class="h-7 w-7" /></div><h3 class="mt-4 text-lg font-semibold">Nenhuma ficha vigente</h3><p class="mx-auto mt-2 max-w-md text-sm text-[var(--wn-muted)]">{{ workoutHistory.length ? 'Renove uma versão do histórico abaixo ou publique um novo treino para o aluno.' : `Crie um treino personalizado para ${student.name} ou aproveite um modelo da biblioteca.` }}</p><div class="mt-5 flex flex-wrap justify-center gap-3"><button class="btn-secondary" @click="workoutPickerOpen = true">Usar modelo</button><RouterLink :to="`/treinos/novo?student=${student.id}`" class="btn-primary">Criar treino</RouterLink></div></div></section>
         </section>
 
-        <StudentTrainingHistory v-if="student && activeTab === 'workouts'" class="mt-5" :plans="workoutHistory" :sessions="workoutSessions" />
+        <StudentTrainingHistory v-if="student && activeTab === 'workouts'" class="mt-5" :plans="workoutHistory" :sessions="workoutSessions" :busy="assigningWorkout" @renew="renewWorkout" @personalize="personalizeWorkout" />
         <div v-if="workoutPickerOpen" class="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4" @click.self="workoutPickerOpen = false"><section class="flex max-h-[82vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"><header class="flex items-start justify-between border-b border-[var(--wn-line)] p-5"><div><h2 class="text-xl font-semibold">Escolher modelo de treino</h2><p class="mt-1 text-sm text-[var(--wn-muted)]">O modelo selecionado passara a ser o treino atual do aluno.</p></div><button class="icon-button" @click="workoutPickerOpen = false"><X class="h-4 w-4" /></button></header><div class="overflow-y-auto p-5"><div v-if="workoutTemplates.length" class="grid gap-3 sm:grid-cols-2"><button v-for="workout in workoutTemplates" :key="workout.id" class="rounded-xl border p-4 text-left transition hover:border-[var(--wn-primary-strong)] hover:bg-[var(--wn-primary-soft)]" :class="workout.selected ? 'border-[var(--wn-primary-strong)] bg-[var(--wn-primary-soft)]' : 'border-[var(--wn-line)]'" :disabled="assigningWorkout" @click="assignWorkout(workout)"><div class="flex items-center justify-between gap-3"><span class="font-semibold">{{ workout.name }}</span><span v-if="workout.selected" class="badge-success">Atual</span></div><p class="mt-2 text-sm text-[var(--wn-muted)]">{{ workout.objective }} · {{ workout.sessionsPerWeek }}x/semana</p><p class="mt-3 text-xs text-[var(--wn-muted)]">{{ workout.daysCount }} dias · {{ workout.durationWeeks }} semanas</p></button></div><p v-else class="p-8 text-center text-sm text-[var(--wn-muted)]">Nenhum modelo ativo disponivel.</p></div></section></div>
 
         <section v-if="student && activeTab === 'communications'" class="mt-5 grid gap-5 xl:grid-cols-[1fr_360px]">
@@ -386,9 +387,11 @@ const AutomationRow = defineComponent({
 
 const route = useRoute();
 const router = useRouter();
-async function personalizeWorkout() {
+async function personalizeWorkout(plan) {
+    const chosen = plan?.assignmentId ? plan : currentWorkout.value;
+    if (!chosen) return;
     assigningWorkout.value = true;
-    try { const { data } = await window.axios.post(`/api/students/${student.value.id}/workout-plans/${currentWorkout.value.assignmentId}/personalize`); router.push(`/treinos/${data.workout.id}/editar?student=${student.value.id}`); }
+    try { const { data } = await window.axios.post(`/api/students/${student.value.id}/workout-plans/${chosen.assignmentId}/personalize`); router.push(`/treinos/${data.workout.id}/editar?student=${student.value.id}`); }
     catch (e) { formMessage.value = e.response?.data?.message ?? 'Não foi possível preparar a nova versão.'; }
     finally { assigningWorkout.value = false; }
 }
@@ -489,6 +492,19 @@ const assignWorkout = async (workout) => {
         await window.axios.post(`/api/students/${student.value.id}/workouts/${workout.id}`);
         await loadWorkouts();
         workoutPickerOpen.value = false;
+    } finally { assigningWorkout.value = false; }
+};
+
+const renewWorkout = async (plan) => {
+    if (!window.confirm(`Renovar esta versão por ${plan.durationWeeks} semanas a partir de hoje? Ela passará a ser a ficha atual do aluno. As versões anteriores serão preservadas.`)) return;
+    assigningWorkout.value = true;
+    formMessage.value = '';
+    try {
+        await window.axios.post(`/api/students/${student.value.id}/workout-plans/${plan.assignmentId}/renew`);
+        await loadWorkouts();
+        formMessage.value = 'Ficha renovada e liberada para o aluno.';
+    } catch (e) {
+        formMessage.value = e.response?.data?.message ?? 'Não foi possível renovar a ficha.';
     } finally { assigningWorkout.value = false; }
 };
 

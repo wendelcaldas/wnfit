@@ -9,6 +9,10 @@
             <p v-if="loading" class="student-card mt-5">
                 Carregando sua sessão…
             </p>
+            <template v-else-if="accessBlocked">
+                <WorkoutAvailabilityNotice :access="blockedAccess" class="mt-6" />
+                <RouterLink to="/aluno/treinos" class="btn-secondary mt-5">Ver meus treinos</RouterLink>
+            </template>
             <p v-else-if="!session" class="student-error mt-5" role="alert">
                 {{ error }}
                 <button class="underline" @click="load">
@@ -261,6 +265,8 @@ import {
 import { ArrowLeft, Check, Timer } from "lucide-vue-next";
 import StudentShell from "../components/StudentShell.vue";
 import WorkoutExerciseInfo from "../components/WorkoutExerciseInfo.vue";
+import WorkoutAvailabilityNotice from "../components/WorkoutAvailabilityNotice.vue";
+import { useWorkoutExpiry, expiredWorkoutMessage } from "../composables/useWorkoutExpiry";
 const route = useRoute();
 const router = useRouter();
 const session = ref(null);
@@ -271,13 +277,15 @@ const restTime = computed(
 );
 const loading = ref(true);
 const error = ref("");
+const accessBlocked = ref(false);
+const blockedAccess = ref(null);
 const dirty = ref(false);
 const saving = ref(false);
 const finishing = ref(false);
 const conflict = ref(false);
 const confirmFinish = ref(false);
 const confirmAbandon = ref(false);
-const editable = computed(() => session.value?.status === "in_progress");
+const editable = computed(() => !accessBlocked.value && session.value?.status === "in_progress");
 const done = computed(() => rows.value.flat().filter((row) => row.done).length);
 const total = computed(() => rows.value.flat().length);
 let saveTimer;
@@ -320,10 +328,37 @@ async function load() {
                 };
             }),
         );
-    } catch {
-        error.value = "Não foi possível carregar esta sessão.";
+    } catch (e) {
+        if (e.response?.data?.code === "workout_unavailable") {
+            blockWorkout(e.response.data.planAccess);
+        } else {
+            error.value = "Não foi possível carregar esta sessão.";
+        }
     } finally {
         loading.value = false;
+    }
+}
+function blockWorkout(access) {
+    accessBlocked.value = true;
+    blockedAccess.value = access;
+    clearTimeout(saveTimer);
+    dirty.value = false;
+    session.value = null;
+    rows.value = [];
+    error.value = "";
+    stopTimer();
+    closeDialog();
+}
+async function checkAccess() {
+    if (!editable.value) return;
+    try {
+        const { data } = await window.axios.get(`/api/student/sessions/${route.params.id}`);
+        if (session.value && !accessBlocked.value) {
+            session.value.expiresAt = data.session.expiresAt;
+            session.value.planAccess = data.session.planAccess;
+        }
+    } catch (e) {
+        if (e.response?.data?.code === "workout_unavailable") blockWorkout(e.response.data.planAccess);
     }
 }
 function reloadSaved() {
@@ -376,10 +411,16 @@ async function flush() {
     inflight = window.axios
         .patch(`/api/student/sessions/${session.value.id}`, body)
         .then(({ data }) => {
+            if (accessBlocked.value || !session.value) return false;
             session.value.revision = data.session.revision;
             return true;
         })
         .catch((e) => {
+            if (e.response?.data?.code === "workout_unavailable") {
+                blockWorkout(e.response.data.planAccess);
+                return false;
+            }
+            if (accessBlocked.value) return false;
             dirty.value = true;
             conflict.value = e.response?.status === 409;
             error.value = conflict.value
@@ -417,20 +458,23 @@ async function finish(abandon) {
         closeDialog();
         if (abandon) router.replace("/aluno/treinos");
     } catch (e) {
-        error.value =
-            e.response?.data?.message ??
-            "Não foi possível concluir. Tente novamente.";
+        if (e.response?.data?.code === "workout_unavailable") {
+            blockWorkout(e.response.data.planAccess);
+        } else {
+            error.value = e.response?.data?.message ?? "Não foi possível concluir. Tente novamente.";
+        }
     } finally {
         finishing.value = false;
     }
 }
 function beforeUnload(event) {
-    if (dirty.value || saving.value) {
+    if (!accessBlocked.value && (dirty.value || saving.value)) {
         event.preventDefault();
         event.returnValue = "";
     }
 }
 onBeforeRouteLeave(async () => {
+    if (accessBlocked.value) return true;
     if (!dirty.value && !saving.value) return true;
     return (
         (await flush()) ||
@@ -438,6 +482,11 @@ onBeforeRouteLeave(async () => {
             "Existem alterações não salvas. Deseja sair mesmo assim?",
         )
     );
+});
+useWorkoutExpiry({
+    expiresAt: () => editable.value ? session.value?.expiresAt : null,
+    onExpire: () => blockWorkout({ ...session.value?.planAccess, status: "expired", message: expiredWorkoutMessage }),
+    refresh: checkAccess,
 });
 onMounted(() => {
     load();

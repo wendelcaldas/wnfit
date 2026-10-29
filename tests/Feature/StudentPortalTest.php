@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\StudentAccessService;
 use App\Services\WorkoutPublishingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -118,11 +119,14 @@ class StudentPortalTest extends TestCase
         $this->getJson('/api/student/home')->assertJsonPath('plan.days.0.exercises.0.load', '20 kg');
         $next = $publishing->publish($student, $workout->fresh(), $owner->id);
         $this->getJson('/api/student/home')->assertJsonPath('plan.days.0.exercises.0.load', '40 kg');
-        $this->getJson("/api/student/sessions/{$sessionId}")->assertJsonPath('session.snapshot.exercises.0.load', '20 kg');
+        $this->getJson("/api/student/sessions/{$sessionId}")->assertForbidden()->assertJsonPath('code', 'workout_unavailable');
+        $this->assertSame('20 kg', StudentWorkoutSession::findOrFail($sessionId)->snapshot['exercises'][0]['load']);
         $this->assertSame('encerrado', $plan->fresh()->status);
         $this->assertNotSame($plan->id, $next->id);
-        $this->postJson('/api/student/sessions', ['dayIndex' => 0])->assertJsonPath('session.id', $sessionId);
-        $this->assertDatabaseCount('student_workout_sessions', 1);
+        $newSession = $this->postJson('/api/student/sessions', ['dayIndex' => 0])->assertOk()->json('session.id');
+        $this->assertNotSame($sessionId, $newSession);
+        $this->assertSame($next->id, StudentWorkoutSession::findOrFail($newSession)->student_workout_plan_id);
+        $this->assertDatabaseCount('student_workout_sessions', 2);
     }
 
     public function test_session_progress_is_restored_finish_is_idempotent_and_completed_history_is_immutable(): void
@@ -192,6 +196,119 @@ class StudentPortalTest extends TestCase
         $this->actingAs($owner)->postJson("/api/students/{$student->id}/workouts/{$workout->id}")->assertUnprocessable();
     }
 
+    public function test_expiry_blocks_existing_sessions_and_preserves_completed_history_and_saved_progress(): void
+    {
+        [$owner, $organization, $student] = $this->setupStudent();
+        $plan = app(WorkoutPublishingService::class)->publish($student, $this->workout($owner, $organization), $owner->id);
+        $this->loginStudent($student);
+        $progress = [['exerciseIndex' => 0, 'setIndex' => 0, 'done' => true, 'load' => '22 kg', 'repetitions' => 10]];
+        $completedId = $this->postJson('/api/student/sessions', ['dayIndex' => 0])->json('session.id');
+        $this->patchJson("/api/student/sessions/{$completedId}", ['progress' => $progress, 'finish' => true])->assertOk();
+        $activeId = $this->postJson('/api/student/sessions', ['dayIndex' => 0])->json('session.id');
+        $this->patchJson("/api/student/sessions/{$activeId}", ['progress' => $progress])->assertOk();
+        $plan->update(['ends_on' => today()->subDay()]);
+
+        $this->getJson('/api/student/home')->assertOk()->assertJsonPath('plan', null)
+            ->assertJsonPath('activeSession', null)->assertJsonPath('planAccess.status', 'expired')->assertJsonCount(1, 'history');
+        $this->postJson('/api/student/sessions', ['dayIndex' => 0])->assertUnprocessable()->assertJsonPath('code', 'workout_unavailable');
+        $this->getJson("/api/student/sessions/{$activeId}")->assertForbidden()->assertJsonMissingPath('session.snapshot');
+        foreach ([[], ['finish' => true], ['abandon' => true]] as $action) {
+            $this->patchJson("/api/student/sessions/{$activeId}", ['progress' => $progress, ...$action])
+                ->assertForbidden()->assertJsonPath('planAccess.status', 'expired');
+        }
+        $this->assertSame($progress, StudentWorkoutSession::findOrFail($activeId)->progress);
+        $this->assertSame('in_progress', StudentWorkoutSession::findOrFail($activeId)->status);
+        $this->getJson("/api/student/sessions/{$completedId}")->assertOk()->assertJsonPath('session.status', 'completed');
+        $this->patchJson("/api/student/sessions/{$completedId}", ['progress' => [], 'finish' => true])
+            ->assertOk()->assertJsonPath('session.progress.0.load', '22 kg');
+    }
+
+    public function test_validity_includes_the_end_date_and_blocks_at_the_next_local_midnight(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-27 23:59:59', config('app.timezone')));
+        [$owner, $organization, $student] = $this->setupStudent();
+        $plan = app(WorkoutPublishingService::class)->publish($student, $this->workout($owner, $organization), $owner->id, '2026-10-27');
+        $this->loginStudent($student);
+        $this->getJson('/api/student/home')->assertJsonPath('planAccess.status', 'available')
+            ->assertJsonPath('plan.expiresAt', '2026-10-28T00:00:00-03:00');
+        $id = $this->postJson('/api/student/sessions', ['dayIndex' => 0])->assertOk()->json('session.id');
+        $this->travel(1)->seconds();
+        $this->getJson('/api/student/home')->assertJsonPath('plan', null)->assertJsonPath('planAccess.status', 'expired');
+        $this->getJson("/api/student/sessions/{$id}")->assertForbidden();
+        $this->travelBack();
+    }
+
+    public function test_legacy_expiry_uses_frozen_duration_and_does_not_fall_back_to_an_older_plan(): void
+    {
+        [$owner, $organization, $student] = $this->setupStudent();
+        $workout = $this->workout($owner, $organization);
+        $service = app(WorkoutPublishingService::class);
+        $older = $service->publish($student, $workout, $owner->id);
+        $plan = $service->publish($student, $workout, $owner->id);
+        $older->update(['status' => 'ativo']);
+        $plan->update(['starts_on' => today()->subWeeks(9), 'ends_on' => null]);
+        $workout->update(['duracao_semanas' => 52]);
+        $this->loginStudent($student);
+        $this->getJson('/api/student/home')->assertJsonPath('plan', null)->assertJsonPath('planAccess.status', 'expired')
+            ->assertJsonPath('planAccess.endsOn', today()->subWeek()->toDateString());
+        $this->postJson('/api/student/sessions', ['dayIndex' => 0])->assertUnprocessable();
+        $this->assertNull($plan->fresh()->ends_on);
+        $plan->update(['starts_on' => today()->subWeek()]);
+        $this->getJson('/api/student/home')->assertJsonPath('plan.durationWeeks', 8)
+            ->assertJsonPath('plan.endsOn', today()->addWeeks(7)->toDateString());
+        $inactiveHistory = $plan->replicate();
+        $inactiveHistory->status = 'encerrado';
+        $inactiveHistory->save();
+        $this->getJson('/api/student/home')->assertJsonPath('plan.assignmentId', $plan->id);
+    }
+
+    public function test_undated_plan_without_a_valid_frozen_duration_requires_teacher_review(): void
+    {
+        [$owner, $organization, $student] = $this->setupStudent();
+        $plan = app(WorkoutPublishingService::class)->publish($student, $this->workout($owner, $organization), $owner->id);
+        $snapshot = $plan->snapshot;
+        unset($snapshot['durationWeeks']);
+        $plan->update(['snapshot' => $snapshot, 'ends_on' => null]);
+        $this->loginStudent($student);
+        $this->getJson('/api/student/home')->assertJsonPath('plan', null)->assertJsonPath('planAccess.status', 'unavailable');
+        $this->postJson('/api/student/sessions', ['dayIndex' => 0])->assertUnprocessable();
+    }
+
+    public function test_teacher_renewal_restores_access_with_a_new_period_and_the_same_frozen_prescription(): void
+    {
+        [$owner, $organization, $student] = $this->setupStudent();
+        $workout = $this->workout($owner, $organization);
+        $plan = app(WorkoutPublishingService::class)->publish($student, $workout, $owner->id);
+        $plan->update(['ends_on' => today()->subDay()]);
+        $workout->dias->first()->exercicios->first()->update(['carga' => '99 kg']);
+        $workout->update(['duracao_semanas' => 52]);
+        $oldSnapshot = $plan->snapshot;
+        $renewed = $this->actingAs($owner)->postJson("/api/students/{$student->id}/workout-plans/{$plan->id}/renew")
+            ->assertOk()->assertJsonPath('workout.days.0.exercises.0.load', '20 kg')
+            ->assertJsonPath('workout.status', 'ativo')->assertJsonPath('workout.accessStatus', 'available')
+            ->assertJsonPath('workout.startsOn', today()->toDateString())
+            ->assertJsonPath('workout.endsOn', today()->addWeeks(8)->toDateString())->json('workout.assignmentId');
+        $this->assertNotSame($plan->id, $renewed);
+        $this->assertSame($oldSnapshot, $plan->fresh()->snapshot);
+        $this->assertSame('encerrado', $plan->fresh()->status);
+        $this->loginStudent($student);
+        $this->getJson('/api/student/home')->assertJsonPath('plan.assignmentId', $renewed);
+        $this->postJson('/api/student/sessions', ['dayIndex' => 0])->assertOk()
+            ->assertJsonPath('session.student_workout_plan_id', $renewed);
+    }
+
+    public function test_renewal_is_scoped_to_the_teacher_organization_and_matching_student(): void
+    {
+        [$owner, $organization, $student] = $this->setupStudent();
+        [$outsider, , $otherStudent] = $this->setupStudent('renew-outsider');
+        $plan = app(WorkoutPublishingService::class)->publish($student, $this->workout($owner, $organization), $owner->id);
+        $this->actingAs($outsider)->postJson("/api/students/{$student->id}/workout-plans/{$plan->id}/renew")->assertNotFound();
+        $this->actingAs($owner)->postJson("/api/students/{$otherStudent->id}/workout-plans/{$plan->id}/renew")->assertNotFound();
+        $this->postJson("/api/students/{$student->id}/workout-plans/{$plan->id}/renew", ['endsOn' => today()->subDay()->toDateString()])
+            ->assertUnprocessable();
+        $this->assertDatabaseCount('student_workout_plans', 1);
+    }
+
     public function test_incomplete_draft_can_be_saved_but_not_published_and_duplicate_archive_restore_work(): void
     {
         [$owner] = $this->setupStudent();
@@ -227,8 +344,11 @@ class StudentPortalTest extends TestCase
         $workout = $this->workout($owner, $organization);
         $student->treinos()->attach($workout->id, ['ativo' => true]);
         $migration = require database_path('migrations/2026_10_02_000001_create_student_portal.php');
+        $deadlines = require database_path('migrations/2026_10_27_000001_add_workout_plan_deadline_notifications.php');
+        $deadlines->down();
         $migration->down();
         $migration->up();
+        $deadlines->up();
         $this->assertDatabaseCount('student_accounts', 0);
         $this->assertDatabaseCount('student_workout_plans', 1);
         $this->assertSame('20 kg', app(WorkoutPublishingService::class)->current($student->id)->snapshot['days'][0]['exercises'][0]['load']);
