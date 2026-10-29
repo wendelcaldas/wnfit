@@ -72,4 +72,3 @@ const hasChartValues = computed(() => daily.value.some(day => Number(day.paid) |
 const tabs = [{ label: 'Todas', value: 'todos', count: 'all' }, { label: 'A vencer', value: 'aberto', count: 'open' }, { label: 'Vencidas', value: 'atrasado', count: 'overdue' }, { label: 'Vencem hoje', value: 'hoje', count: 'today' }, { label: 'Recebidas', value: 'pago', count: 'paid' }];
 function changeMonth(step) { const [year, number] = props.month.split('-').map(Number); const date = new Date(year, number - 1 + step, 1); emit('month', date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0')); }
 </script>
-
