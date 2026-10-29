@@ -52,9 +52,7 @@
                         autocomplete="new-password"
                         required
                 /></label>
-                <p v-if="error" class="student-error" role="alert">
-                    {{ error }}
-                </p>
+                <ActionFeedback :message="error" type="error" />
                 <button
                     class="btn-primary w-full justify-center"
                     :disabled="busy"

@@ -38,6 +38,10 @@
                 <X :size="18" aria-hidden="true" />
             </button>
         </div>
+        <div v-if="realtimeUnavailable && !isPreview" class="notification-preview-note" role="status">
+            Atualização em tempo real indisponível.
+            <button type="button" :disabled="loading" @click="loadNotifications()">Atualizar</button>
+        </div>
         <div v-if="isPreview" class="notification-preview-note">Demonstração · dados ilustrativos</div>
         <div v-if="selected" class="notification-detail">
             <button type="button" class="notification-back" @click="backToList">
@@ -47,27 +51,38 @@
             <h3 ref="detailHeading" tabindex="-1">
                 {{ headline(selected) }}
             </h3>
-            <p>
-                {{ selected.data.workoutName }}<span v-if="selected.data.focus"> · {{ selected.data.focus }}</span>
-            </p>
-            <p class="notification-completed-date">{{ isDeadline(selected) ? 'Vigência até ' + planDate(selected.data.endsOn) : date(selected.data.completedAt) }}</p>
-            <p v-if="isDeadline(selected)">Confira os treinos do aluno para renovar a vigência ou preparar uma nova versão da ficha.</p>
-            <dl v-else>
-                <div>
-                    <dt>Tempo decorrido</dt>
-                    <dd>{{ duration(selected.data.durationSeconds) }}</dd>
-                </div>
-                <div>
-                    <dt>Exercícios concluídos</dt>
-                    <dd>{{ selected.data.completedExercises }} de {{ selected.data.totalExercises }}</dd>
-                </div>
-                <div>
-                    <dt>Séries registradas</dt>
-                    <dd>{{ selected.data.completedSets }} de {{ selected.data.totalSets }}</dd>
-                </div>
-            </dl>
+            <template v-if="isBooking(selected)">
+                <p>{{ selected.data.appointmentTitle }}</p>
+                <p class="notification-completed-date">{{ date(selected.data.startsAt) }} – {{ time(selected.data.endsAt) }}</p>
+                <dl>
+                    <div><dt>Contato</dt><dd>{{ selected.data.phone }}</dd></div>
+                    <div><dt>Professor</dt><dd>{{ selected.data.instructorName }}</dd></div>
+                    <div v-if="selected.data.location"><dt>Local</dt><dd>{{ selected.data.location }}</dd></div>
+                </dl>
+            </template>
+            <template v-else>
+                <p>
+                    {{ selected.data.workoutName }}<span v-if="selected.data.focus"> · {{ selected.data.focus }}</span>
+                </p>
+                <p class="notification-completed-date">{{ isDeadline(selected) ? 'Vigência até ' + planDate(selected.data.endsOn) : date(selected.data.completedAt) }}</p>
+                <p v-if="isDeadline(selected)">Confira os treinos do aluno para renovar a vigência ou preparar uma nova versão da ficha.</p>
+                <dl v-else>
+                    <div>
+                        <dt>Tempo decorrido</dt>
+                        <dd>{{ duration(selected.data.durationSeconds) }}</dd>
+                    </div>
+                    <div>
+                        <dt>Exercícios concluídos</dt>
+                        <dd>{{ selected.data.completedExercises }} de {{ selected.data.totalExercises }}</dd>
+                    </div>
+                    <div>
+                        <dt>Séries registradas</dt>
+                        <dd>{{ selected.data.completedSets }} de {{ selected.data.totalSets }}</dd>
+                    </div>
+                </dl>
+            </template>
             <small v-if="isPreview">Exemplo de resumo. Nenhum registro real foi alterado.</small>
-            <a v-else :href="selected.data.href" class="btn-primary notification-student-link">Ver treinos do aluno</a>
+            <a v-else :href="selected.data.href" class="btn-primary notification-student-link">{{ isBooking(selected) ? 'Ver agendamento' : 'Ver treinos do aluno' }}</a>
             <p v-if="readError" class="notification-error" role="alert">
                 Não foi possível marcar como lida.
                 <button type="button" :disabled="marking" @click="markRead(selected)">Tentar novamente</button>
@@ -88,13 +103,14 @@
                     type="button"
                     class="notification-row"
                     :class="{ 'is-unread': !notification.readAt }"
-                    :aria-label="'Abrir ' + kind(notification).toLowerCase() + ' de ' + notification.data.studentName"
+                    :aria-label="'Abrir ' + kind(notification).toLowerCase() + ' de ' + (isBooking(notification) ? notification.data.guestName : notification.data.studentName)"
                     @click="openNotification(notification)"
                 >
-                    <span class="notification-row-icon"><Dumbbell :size="20" aria-hidden="true" /></span>
+                    <span class="notification-row-icon"><CalendarDays v-if="isBooking(notification)" :size="20" aria-hidden="true" /><Dumbbell v-else :size="20" aria-hidden="true" /></span>
                     <span class="notification-row-text"
                         ><strong>{{ kind(notification) }}</strong
                         ><span>{{ headline(notification) }}.</span
+                        ><span v-if="isBooking(notification)">{{ notification.data.appointmentTitle }} · {{ date(notification.data.startsAt) }}</span
                         ><small
                             >{{ isPreview ? 'Há 5 minutos' : date(notification.createdAt) }} ·
                             {{ notification.readAt ? 'Lida' : 'Não lida' }}</small
@@ -122,9 +138,10 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { ArrowLeft, Bell, Dumbbell, X } from 'lucide-vue-next';
+import { ArrowLeft, Bell, CalendarDays, Dumbbell, X } from 'lucide-vue-next';
+import { subscribeStaffNotifications } from '../composables/staffNotificationStream';
 import { useAuthStore } from '../stores/auth';
 
 const route = useRoute();
@@ -152,6 +169,7 @@ const count = ref(0);
 const unreadCount = computed(() => (isPreview.value ? (demo.value.readAt ? 0 : 1) : count.value));
 const notifications = computed(() => (isPreview.value ? [demo.value] : items.value));
 const selected = ref(null);
+const realtimeUnavailable = ref(false);
 const detailHeading = ref(null);
 const trigger = ref(null);
 const panel = ref(null);
@@ -167,22 +185,26 @@ const panelId = 'notifications-' + useId();
 const titleId = panelId + '-title';
 let requestVersion = 0,
     controller,
-    interval,
+    stopStream,
+    refreshTimer,
+    pendingRefresh = false,
     destroyed = false;
 const scope = computed(() => [auth.user?.id, auth.organization?.id, isPreview.value].join(':'));
 const date = (value) =>
     new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(
         new Date(value),
     );
+const isBooking = (notification) => notification?.type === 'public_booking_created';
+const time = (value) => new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 const isDeadline = (notification) => ['workout_plan_ends_today', 'workout_plan_expired'].includes(notification?.type);
 const planDate = (value) => new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR');
 const isDueToday = (notification) => notification.data.endsOn === new Date().toLocaleDateString('en-CA');
-const kind = (notification) => notification.type === 'workout_plan_expired'
+const kind = (notification) => isBooking(notification) ? 'Novo agendamento' : notification.type === 'workout_plan_expired'
     ? 'Ficha vencida'
     : notification.type === 'workout_plan_ends_today'
       ? (isDueToday(notification) ? 'Ficha vence hoje' : 'Vencimento da ficha')
       : 'Treino concluído';
-const headline = (notification) => notification.type === 'workout_plan_expired'
+const headline = (notification) => isBooking(notification) ? `${notification.data.guestName} agendou pelo link` : notification.type === 'workout_plan_expired'
     ? `A ficha de ${notification.data.studentName} venceu em ${planDate(notification.data.endsOn)}`
     : notification.type === 'workout_plan_ends_today'
       ? (isDueToday(notification) ? `A ficha de ${notification.data.studentName} vence hoje` : `A ficha de ${notification.data.studentName} tinha vigência até ${planDate(notification.data.endsOn)}`)
@@ -208,6 +230,8 @@ const loadNotifications = async (append = false) => {
         });
         if (destroyed || version !== requestVersion || currentScope !== scope.value) return;
         const incoming = Array.isArray(data.notifications) ? data.notifications : [];
+        const refreshedSelection = incoming.find((item) => item.id === selected.value?.id);
+        if (refreshedSelection) Object.assign(selected.value, refreshedSelection);
         items.value = append
             ? [...items.value, ...incoming.filter((n) => !items.value.some((old) => old.id === n.id))]
             : incoming;
@@ -225,7 +249,7 @@ const loadNotifications = async (append = false) => {
             selected.value = null;
         }
     } finally {
-        if (version === requestVersion) loading.value = false;
+        if (version === requestVersion) { loading.value = false; flushRefresh(); }
     }
 };
 const markRead = async (notification) => {
@@ -251,6 +275,7 @@ const markRead = async (notification) => {
         if (!destroyed && currentScope === scope.value) readError.value = true;
     } finally {
         marking.value = false;
+        flushRefresh();
     }
 };
 const openNotification = async (notification) => {
@@ -282,12 +307,25 @@ const handleToggle = (event) => {
         expandedHistory.value = false;
     }
 };
-const refreshVisible = () => {
-    if (!document.hidden && !selected.value && !(isOpen.value && expandedHistory.value)) void loadNotifications();
+// Fetch only after an event or subscription/reconnection, never on a timer loop.
+const scheduleRefresh = () => {
+    pendingRefresh = true;
+    flushRefresh();
+};
+const flushRefresh = () => {
+    if (!pendingRefresh || destroyed || loading.value || marking.value) return;
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => {
+        pendingRefresh = false;
+        void loadNotifications();
+    }, 150);
 };
 watch(
     scope,
     () => {
+        stopStream?.();
+        clearTimeout(refreshTimer);
+        pendingRefresh = false;
         controller?.abort();
         ++requestVersion;
         loading.value = false;
@@ -298,19 +336,24 @@ watch(
         selected.value = null;
         nextCursor.value = null;
         loadError.value = false;
+        if (!isPreview.value && auth.user && auth.organization) {
+            stopStream = subscribeStaffNotifications({
+                organizationId: auth.organization.id,
+                userId: auth.user.id,
+                onChange: scheduleRefresh,
+                onSubscribed: () => { realtimeUnavailable.value = false; scheduleRefresh(); },
+                onUnavailable: () => { realtimeUnavailable.value = true; },
+            });
+        }
         void loadNotifications();
     },
     { immediate: true },
 );
-onMounted(() => {
-    interval = setInterval(refreshVisible, 30000);
-    document.addEventListener('visibilitychange', refreshVisible);
-});
 onBeforeUnmount(() => {
     destroyed = true;
     controller?.abort();
-    clearInterval(interval);
-    document.removeEventListener('visibilitychange', refreshVisible);
+    clearTimeout(refreshTimer);
+    stopStream?.();
 });
 </script>
 

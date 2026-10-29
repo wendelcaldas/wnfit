@@ -3,7 +3,7 @@
         <section ref="dialog" role="dialog" aria-modal="true" aria-labelledby="income-title" class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" @keydown.tab="trapFocus">
             <div class="flex items-center justify-between"><h2 id="income-title" class="text-lg font-bold">Adicionar entrada</h2><button type="button" class="icon-button" aria-label="Fechar" :disabled="busy" @click="close"><X :size="20" /></button></div>
             <p class="mt-2 text-sm text-[var(--wn-muted)]">Registre um valor avulso já recebido.</p>
-            <p v-if="error" role="alert" class="mt-4 text-sm text-rose-700">{{ error }}</p>
+            <ActionFeedback :message="error" type="error" />
             <form class="mt-5 grid gap-4" @submit.prevent="save">
                 <label class="grid gap-1 text-sm">Descrição<input ref="firstInput" v-model="description" class="form-control" required maxlength="180" placeholder="Ex.: aula avulsa · Ana" :disabled="busy" /></label>
                 <div class="grid grid-cols-2 gap-3"><label class="grid gap-1 text-sm">Valor (R$)<input v-model="value" type="number" min="0.01" max="99999999.99" step="0.01" class="form-control" required :disabled="busy" /></label><label class="grid gap-1 text-sm">Recebido em<input v-model="date" type="date" :max="today" class="form-control" required :disabled="busy" /></label></div>

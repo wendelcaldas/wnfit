@@ -82,7 +82,7 @@ onUnmounted(() => { disposed = true; dialog.value?.close(); document.body.classL
                 <p class="student-overline">UM PRESENTE DO NOSSO ENCONTRO</p>
                 <h2 id="gift-title" ref="title" tabindex="-1">{{ result?.gift ? result.gift.name : 'Esse carinho é seu' }}</h2>
                 <p id="gift-description">{{ result?.gift ? result.gift.message : 'Raspe o cartão e descubra o presente que preparamos para você.' }}</p>
-                <p v-if="error" role="alert">{{ error }}</p>
+                <ActionFeedback :message="error" type="error" />
                 <template v-if="result?.gift">
                     <div class="gift-pickup"><Check :size="22" aria-hidden="true" /><div><strong>{{ result.deliveredAt ? 'Retirada confirmada' : 'Seu presente está garantido' }}</strong><p v-if="!result.deliveredAt">{{ result.gift.instructions }}</p><p v-if="!result.deliveredAt">Mostre esta tela à equipe para retirar.</p></div></div>
                     <button class="btn-primary" @click="close">Voltar ao evento</button>

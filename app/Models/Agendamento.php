@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Agendamento extends Model
 {
@@ -31,6 +32,11 @@ class Agendamento extends Model
     public function instrutor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'instrutor_id');
+    }
+
+    public function publicBooking(): HasOne
+    {
+        return $this->hasOne(PublicScheduleBooking::class);
     }
 
     public function alunos(): BelongsToMany

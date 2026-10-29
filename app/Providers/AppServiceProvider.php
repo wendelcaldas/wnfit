@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\StaffNotification;
+use App\Observers\StaffNotificationObserver;
 use App\Services\Messaging\FakeWhatsAppDriver;
 use App\Services\Messaging\TwilioWhatsAppDriver;
 use App\Services\Messaging\WhatsAppMessageDriver;
@@ -16,7 +18,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(WhatsAppMessageDriver::class, function () {
             if (config('services.twilio.whatsapp.driver') === 'fake') {
-                return new FakeWhatsAppDriver();
+                return new FakeWhatsAppDriver;
             }
 
             return new TwilioWhatsAppDriver(
@@ -33,6 +35,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        StaffNotification::observe(StaffNotificationObserver::class);
     }
 }

@@ -17,6 +17,12 @@
             content="WNFIT e a plataforma SaaS para gestao inteligente de academias, studios e personal trainers."
         >
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="notifications-realtime" content="{{ json_encode([
+            'key' => config('broadcasting.default') === 'reverb' ? config('broadcasting.connections.reverb.key') : null,
+            'host' => config('reverb.client.host'),
+            'port' => config('reverb.client.port'),
+            'scheme' => config('reverb.client.scheme'),
+        ]) }}">
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

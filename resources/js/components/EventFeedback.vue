@@ -35,7 +35,7 @@ async function save() {
                 <p class="rating-caption" aria-live="polite">{{ rating ? rating + ' de 5 estrelas' : 'Escolha de 1 a 5 estrelas' }}</p>
                 <label class="comment-label">Quer contar um pouco mais? <span>Comentário opcional</span><textarea v-model="feedback" maxlength="1000" rows="3" placeholder="O que você mais gostou? O que podemos melhorar?" /></label>
             </fieldset>
-            <p v-if="error" role="alert">{{ error }}</p><p v-if="notice" role="status">{{ notice }}</p>
+            <ActionFeedback :message="error" type="error" /><ActionFeedback v-model="notice" />
             <button class="btn-primary" :disabled="!available || busy || !rating">{{ busy ? 'Salvando…' : participant.rating ? 'Atualizar avaliação' : 'Enviar avaliação' }}</button>
         </form>
     </section>

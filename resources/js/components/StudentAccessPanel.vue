@@ -94,7 +94,7 @@
                 </button>
             </div>
         </div>
-        <p v-if="error" class="student-error mt-4" role="alert">{{ error }}</p>
+        <ActionFeedback :message="error" type="error" />
         <div
             v-if="resetOpen"
             class="student-modal-backdrop"

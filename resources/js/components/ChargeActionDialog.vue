@@ -3,8 +3,8 @@
         <section ref="dialog" role="dialog" aria-modal="true" aria-labelledby="charge-action-title" tabindex="-1" class="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl" @keydown.tab="trapFocus">
             <div class="flex items-start justify-between gap-4"><h2 id="charge-action-title" class="text-xl font-bold">{{ action === 'message' ? 'Mensagem de cobrança' : 'Registrar pagamento' }}</h2><button type="button" aria-label="Fechar" class="icon-button" :disabled="busy" @click="close"><X class="h-5 w-5" /></button></div>
             <p class="mt-3 text-sm text-[var(--wn-muted)]">{{ charge.student ? charge.student + ' · ' : '' }}{{ charge.competence }} · {{ money(charge.value) }} · vencimento {{ charge.dueDate }}</p>
-            <p v-if="error" role="alert" class="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{{ error }}</p>
-            <p v-if="notice" role="status" class="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{{ notice }}</p>
+            <ActionFeedback :message="error" type="error" />
+            <ActionFeedback v-model="notice" />
             <template v-if="action === 'message'">
                 <p v-if="loading" class="mt-5 text-sm">Preparando a mensagem padrão…</p>
                 <form v-else-if="needsPhone" class="mt-5" @submit.prevent="prepare(true)">

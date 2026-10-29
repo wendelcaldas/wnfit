@@ -45,7 +45,7 @@ onUnmounted(() => clearInterval(timer));
           <p v-else>As inscrições não estão abertas neste momento.</p>
           <button class="event-secondary" @click="recoverMode = !recoverMode">{{ recoverMode ? 'Voltar para inscrição' : 'Já me inscrevi · recuperar acesso' }}</button>
         </template>
-        <p v-if="notice" role="status" class="event-note">{{ notice }}</p>
+        <ActionFeedback v-model="notice" />
       </section>
       <section v-if="event.instructions" class="event-card"><h2>Prepare-se para o encontro</h2><p class="event-multiline">{{ event.instructions }}</p></section>
       <footer>Promovido por {{ event.organizer }} · experiência com WNFIT</footer>

@@ -3,7 +3,7 @@
         <section ref="dialog" role="dialog" aria-modal="true" aria-labelledby="generate-charge-title" tabindex="-1" class="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl" @keydown.tab="trapFocus">
             <div class="flex items-center justify-between gap-4"><h2 id="generate-charge-title" class="text-xl font-bold">Gerar cobrança</h2><button class="icon-button" type="button" aria-label="Fechar" :disabled="busy" @click="close"><X :size="20" /></button></div>
             <p class="mt-2 text-sm text-[var(--wn-muted)]">Selecione o aluno e confira a próxima mensalidade do plano.</p>
-            <p v-if="error" role="alert" class="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{{ error }}</p>
+            <ActionFeedback :message="error" type="error" />
             <form v-if="!student" class="mt-5" @submit.prevent="findStudents">
                 <label for="charge-student-query" class="mb-2 block text-sm font-semibold">Nome do aluno</label>
                 <div class="flex gap-2"><input id="charge-student-query" ref="searchInput" v-model="query" class="form-control min-w-0" placeholder="Digite pelo menos 2 letras" required minlength="2" maxlength="100" :disabled="searching" /><button class="btn-secondary" :disabled="searching || query.trim().length < 2">{{ searching ? 'Buscando…' : 'Buscar' }}</button></div>

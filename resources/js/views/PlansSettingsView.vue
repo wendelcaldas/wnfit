@@ -1,8 +1,8 @@
 <template>
     <AppShell eyebrow="Configurações > Planos" title="Planos" description="Personalize os planos e valores oferecidos aos seus alunos.">
         <SettingsNavigation />
-        <p v-if="notice" role="status" class="mb-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">{{ notice }}</p>
-        <p v-if="loadError" role="alert" class="mb-4 rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{{ loadError }} <button class="underline" @click="load">Tentar novamente</button></p>
+        <ActionFeedback v-model="notice" />
+        <ActionFeedback :message="loadError" type="error" :action="load" />
         <div class="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
             <section class="panel-card !p-0 overflow-hidden" aria-labelledby="plans-title">
                 <div class="flex items-center justify-between gap-3 border-b border-[var(--wn-line)] p-5"><div><h2 id="plans-title" class="text-lg font-semibold">Planos do seu negócio</h2><p class="mt-1 text-sm text-[var(--wn-muted)]">Planos ativos ficam disponíveis no cadastro de alunos.</p></div><button v-if="canManage" class="btn-primary whitespace-nowrap" :disabled="saving" @click="create"><Plus :size="16" />Novo plano</button></div>
@@ -20,7 +20,7 @@
                     <p class="text-xs leading-5 text-[var(--wn-muted)]">O valor é cobrado uma vez por ciclo. Um plano anual gera uma cobrança a cada 12 meses.</p>
                     <label class="flex items-center gap-2 text-sm"><input v-model="form.active" type="checkbox" :disabled="saving" />Disponível para novas matrículas</label>
                     <p v-if="editingId" class="rounded-xl bg-[var(--wn-surface-soft)] p-3 text-xs leading-5 text-[var(--wn-muted)]">Alterar o valor afeta as próximas cobranças geradas, inclusive das assinaturas atuais. Cobranças já geradas mantêm seus valores. Desativar o plano impede novas matrículas; as assinaturas atuais continuam.</p>
-                    <p v-if="error" role="alert" class="text-sm text-rose-700">{{ error }}</p>
+                    <ActionFeedback :message="error" type="error" />
                     <div class="flex gap-2"><button class="btn-primary flex-1 justify-center" :disabled="saving || loading">{{ saving ? 'Salvando…' : editingId ? 'Salvar alterações' : 'Criar plano' }}</button><button v-if="editingId" type="button" class="btn-secondary" :disabled="saving" @click="create">Cancelar</button></div>
                 </form>
             </aside>

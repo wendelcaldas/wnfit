@@ -71,9 +71,7 @@
                         </button>
                     </div>
                 </div>
-                <p v-if="error" role="alert" class="auth-login-error">
-                    {{ error }}
-                </p>
+                <ActionFeedback :message="error" type="error" />
                 <button
                     class="btn-primary w-full justify-center"
                     :disabled="busy"

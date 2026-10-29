@@ -226,9 +226,7 @@
                                     : `Você realizou ${done} de ${total} séries. Seu registro será salvo no histórico.`
                             }}
                         </p>
-                        <p v-if="error" class="student-error mt-3">
-                            {{ error }}
-                        </p>
+                        <ActionFeedback :message="error" type="error" />
                         <button
                             class="btn-primary mt-5 w-full justify-center"
                             :disabled="finishing"

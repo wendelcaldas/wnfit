@@ -48,9 +48,7 @@
                         </span>
                     </label>
 
-                    <p v-if="message" class="rounded-lg px-4 py-3 text-sm" :class="messageType === 'error' ? 'bg-rose-50 text-rose-600' : 'bg-[var(--wn-primary-soft)] text-[var(--wn-primary-strong)]'">
-                        {{ message }}
-                    </p>
+                    <ActionFeedback v-model="message" :type="messageType" />
                 </div>
             </form>
 

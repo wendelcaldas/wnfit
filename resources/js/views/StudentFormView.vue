@@ -47,7 +47,7 @@
                     </div>
                 </section>
 
-                <p v-if="error" class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600 lg:col-span-2">{{ error }}</p>
+                <ActionFeedback :message="error" type="error" />
                 <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end lg:col-span-2">
                     <RouterLink to="/alunos" class="btn-secondary justify-center">Cancelar</RouterLink>
                     <button type="submit" class="btn-secondary justify-center" :disabled="loading || !form.plan_id" @click="intent = 'complete'">Salvar e completar ficha</button>

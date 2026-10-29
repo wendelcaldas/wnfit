@@ -52,7 +52,7 @@ function close() { open.value = false; result.value = null; error.value = ''; co
         <button v-if="!open" type="button" class="btn-secondary" @click="show">{{ registration.aluno_id ? 'Preparar mensagem de acesso' : 'Preparar acesso do aluno' }}</button>
         <section v-else class="access-panel" :aria-label="`Acesso de ${registration.name}`" :aria-busy="loading || saving">
             <h4>Acesso de {{ registration.name }}</h4>
-            <p v-if="error" role="alert" class="access-error">{{ error }}</p>
+            <ActionFeedback :message="error" type="error" />
             <template v-if="result">
                 <p role="status">{{ result.message }}</p>
                 <p v-if="result.credentials"><strong>A senha provisória aparece somente agora.</strong> Copie a mensagem antes de fechar. O aluno deverá trocar a senha ao entrar.</p>

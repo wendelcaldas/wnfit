@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Agendamento;
 use App\Models\Aluno;
 use App\Models\Organizacao;
+use App\Services\ScheduleAvailabilityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -28,7 +29,7 @@ class ScheduleController extends Controller
         $end = Carbon::createFromFormat('Y-m-d', $data['end'])->endOfDay();
 
         $events = $this->eventsQuery($organization, $role, $request->user()->id)
-            ->with(['instrutor:id,name', 'alunos:id,nome'])
+            ->with(['instrutor:id,name', 'alunos:id,nome', 'publicBooking'])
             ->when($data['instructor_id'] ?? null, fn ($query, $instructorId) => $query->where('instrutor_id', $instructorId))
             ->where('inicio_em', '<=', $end)
             ->where('fim_em', '>=', $start)
@@ -36,12 +37,13 @@ class ScheduleController extends Controller
             ->get();
 
         return response()->json([
+            'operatingHours' => app(ScheduleAvailabilityService::class)->hoursPayload(app(ScheduleAvailabilityService::class)->settings($organization->id)),
             'events' => $events->map(fn (Agendamento $event) => $this->payload($event))->values(),
             'summary' => [
                 'events' => $events->where('status', '!=', 'cancelado')->count(),
-                'participants' => $events->sum(fn (Agendamento $event) => $event->alunos->where('pivot.status', 'confirmado')->count()),
+                'participants' => $events->sum(fn (Agendamento $event) => $event->alunos->where('pivot.status', 'confirmado')->count() + ($event->publicBooking ? 1 : 0)),
                 'availableSlots' => $events->where('status', '!=', 'cancelado')->sum(function (Agendamento $event) {
-                    return $event->capacidade === null ? 0 : max($event->capacidade - $event->alunos->where('pivot.status', 'confirmado')->count(), 0);
+                    return $event->capacidade === null ? 0 : max($event->capacidade - $event->alunos->where('pivot.status', 'confirmado')->count() - ($event->publicBooking ? 1 : 0), 0);
                 }),
             ],
         ]);
@@ -71,6 +73,7 @@ class ScheduleController extends Controller
                 ->map(fn (Aluno $student) => ['id' => $student->id, 'name' => $student->nome, 'phone' => $student->telefone])
                 ->values(),
             'role' => $role,
+            'operatingHours' => app(ScheduleAvailabilityService::class)->hoursPayload(app(ScheduleAvailabilityService::class)->settings($organization->id)),
         ]);
     }
 
@@ -80,11 +83,14 @@ class ScheduleController extends Controller
         $data = $this->validatedData($request);
         $this->assertRelationsBelongToOrganization($organization, $data, $role, $request->user()->id);
         $occurrences = $this->recurringOccurrences($data);
-        foreach ($occurrences as $occurrence) {
-            $this->ensureNoInstructorConflict($organization, [...$data, ...$occurrence]);
-        }
-
         $events = DB::transaction(function () use ($organization, $data, $occurrences) {
+            Organizacao::whereKey($organization->id)->lockForUpdate()->firstOrFail();
+            foreach ($occurrences as $occurrence) {
+                if ($data['status'] !== 'cancelado') {
+                    app(ScheduleAvailabilityService::class)->assertOpen($organization->id, $occurrence['starts_at'], $occurrence['ends_at']);
+                }
+                $this->ensureNoInstructorConflict($organization, [...$data, ...$occurrence]);
+            }
             $seriesId = count($occurrences) > 1 ? (string) Str::uuid() : null;
 
             return collect($occurrences)->map(function (array $occurrence) use ($organization, $data, $seriesId) {
@@ -101,7 +107,7 @@ class ScheduleController extends Controller
             });
         });
 
-        $event = $events->first()->load(['instrutor:id,name', 'alunos:id,nome']);
+        $event = $events->first()->load(['instrutor:id,name', 'alunos:id,nome', 'publicBooking']);
 
         return response()->json([
             'event' => $this->payload($event),
@@ -115,14 +121,21 @@ class ScheduleController extends Controller
         $this->ensureEventAccess($schedule, $organization, $role, $request->user()->id);
         $data = $this->validatedData($request);
         $this->assertRelationsBelongToOrganization($organization, $data, $role, $request->user()->id);
-        $this->ensureNoInstructorConflict($organization, $data, $schedule->id);
-
-        DB::transaction(function () use ($schedule, $data) {
+        DB::transaction(function () use ($organization, $schedule, $data) {
+            Organizacao::whereKey($organization->id)->lockForUpdate()->firstOrFail();
+            $schedule->refresh();
+            $unchanged = $schedule->status !== 'cancelado'
+                && $schedule->inicio_em->equalTo(Carbon::parse($data['starts_at'])->timezone(config('app.timezone')))
+                && $schedule->fim_em->equalTo(Carbon::parse($data['ends_at'])->timezone(config('app.timezone')));
+            if ($data['status'] !== 'cancelado' && ! $unchanged) {
+                app(ScheduleAvailabilityService::class)->assertOpen($organization->id, Carbon::parse($data['starts_at']), Carbon::parse($data['ends_at']));
+            }
+            $this->ensureNoInstructorConflict($organization, $data, $schedule->id);
             $schedule->update($this->eventFields($data));
             $this->syncParticipants($schedule, $data['participant_ids'] ?? []);
         });
 
-        return response()->json(['event' => $this->payload($schedule->fresh(['instrutor:id,name', 'alunos:id,nome']))]);
+        return response()->json(['event' => $this->payload($schedule->fresh(['instrutor:id,name', 'alunos:id,nome', 'publicBooking']))]);
     }
 
     private function validatedData(Request $request): array
@@ -207,7 +220,7 @@ class ScheduleController extends Controller
     {
         return [
             'titulo' => $data['title'], 'tipo' => $data['type'], 'status' => $data['status'],
-            'inicio_em' => $data['starts_at'], 'fim_em' => $data['ends_at'], 'instrutor_id' => $data['instructor_id'] ?? null,
+            'inicio_em' => Carbon::parse($data['starts_at'])->timezone(config('app.timezone')), 'fim_em' => Carbon::parse($data['ends_at'])->timezone(config('app.timezone')), 'instrutor_id' => $data['instructor_id'] ?? null,
             'modalidade' => $data['modality'], 'local' => $data['location'] ?? null, 'endereco' => $data['address'] ?? null,
             'capacidade' => $data['capacity'] ?? null, 'observacoes' => $data['notes'] ?? null,
         ];
@@ -215,8 +228,8 @@ class ScheduleController extends Controller
 
     private function recurringOccurrences(array $data): array
     {
-        $start = Carbon::parse($data['starts_at']);
-        $end = Carbon::parse($data['ends_at']);
+        $start = Carbon::parse($data['starts_at'])->timezone(config('app.timezone'));
+        $end = Carbon::parse($data['ends_at'])->timezone(config('app.timezone'));
         if ($data['repeat_frequency'] === 'none') {
             return [['starts_at' => $start, 'ends_at' => $end]];
         }
@@ -278,7 +291,8 @@ class ScheduleController extends Controller
             'instructorId' => $event->instrutor_id, 'instructorName' => $event->instrutor?->name,
             'modality' => $event->modalidade, 'location' => $event->local, 'address' => $event->endereco,
             'capacity' => $event->capacidade, 'notes' => $event->observacoes, 'participants' => $participants,
-            'participantCount' => $participants->where('status', 'confirmado')->count(),
+            'publicBooking' => $event->publicBooking ? $event->publicBooking->only(['name', 'phone', 'email', 'reference']) : null,
+            'participantCount' => $participants->where('status', 'confirmado')->count() + ($event->publicBooking ? 1 : 0),
         ];
     }
 }
