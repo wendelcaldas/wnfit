@@ -41,7 +41,8 @@
                             <Field label="Vencimento *" v-model="form.data_vencimento" type="date" required />
                         </div>
                         <SelectField label="Professor responsavel" v-model="form.treinador" :options="options.teachers" placeholder="Definir depois" />
-                        <SelectField label="Unidade / Studio" v-model="form.unidade" :options="options.units" placeholder="Selecione uma unidade" />
+                        <label class="block space-y-2"><span class="text-sm font-medium text-[var(--wn-muted)]">Unidade / Studio</span><select v-model="form.unit_id" class="form-control" required><option v-for="unit in options.units" :key="unit.id" :value="unit.id">{{ unit.nome }}{{ unit.padrao ? ' · Padrão' : '' }}</option></select></label>
+                        <RouterLink to="/configuracoes/unidades" class="inline-block text-xs font-semibold text-[var(--wn-primary-strong)]">Gerenciar unidades</RouterLink>
                         <SelectField label="Status" v-model="form.status" :options="['ativo', 'avaliacao', 'pausado']" />
                     </div>
                 </section>
@@ -97,7 +98,7 @@ const today = new Date();
 const nextMonth = new Date();
 nextMonth.setMonth(today.getMonth() + 1);
 const toInputDate = (date) => date.toISOString().slice(0, 10);
-const form = reactive({ modalidade: '', nome: '', telefone: '', email: '', data_nascimento: '', plan_id: '', data_inicio: toInputDate(today), data_vencimento: toInputDate(nextMonth), treinador: '', unidade: '', status: 'ativo', objetivo: 'Saude', auto_renovacao: true, metodo_pagamento: 'PIX' });
+const form = reactive({ modalidade: '', nome: '', telefone: '', email: '', data_nascimento: '', plan_id: '', data_inicio: toInputDate(today), data_vencimento: toInputDate(nextMonth), treinador: '', unit_id: '', status: 'ativo', objetivo: 'Saude', auto_renovacao: true, metodo_pagamento: 'PIX' });
 const cycleUnits = { mensal: 'mês', trimestral: 'trimestre', semestral: 'semestre', anual: 'ano' };
 const money = value => Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 let usernameTimer; let suggestionRequest = 0;
@@ -108,6 +109,7 @@ onMounted(async () => {
         const { data } = await window.axios.get('/api/students/options');
         Object.assign(options, data);
         form.plan_id = options.plans.find(plan => plan.nome === 'Plano Mensal')?.id ?? options.plans[0]?.id ?? '';
+        form.unit_id = data.defaultUnitId;
         plansLoaded.value = true;
     } catch { error.value = 'Não foi possível carregar os planos. Atualize a página para tentar novamente.'; }
 });

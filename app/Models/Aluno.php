@@ -46,6 +46,7 @@ class Aluno extends Model
         'altura',
         'como_conheceu',
         'unidade',
+        'unidade_id',
         'observacoes',
         'restricoes_medicas',
         'lesoes',
@@ -59,6 +60,11 @@ class Aluno extends Model
             'data_nascimento' => 'date',
             'peso' => 'decimal:2',
         ];
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unidade::class, 'unidade_id');
     }
 
     public function organizacao(): BelongsTo

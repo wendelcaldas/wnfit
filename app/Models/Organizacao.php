@@ -49,6 +49,11 @@ class Organizacao extends Model
         return $this->hasMany(Aluno::class);
     }
 
+    public function unidades(): HasMany
+    {
+        return $this->hasMany(Unidade::class);
+    }
+
     public function planos(): HasMany
     {
         return $this->hasMany(Plano::class);

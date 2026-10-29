@@ -125,9 +125,11 @@ class StudentController extends Controller
                 throw \Illuminate\Validation\ValidationException::withMessages(['plan_id' => 'Selecione um plano ativo para cadastrar o aluno.']);
             }
 
+            $unit = app(\App\Services\OrganizationUnitService::class)->resolve($organization->id, $data);
             $student = Aluno::query()->create([
                 ...$this->studentPayload($data),
                 'organizacao_id' => $organization->id,
+                'unidade_id' => $unit->id, 'unidade' => $unit->nome,
                 'plano' => $plan->nome,
                 'vencimento' => $data['data_vencimento'],
                 'status' => $data['status'],
@@ -172,6 +174,11 @@ class StudentController extends Controller
         $data = $request->validate($this->profileValidationRules());
         if (isset($data['telefone'])) {
             $this->messaging->normalizeBrazilianPhone($data['telefone']);
+        }
+        if (array_key_exists('unit_id', $data)) {
+            $unit = app(\App\Services\OrganizationUnitService::class)->resolve($organization->id, $data);
+            unset($data['unit_id']);
+            $data['unidade_id'] = $unit->id; $data['unidade'] = $unit->nome;
         }
         $student->update($data);
 
@@ -226,7 +233,8 @@ class StudentController extends Controller
                 ->orderBy('name')
                 ->pluck('name')
                 ->values(),
-            'units' => ['Unidade Vila Madalena', 'Unidade Centro', 'Online'],
+            'defaultUnitId' => app(\App\Services\OrganizationUnitService::class)->defaultFor($organization->id)->id,
+            'units' => $organization->unidades()->where('ativa', true)->orderByDesc('padrao')->orderBy('nome')->get(['id', 'nome', 'padrao']),
         ]);
     }
 
@@ -341,6 +349,7 @@ class StudentController extends Controller
             'objetivo' => ['nullable', 'string', 'max:80'],
             'treinador' => ['nullable', 'string', 'max:80'],
             'unidade' => ['nullable', 'string', 'max:255'],
+            'unit_id' => ['nullable', 'integer', Rule::exists('unidades', 'id')->where('organizacao_id', request()->user()->organizacoes()->firstOrFail()->id)->where('ativa', true)],
             'como_conheceu' => ['nullable', 'string', 'max:255'],
             'observacoes' => ['nullable', 'string'],
             'plan_id' => ['nullable', 'integer', Rule::exists('planos', 'id')->where('organizacao_id', request()->user()->organizacoes()->firstOrFail()->id)->where('ativo', true)],
@@ -357,6 +366,7 @@ class StudentController extends Controller
     private function profileValidationRules(): array
     {
         return [
+            'unit_id' => ['sometimes', 'nullable', 'integer', Rule::exists('unidades', 'id')->where('organizacao_id', request()->user()->organizacoes()->firstOrFail()->id)->where('ativa', true)],
             'modalidade' => ['sometimes', 'nullable', Rule::in(array_keys(Aluno::MODALIDADES))],
             'nome' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'nullable', 'email', 'max:255'],
@@ -474,7 +484,8 @@ class StudentController extends Controller
             'state' => $student->estado,
             'plan' => $subscription?->plano?->nome ?? $student->plano,
             'teacher' => $student->treinador,
-            'unit' => $student->unidade,
+            'unit' => $student->unit?->nome ?? $student->unidade,
+            'unitId' => $student->unidade_id,
             'goal' => $student->objetivo,
             'observations' => $student->observacoes,
             'profile' => [
