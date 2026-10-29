@@ -42,7 +42,7 @@ npm run dev -- --host 127.0.0.1
 
 ## Regras e limites desta versão
 
-- O acesso do aluno usa usuário único no sistema, senha provisória aleatória e troca obrigatória. Não depende de e-mail.
+- O acesso do aluno usa usuário único no sistema, senha provisória aleatória de 8 dígitos numéricos e troca obrigatória. Não depende de e-mail.
 - A recuperação é assistida pela equipe. O portal explica onde pedir uma nova senha.
 - O aluno acessa somente sua ficha e suas sessões. Não tem acesso aos endpoints da gestão.
 - Há uma sessão em andamento por aluno. Um segundo pedido de início retoma a mesma sessão.

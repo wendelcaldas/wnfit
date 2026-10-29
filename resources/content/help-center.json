@@ -1,0 +1,889 @@
+{
+  "collections": [
+    {
+      "slug": "primeiros-passos",
+      "title": "Comece por aqui",
+      "description": "Do primeiro acesso à sua primeira aula. Um caminho simples para organizar a operação.",
+      "icon": "spark",
+      "number": "01"
+    },
+    {
+      "slug": "alunos",
+      "title": "Alunos",
+      "description": "Cadastro, acompanhamento e acesso do aluno ao seu portal.",
+      "icon": "users",
+      "number": "02"
+    },
+    {
+      "slug": "treinos",
+      "title": "Treinos",
+      "description": "Crie modelos, entregue fichas e acompanhe a prática dos alunos.",
+      "icon": "workout",
+      "number": "03"
+    },
+    {
+      "slug": "financeiro",
+      "title": "Financeiro",
+      "description": "Entenda os indicadores, acompanhe cobranças e registre entradas.",
+      "icon": "wallet",
+      "number": "04"
+    },
+    {
+      "slug": "agenda",
+      "title": "Agenda e reservas",
+      "description": "Organize as aulas e receba reservas pelos seus links públicos.",
+      "icon": "calendar",
+      "number": "05"
+    },
+    {
+      "slug": "configuracoes",
+      "title": "Configurações",
+      "description": "Personalize planos, unidades, equipe e horários de funcionamento.",
+      "icon": "settings",
+      "number": "06"
+    },
+    {
+      "slug": "portal-do-aluno",
+      "title": "Portal do aluno",
+      "description": "Ajude seus alunos a acessar a ficha e registrar os treinos.",
+      "icon": "phone",
+      "number": "07"
+    }
+  ],
+  "articles": [
+    {
+      "slug": "organizar-seu-negocio",
+      "collection": "primeiros-passos",
+      "title": "Seu primeiro dia no WNFit",
+      "summary": "Prepare o negócio, cadastre um aluno e organize o primeiro atendimento.",
+      "minutes": 7,
+      "sections": [
+        {
+          "title": "Prepare a base",
+          "paragraphs": [
+            "Comece pelas configurações que serão usadas no [[cadastrar-aluno|cadastro de alunos]] e na agenda. Assim, você evita preencher cada informação novamente."
+          ],
+          "steps": [
+            "Em [[equipe-e-professores|Configurações → Usuários]], confira os acessos da equipe e os professores ativos.",
+            "Em [[configurar-planos|Configurações → Planos]], cadastre os serviços, os ciclos de cobrança e os valores que você oferece.",
+            "Em [[configurar-unidades|Configurações → Unidades]], confira a unidade padrão e crie outras apenas se o negócio precisar.",
+            "Em [[configurar-horarios|Configurações → Horários]], defina os dias e intervalos de atendimento. Ative o expediente e salve para aplicar os bloqueios na agenda."
+          ],
+          "figures": [
+            {
+              "src": "images/support/configurar-planos.jpg",
+              "alt": "Tela de Planos do WNFit, com as abas de configurações e o formulário de criação destacados.",
+              "caption": "1. As abas alternam as configurações. 2. Preencha nome, ciclo e valor antes de criar o plano.",
+              "width": 1248,
+              "height": 751
+            }
+          ]
+        },
+        {
+          "title": "Cadastre e acompanhe o primeiro aluno",
+          "steps": [
+            "Abra Alunos e escolha Novo aluno. Siga o [[cadastrar-aluno|passo a passo do cadastro de aluno]].",
+            "Preencha os dados pessoais, o plano, a modalidade e as datas de início e vencimento.",
+            "Confira o professor e a unidade. Depois de salvar, veja [[liberar-acesso-aluno|como disponibilizar o acesso ao aluno]].",
+            "Crie um [[criar-modelo-treino|modelo de treino]] e use [[entregar-ficha|Entregar ficha]] para publicá-lo para o aluno."
+          ],
+          "figures": [
+            {
+              "src": "images/support/cadastro-aluno.jpg",
+              "alt": "Cadastro de aluno com dados essenciais, matrícula e o botão Salvar aluno numerados.",
+              "caption": "1. Dados essenciais. 2. Informações da matrícula. 3. Salvar aluno conclui o cadastro.",
+              "width": 1248,
+              "height": 1010
+            },
+            {
+              "src": "images/support/biblioteca-treinos.jpg",
+              "alt": "Biblioteca de Treinos com os botões Novo treino e Entregar ficha destacados.",
+              "caption": "1. Novo treino abre o montador. 2. Entregar ficha publica um modelo ativo para um aluno.",
+              "width": 1248,
+              "height": 578
+            }
+          ]
+        },
+        {
+          "title": "Experimente a rotina",
+          "paragraphs": [
+            "Consulte o [[indicadores-financeiros|guia dos indicadores do Financeiro]] para entender os valores recebidos e pendentes. Use o tutorial [[criar-aula-agenda|Como criar uma aula na agenda]] para organizar os atendimentos.",
+            "Para receber interessados pelo Instagram ou por mensagem, veja [[links-aula-experimental|como criar um link de aula experimental]]."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "entender-painel",
+      "collection": "primeiros-passos",
+      "title": "Como se orientar pelo painel",
+      "summary": "Conheça os caminhos para as principais rotinas do sistema.",
+      "minutes": 2,
+      "sections": [
+        {
+          "title": "Uma visão da operação",
+          "paragraphs": [
+            "O Painel reúne informações para acompanhar o negócio. Use-o como ponto de partida; o detalhamento de cada rotina fica no seu módulo."
+          ]
+        },
+        {
+          "title": "Encontre o que precisa",
+          "steps": [
+            "Alunos: cadastro, perfil, ficha e informações de cada pessoa.",
+            "Treinos: biblioteca de modelos e entrega de fichas.",
+            "Financeiro: recebimentos, cobranças e valores em aberto.",
+            "Agenda: compromissos e aulas.",
+            "Configurações: equipe, planos, unidades e horários."
+          ]
+        },
+        {
+          "title": "O que ainda não está disponível",
+          "paragraphs": [
+            "Eventos e Comunicações estão desativados no menu nesta etapa. As integrações de check-in com TotalPass e Wellhub ainda não estão disponíveis."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "cadastrar-aluno",
+      "collection": "alunos",
+      "title": "Como cadastrar um aluno",
+      "summary": "Escolha o plano, as datas, o professor e a unidade no primeiro cadastro.",
+      "minutes": 5,
+      "sections": [
+        {
+          "title": "1. Abra o cadastro",
+          "paragraphs": [
+            "Em Alunos, escolha Novo aluno. A tela reúne os dados pessoais à esquerda e as informações da matrícula à direita. Antes de continuar, tenha um [[configurar-planos|plano ativo]] e confira a [[configurar-unidades|unidade do negócio]]."
+          ],
+          "figures": [
+            {
+              "src": "images/support/cadastro-aluno.jpg",
+              "alt": "Cadastro de aluno com dados essenciais, matrícula e o botão Salvar aluno numerados.",
+              "caption": "1. Dados essenciais. 2. Informações da matrícula. 3. Salvar aluno conclui o cadastro.",
+              "width": 1248,
+              "height": 1010
+            }
+          ]
+        },
+        {
+          "title": "2. Preencha os dados essenciais",
+          "steps": [
+            "Informe o nome completo e o telefone do aluno. Acrescente e-mail e data de nascimento, se estiverem disponíveis.",
+            "Confira o Usuário do portal sugerido pelo nome. Você pode ajustá-lo antes de salvar. A senha provisória será gerada ao concluir o cadastro."
+          ],
+          "paragraphs": [
+            "Use um telefone e um e-mail que pertençam ao aluno. Nas imagens deste guia, os dados são apenas exemplos."
+          ],
+          "figures": [
+            {
+              "src": "images/support/cadastro-dados.jpg",
+              "alt": "Painel Dados essenciais preenchido com nome, telefone e e-mail fictícios e o usuário do portal.",
+              "caption": "Confira nome, telefone e o usuário sugerido. A senha provisória é gerada ao salvar.",
+              "width": 538,
+              "height": 726
+            }
+          ]
+        },
+        {
+          "title": "3. Configure a matrícula",
+          "steps": [
+            "Selecione o plano. Se não houver opções, veja [[configurar-planos|como criar ou ativar um plano]].",
+            "Escolha a modalidade de acompanhamento. Esse campo também é obrigatório.",
+            "Confira a data de início e o vencimento. Essas informações precisam refletir o combinado com o aluno.",
+            "Escolha o professor responsável e a unidade. A unidade padrão já vem selecionada.",
+            "Confira o status do cadastro e as demais opções apresentadas antes de salvar."
+          ],
+          "figures": [
+            {
+              "src": "images/support/cadastro-matricula.jpg",
+              "alt": "Painel Matrícula mostrando plano, modalidade, datas, professor responsável, unidade e status.",
+              "caption": "Escolha o plano e a modalidade; depois confira datas, professor, unidade e status.",
+              "width": 538,
+              "height": 726
+            }
+          ]
+        },
+        {
+          "title": "4. Salve e confira o acesso",
+          "steps": [
+            "Clique em Salvar aluno para concluir o cadastro e abrir as informações de acesso do aluno.",
+            "Se quiser seguir para os dados complementares, use Salvar e completar ficha.",
+            "Confira as credenciais geradas e siga o guia [[liberar-acesso-aluno|Como liberar o acesso ao portal do aluno]]."
+          ],
+          "paragraphs": [
+            "Depois do cadastro, você pode [[entregar-ficha|entregar uma ficha de treino]]. Ter o cadastro concluído não significa que uma ficha já foi publicada para o aluno."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "liberar-acesso-aluno",
+      "collection": "alunos",
+      "title": "Como liberar o acesso ao portal do aluno",
+      "summary": "Encontre as credenciais e oriente o primeiro acesso.",
+      "minutes": 3,
+      "sections": [
+        {
+          "title": "Acesse o perfil",
+          "paragraphs": [
+            "Abra Alunos, selecione a pessoa e localize a seção Acesso do aluno. O portal tem credenciais próprias, separadas do acesso dos gestores e professores."
+          ]
+        },
+        {
+          "title": "Disponibilize as credenciais",
+          "steps": [
+            "Na seção de acesso, use a ação disponível para gerar ou redefinir as credenciais.",
+            "Confira o usuário, a senha inicial e o link de acesso apresentados pelo sistema.",
+            "Compartilhe as informações somente com o aluno correspondente.",
+            "Oriente o aluno a seguir a troca de senha quando solicitada no primeiro acesso."
+          ],
+          "paragraphs": [
+            "A senha provisória tem 8 dígitos numéricos, gerados para esse acesso. O aluno deve escolher uma nova senha no primeiro uso."
+          ]
+        },
+        {
+          "title": "Se o aluno não conseguir entrar",
+          "paragraphs": [
+            "Confira se ele está usando o [[aluno-primeiro-acesso|portal do aluno]] e as credenciais corretas. Se necessário, redefina o acesso no perfil e repasse as novas informações. Evite compartilhar a senha da equipe."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "criar-modelo-treino",
+      "collection": "treinos",
+      "title": "Como criar um modelo de treino",
+      "summary": "Monte uma estrutura reutilizável antes de entregar a ficha.",
+      "minutes": 4,
+      "sections": [
+        {
+          "title": "Modelo e ficha são etapas diferentes",
+          "paragraphs": [
+            "O modelo pertence à biblioteca de Treinos. A entrega publica uma ficha para um aluno. Criar um modelo, sozinho, não entrega a ficha."
+          ]
+        },
+        {
+          "title": "Monte o programa",
+          "steps": [
+            "Em Treinos, clique em Novo treino.",
+            "Preencha as informações do programa e organize os dias e exercícios no montador.",
+            "Revise as orientações e os parâmetros de cada exercício.",
+            "Use Visão do aluno para conferir como a ficha será apresentada.",
+            "Salve como rascunho se ainda estiver preparando ou deixe o modelo ativo quando estiver pronto."
+          ],
+          "figures": [
+            {
+              "src": "images/support/biblioteca-treinos.jpg",
+              "alt": "Biblioteca de Treinos com os botões Novo treino e Entregar ficha destacados.",
+              "caption": "1. Novo treino abre o montador. 2. Entregar ficha publica um modelo ativo para um aluno.",
+              "width": 1248,
+              "height": 578
+            }
+          ]
+        },
+        {
+          "title": "Continue depois",
+          "paragraphs": [
+            "A biblioteca permite filtrar modelos ativos, rascunhos e arquivados. Use o menu de ações para editar, duplicar ou arquivar um modelo. Arquivar preserva as fichas já entregues."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "entregar-ficha",
+      "collection": "treinos",
+      "title": "Como entregar uma ficha para o aluno",
+      "summary": "Publique um modelo ativo e confira a ficha no perfil do aluno.",
+      "minutes": 3,
+      "sections": [
+        {
+          "title": "Escolha o modelo",
+          "paragraphs": [
+            "A ação Entregar ficha aparece para modelos ativos na biblioteca de Treinos. Se o modelo estiver em rascunho, conclua e salve a versão antes de entregar."
+          ],
+          "figures": [
+            {
+              "src": "images/support/biblioteca-treinos.jpg",
+              "alt": "Biblioteca de Treinos com os botões Novo treino e Entregar ficha destacados.",
+              "caption": "1. Novo treino abre o montador. 2. Entregar ficha publica um modelo ativo para um aluno.",
+              "width": 1248,
+              "height": 578
+            }
+          ]
+        },
+        {
+          "title": "Entregue a ficha",
+          "steps": [
+            "Abra Treinos e encontre o modelo usando a busca ou os filtros. Se ainda não tiver um, veja [[criar-modelo-treino|como criar um modelo de treino]].",
+            "No modelo ativo, clique em Entregar ficha.",
+            "No pop-up, use Buscar aluno para localizar a pessoa e selecione o nome no campo Aluno.",
+            "Confira o nome do programa e o aluno. Clique em Publicar para o aluno.",
+            "Confira a ficha publicada no perfil. Se necessário, consulte [[liberar-acesso-aluno|como liberar o acesso ao portal do aluno]]."
+          ],
+          "figures": [
+            {
+              "src": "images/support/entregar-ficha.jpg",
+              "alt": "Pop-up Entregar ficha com o programa Condicionamento inicial, a aluna Ana Exemplo e o botão Publicar para o aluno.",
+              "caption": "Selecione a pessoa no campo Aluno e confira o programa antes de clicar em Publicar para o aluno.",
+              "width": 496,
+              "height": 488
+            }
+          ]
+        },
+        {
+          "title": "Revise a vigência",
+          "paragraphs": [
+            "Confira as datas e o conteúdo da ficha publicada. Quando uma ficha estiver próxima da rotina de renovação, revise sua vigência e prepare a próxima versão conforme a necessidade do aluno."
+          ]
+        }
+      ],
+      "updated": "2026-10-29",
+      "note": "Publicar uma nova ficha substitui a vigente. As versões anteriores e o histórico de sessões ficam preservados."
+    },
+    {
+      "slug": "biblioteca-treinos",
+      "collection": "treinos",
+      "title": "Como organizar a biblioteca de treinos",
+      "summary": "Use busca, filtros e estados para encontrar o próximo modelo rapidamente.",
+      "minutes": 2,
+      "sections": [
+        {
+          "title": "Filtre a biblioteca",
+          "steps": [
+            "Clique nos indicadores Todos, Ativos, Rascunhos ou Arquivados para filtrar os modelos.",
+            "Busque pelo nome ou objetivo. Combine a busca com os filtros de objetivo e situação.",
+            "Use Limpar para voltar à listagem sem filtros."
+          ],
+          "figures": [
+            {
+              "src": "images/support/biblioteca-treinos.jpg",
+              "alt": "Biblioteca de Treinos com os botões Novo treino e Entregar ficha destacados.",
+              "caption": "1. Novo treino abre o montador. 2. Entregar ficha publica um modelo ativo para um aluno.",
+              "width": 1248,
+              "height": 578
+            }
+          ]
+        },
+        {
+          "title": "Entenda cada estado",
+          "paragraphs": [
+            "Ativo: modelo pronto para entregar. Rascunho: programa em preparação. Arquivado: modelo guardado fora da rotina de entrega, preservando as fichas anteriores."
+          ]
+        },
+        {
+          "title": "Reaproveite uma estrutura",
+          "paragraphs": [
+            "No menu de ações do modelo, use Duplicar modelo para preparar uma nova versão. Restaurar um modelo arquivado o devolve como rascunho."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "indicadores-financeiros",
+      "collection": "financeiro",
+      "title": "O que significam os indicadores do Financeiro?",
+      "summary": "Entenda Previsto, Recebido, Em aberto e Vencido sem contar valores duas vezes.",
+      "minutes": 4,
+      "sections": [
+        {
+          "title": "Escolha o período",
+          "paragraphs": [
+            "Use o seletor de mês para definir a referência. Confira o período antes de comparar o painel com a listagem de cobranças."
+          ]
+        },
+        {
+          "title": "Leia os quatro indicadores",
+          "paragraphs": [
+            "Recebido: valores pagos no mês, incluindo entradas avulsas, recuperações e antecipações. Em aberto: valores ainda não pagos que vencem hoje ou em uma data futura. Vencido: valores não pagos cujo vencimento já passou.",
+            "Previsto é a soma de Recebido + Em aberto + Vencido. O indicador Em aberto não inclui os vencidos."
+          ]
+        },
+        {
+          "title": "Entenda o gráfico",
+          "paragraphs": [
+            "Verde representa o que foi recebido e usa a data do recebimento. Amarelo representa valores a vencer; vermelho representa valores vencidos. Os dois últimos usam a data de vencimento. Passe o mouse nos pontos do gráfico para consultar os valores."
+          ]
+        },
+        {
+          "title": "Por que a soma da lista pode ser diferente?",
+          "paragraphs": [
+            "A listagem de cobranças e os recebimentos não usam necessariamente a mesma data de referência. Uma cobrança de outro mês pode ser paga no mês atual. Entradas avulsas também entram no Recebido sem serem uma mensalidade da listagem."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "registrar-pagamento",
+      "collection": "financeiro",
+      "title": "Como registrar o pagamento de uma cobrança",
+      "summary": "Marque um recebimento e acompanhe a atualização da situação.",
+      "minutes": 3,
+      "sections": [
+        {
+          "title": "Localize a cobrança",
+          "paragraphs": [
+            "Abra o Financeiro, confira o mês e busque a cobrança do aluno. Valores a vencer ou vencidos ainda estão aguardando pagamento."
+          ]
+        },
+        {
+          "title": "Registre o recebimento",
+          "steps": [
+            "Confira aluno, descrição e valor da cobrança.",
+            "Clique em Registrar pagamento.",
+            "Preencha as informações solicitadas e confira a data do recebimento.",
+            "Confirme e aguarde a atualização dos indicadores e da situação."
+          ]
+        },
+        {
+          "title": "Confira a data",
+          "paragraphs": [
+            "O recebimento aparece no período em que foi pago. Se a cobrança venceu em outro mês, confira o mês do pagamento ao procurar a entrada."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "entrada-avulsa",
+      "collection": "financeiro",
+      "title": "Como adicionar uma entrada avulsa",
+      "summary": "Registre um valor extra que já foi recebido pelo negócio.",
+      "minutes": 2,
+      "sections": [
+        {
+          "title": "Quando usar",
+          "paragraphs": [
+            "Use uma entrada avulsa para registrar um recebimento extra, como uma aula avulsa. Para quitar uma cobrança já existente, use [[registrar-pagamento|Registrar pagamento]] na própria cobrança."
+          ]
+        },
+        {
+          "title": "Adicione a entrada",
+          "steps": [
+            "No bloco de entradas do Financeiro, clique no botão de adicionar.",
+            "Informe uma descrição que identifique o recebimento.",
+            "Preencha o valor, a data em que recebeu e a forma de pagamento.",
+            "Confira e clique em Registrar entrada."
+          ]
+        },
+        {
+          "title": "Confira o lançamento",
+          "paragraphs": [
+            "A entrada participa dos recebimentos do mês informado. Esse lançamento registra um valor recebido; não cria uma cobrança futura."
+          ]
+        }
+      ],
+      "updated": "2026-10-29",
+      "note": "Não registre a mesma mensalidade como entrada avulsa e como pagamento de cobrança. Isso duplicaria o recebimento."
+    },
+    {
+      "slug": "criar-aula-agenda",
+      "collection": "agenda",
+      "title": "Como criar uma aula na agenda",
+      "summary": "Escolha data, professor, participantes e duração do compromisso.",
+      "minutes": 3,
+      "sections": [
+        {
+          "title": "Confira o expediente",
+          "paragraphs": [
+            "Se os horários de funcionamento estiverem ativados, a agenda bloqueia períodos fora do expediente. Um gestor pode ajustá-los em [[configurar-horarios|Configurações → Horários]]."
+          ]
+        },
+        {
+          "title": "Crie o compromisso",
+          "steps": [
+            "Abra Agenda e navegue até a data desejada.",
+            "Selecione um horário aberto ou use a opção de novo agendamento.",
+            "Preencha título, tipo, início e fim. Escolha professor, local e participantes quando necessário.",
+            "Se usar repetição, confira a frequência e a data final.",
+            "Salve. Se houver conflito de professor ou horário fechado, ajuste o período informado."
+          ]
+        },
+        {
+          "title": "Edite um compromisso existente",
+          "paragraphs": [
+            "Selecione o compromisso na agenda para revisar ou alterar os dados. Mudar o expediente não cancela automaticamente as aulas já cadastradas."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "links-aula-experimental",
+      "collection": "agenda",
+      "title": "Como criar um link de aula experimental",
+      "summary": "Divulgue um atendimento e permita que a pessoa escolha um horário livre.",
+      "minutes": 4,
+      "sections": [
+        {
+          "title": "Prepare os horários",
+          "paragraphs": [
+            "Em [[configurar-horarios|Configurações → Horários]], preencha os intervalos da semana, ative o expediente e salve. O atendimento precisa caber em pelo menos um intervalo aberto."
+          ],
+          "figures": [
+            {
+              "src": "images/support/configurar-horarios.jpg",
+              "alt": "Tela de Horários com dois intervalos na segunda-feira e o botão Salvar alterações destacados.",
+              "caption": "1. Os dois intervalos deixam a pausa de 12h às 14h fechada. 2. Salve para aplicar o expediente na agenda.",
+              "width": 1248,
+              "height": 918
+            }
+          ]
+        },
+        {
+          "title": "Crie o link",
+          "steps": [
+            "No bloco Reservas por link, clique em Novo link.",
+            "Dê um nome claro, como Aula experimental.",
+            "Selecione o professor, a duração e, se necessário, o local.",
+            "Ative o link e salve.",
+            "Clique em Copiar no cartão e compartilhe o endereço no Instagram ou com a pessoa interessada."
+          ],
+          "figures": [
+            {
+              "src": "images/support/novo-link.jpg",
+              "alt": "Pop-up Novo atendimento preenchido com Avaliação física, professor e duração de 30 minutos.",
+              "caption": "Cada link pode ter seu próprio atendimento, professor e duração. Ative o link quando estiver pronto para receber reservas.",
+              "width": 476,
+              "height": 488
+            }
+          ]
+        },
+        {
+          "title": "O que a pessoa vê?",
+          "paragraphs": [
+            "A página pública apresenta o atendimento e os horários disponíveis. A pessoa escolhe a data e o horário, informa nome e telefone e confirma a reserva. Ela não precisa entrar com uma conta do WNFit."
+          ]
+        },
+        {
+          "title": "Onde a reserva aparece?",
+          "paragraphs": [
+            "O compromisso entra na agenda. Os gestores e o professor responsável recebem uma notificação no sino, com o caminho para o agendamento. A reserva não cria automaticamente aluno, matrícula ou cobrança."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "gerenciar-links-reserva",
+      "collection": "agenda",
+      "title": "Como gerenciar seus três links de reserva",
+      "summary": "Ofereça atendimentos diferentes usando a mesma agenda do professor.",
+      "minutes": 3,
+      "sections": [
+        {
+          "title": "Um link para cada atendimento",
+          "paragraphs": [
+            "Você pode manter até três links por negócio, contando os desativados. Por exemplo: Aula experimental, de 60 minutos, e Avaliação física, de 30 minutos. Cada link tem nome, duração, professor e local próprios."
+          ],
+          "figures": [
+            {
+              "src": "images/support/novo-link.jpg",
+              "alt": "Pop-up Novo atendimento preenchido com Avaliação física, professor e duração de 30 minutos.",
+              "caption": "Cada link pode ter seu próprio atendimento, professor e duração. Ative o link quando estiver pronto para receber reservas.",
+              "width": 476,
+              "height": 488
+            }
+          ]
+        },
+        {
+          "title": "Edite, copie ou desative",
+          "steps": [
+            "Em [[configurar-horarios|Configurações → Horários]], encontre o cartão do atendimento.",
+            "Use Copiar para divulgar o endereço. O botão mostra Copiado quando a cópia funciona.",
+            "Use Editar para ajustar o atendimento. O endereço do link é preservado.",
+            "Desligue o seletor para interromper novas reservas.",
+            "Para remover um link, clique em Excluir e confirme a exclusão."
+          ]
+        },
+        {
+          "title": "Como os conflitos são evitados?",
+          "paragraphs": [
+            "Links do mesmo professor consultam a mesma agenda. Quando uma reserva ocupa um período, os horários sobrepostos deixam de ser oferecidos nos outros links desse professor.",
+            "Os horários públicos respeitam uma antecedência mínima de 30 minutos e um horizonte de até 60 dias."
+          ]
+        },
+        {
+          "title": "Excluir cancela as aulas?",
+          "paragraphs": [
+            "Não. Excluir ou desativar o link impede novas reservas por ele. Os compromissos que já foram agendados continuam na agenda."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "configurar-planos",
+      "collection": "configuracoes",
+      "title": "Como criar e personalizar os planos",
+      "summary": "Defina nome, ciclo de cobrança e valor de cada serviço.",
+      "minutes": 3,
+      "sections": [
+        {
+          "title": "Abra a configuração",
+          "paragraphs": [
+            "A criação e edição de planos ficam disponíveis ao proprietário e aos administradores em Configurações → Planos."
+          ]
+        },
+        {
+          "title": "Cadastre o plano",
+          "steps": [
+            "Clique em Novo plano.",
+            "Informe o nome, escolha o ciclo de cobrança e preencha o valor por ciclo.",
+            "Deixe o plano disponível para novas matrículas se quiser oferecê-lo nos próximos cadastros.",
+            "Salve e confira o plano na listagem."
+          ],
+          "figures": [
+            {
+              "src": "images/support/configurar-planos.jpg",
+              "alt": "Tela de Planos do WNFit, com as abas de configurações e o formulário de criação destacados.",
+              "caption": "1. As abas alternam as configurações. 2. Preencha nome, ciclo e valor antes de criar o plano.",
+              "width": 1248,
+              "height": 751
+            }
+          ]
+        },
+        {
+          "title": "Atenção ao ciclo e ao valor",
+          "paragraphs": [
+            "O valor é cobrado uma vez por ciclo: um plano anual gera uma cobrança a cada 12 meses. Planos com assinaturas vinculadas não permitem trocar o ciclo; crie outro plano para essa mudança.",
+            "Alterar o valor afeta as próximas cobranças geradas, inclusive de assinaturas atuais. Cobranças já geradas mantêm seus valores. Desativar o plano impede novas matrículas, mas as assinaturas atuais continuam."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "configurar-unidades",
+      "collection": "configuracoes",
+      "title": "Como cadastrar ou excluir uma unidade",
+      "summary": "Organize as unidades do negócio e escolha uma opção padrão.",
+      "minutes": 3,
+      "sections": [
+        {
+          "title": "Comece pela unidade padrão",
+          "paragraphs": [
+            "O negócio tem uma unidade padrão para uso nos cadastros. Se você atende em um único local, pode ajustar esse cadastro em vez de manter unidades que não existem na sua operação."
+          ]
+        },
+        {
+          "title": "Organize os locais",
+          "steps": [
+            "Abra Configurações → Unidades.",
+            "Cadastre uma nova unidade ou edite uma existente.",
+            "Escolha a unidade padrão conforme a rotina do negócio.",
+            "Confira a unidade selecionada ao cadastrar ou editar um aluno."
+          ],
+          "figures": [
+            {
+              "src": "images/support/configurar-unidades.jpg",
+              "alt": "Configuração de unidades com a unidade principal e o botão Nova unidade destacados.",
+              "caption": "1. Confira a unidade padrão na lista. 2. Use Nova unidade para cadastrar outro local.",
+              "width": 1248,
+              "height": 688
+            }
+          ]
+        },
+        {
+          "title": "Exclua com os vínculos corretos",
+          "paragraphs": [
+            "Use Excluir na unidade que quer remover. Se houver alunos vinculados, siga a transferência para uma unidade de destino antes de confirmar. Confira as informações mostradas na confirmação."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "configurar-horarios",
+      "collection": "configuracoes",
+      "title": "Como definir o horário de funcionamento",
+      "summary": "Abra os dias de atendimento e represente pausas com intervalos.",
+      "minutes": 3,
+      "sections": [
+        {
+          "title": "Configure a semana",
+          "steps": [
+            "Abra Configurações → Horários.",
+            "Ative o seletor de expediente em Sua semana.",
+            "Use o botão + no dia desejado para adicionar um intervalo.",
+            "Ajuste início e fim. Para representar uma pausa de almoço, use dois intervalos, como 08:00–12:00 e 14:00–18:00.",
+            "Deixe sem intervalos os dias fechados. Clique em Salvar alterações."
+          ],
+          "figures": [
+            {
+              "src": "images/support/configurar-horarios.jpg",
+              "alt": "Tela de Horários com dois intervalos na segunda-feira e o botão Salvar alterações destacados.",
+              "caption": "1. Os dois intervalos deixam a pausa de 12h às 14h fechada. 2. Salve para aplicar o expediente na agenda.",
+              "width": 1248,
+              "height": 918
+            }
+          ]
+        },
+        {
+          "title": "O que muda na agenda?",
+          "paragraphs": [
+            "Os períodos fechados ficam bloqueados para novos compromissos. Os intervalos de um dia não podem se sobrepor. Os horários são interpretados no fuso informado na tela."
+          ]
+        },
+        {
+          "title": "E as aulas que já existiam?",
+          "paragraphs": [
+            "Compromissos anteriores continuam visíveis. Mudar o expediente não cancela automaticamente essas aulas. Para movê-las para outro horário, escolha um período de funcionamento."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "equipe-e-professores",
+      "collection": "configuracoes",
+      "title": "Como organizar os usuários e professores",
+      "summary": "Gerencie os acessos da equipe e os professores disponíveis no cadastro.",
+      "minutes": 3,
+      "sections": [
+        {
+          "title": "Acesse a equipe",
+          "paragraphs": [
+            "Em Configurações → Usuários, o gestor encontra os usuários vinculados ao negócio e seus perfis de acesso."
+          ]
+        },
+        {
+          "title": "Revise os vínculos",
+          "steps": [
+            "Confira o nome e o e-mail antes de alterar um usuário.",
+            "Escolha o perfil adequado à função da pessoa.",
+            "Confira se o usuário está ativo para participar da operação.",
+            "Para disponibilizar um professor no cadastro de aluno, confira o perfil e o status do vínculo."
+          ],
+          "figures": [
+            {
+              "src": "images/support/configurar-equipe.jpg",
+              "alt": "Formulário Novo usuário com os campos de nome, e-mail, perfil e senha inicial.",
+              "caption": "No painel Novo usuário, escolha o perfil adequado antes de cadastrar a pessoa na equipe.",
+              "width": 426,
+              "height": 543
+            }
+          ]
+        },
+        {
+          "title": "Acesso da equipe e acesso do aluno",
+          "paragraphs": [
+            "Usuários e professores entram pelo acesso da equipe. O [[aluno-primeiro-acesso|portal do aluno]] tem credenciais próprias, gerenciadas no perfil do aluno. Não compartilhe um usuário de administrador com os alunos."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "notificacoes-sistema",
+      "collection": "primeiros-passos",
+      "title": "Como acompanhar as notificações",
+      "summary": "Veja novos agendamentos e avisos de treino pelo sino do sistema.",
+      "minutes": 2,
+      "sections": [
+        {
+          "title": "Abra o sino",
+          "paragraphs": [
+            "O sino no topo do sistema indica a quantidade de avisos não lidos. Selecione um item para ver os detalhes e marcá-lo como lido."
+          ]
+        },
+        {
+          "title": "Veja a origem do aviso",
+          "paragraphs": [
+            "Novas reservas por link informam a pessoa, o atendimento e o horário. Os gestores e o professor responsável recebem o aviso e podem abrir o agendamento.",
+            "O sino também apresenta avisos de treinos concluídos e de vigência das fichas, conforme a rotina e os vínculos da equipe."
+          ]
+        },
+        {
+          "title": "Se uma atualização não aparecer",
+          "paragraphs": [
+            "Confira a conexão com a internet. Se o painel informar indisponibilidade da atualização em tempo real, use Atualizar ou reabra o sistema. As notificações ficam registradas mesmo se a conexão temporariamente cair."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "aluno-primeiro-acesso",
+      "collection": "portal-do-aluno",
+      "title": "Primeiro acesso do aluno",
+      "summary": "Oriente o aluno a entrar com as credenciais fornecidas pelo professor.",
+      "minutes": 2,
+      "sections": [
+        {
+          "title": "Tenha as credenciais",
+          "paragraphs": [
+            "O professor ou gestor fornece o link do portal, o usuário e a senha inicial. Essas credenciais não são o mesmo acesso usado pela equipe.",
+            "Nos novos acessos e nas redefinições, a senha provisória tem 8 dígitos numéricos. Depois de entrar, siga a troca obrigatória de senha."
+          ]
+        },
+        {
+          "title": "Acesse o portal",
+          "steps": [
+            "Abra o endereço de acesso do aluno enviado pelo professor.",
+            "Informe o usuário e a senha recebidos.",
+            "Se o sistema solicitar, escolha uma nova senha antes de continuar.",
+            "Acesse Treinos para consultar sua ficha disponível."
+          ]
+        },
+        {
+          "title": "Esqueceu a senha?",
+          "paragraphs": [
+            "Peça ao professor ou gestor para conferir ou redefinir seu acesso. Não envie sua senha em grupos nem use as credenciais de outra pessoa."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    },
+    {
+      "slug": "registrar-treino-aluno",
+      "collection": "portal-do-aluno",
+      "title": "Como o aluno acompanha e registra o treino",
+      "summary": "Consulte a ficha disponível e registre a sessão pelo portal.",
+      "minutes": 3,
+      "sections": [
+        {
+          "title": "Confira a ficha",
+          "paragraphs": [
+            "Depois de entrar no portal, abra Treinos e selecione a ficha disponível. Se não houver ficha liberada ou a vigência impedir iniciar a sessão, fale com o professor."
+          ]
+        },
+        {
+          "title": "Registre a prática",
+          "steps": [
+            "Escolha o dia de treino na ficha.",
+            "Inicie a sessão e siga as orientações apresentadas.",
+            "Registre as séries realizadas conforme os exercícios forem concluídos.",
+            "Revise os registros e finalize a sessão quando terminar."
+          ]
+        },
+        {
+          "title": "O professor é avisado?",
+          "paragraphs": [
+            "Ao concluir a sessão, o sistema gera um resumo para os destinatários da equipe responsáveis pelo acompanhamento. Evite finalizar uma sessão de teste como se fosse um treino realizado."
+          ]
+        }
+      ],
+      "updated": "2026-10-29"
+    }
+  ],
+  "onboarding": [
+    "configurar-planos",
+    "configurar-horarios",
+    "cadastrar-aluno",
+    "entregar-ficha"
+  ],
+  "popular": [
+    "links-aula-experimental",
+    "indicadores-financeiros",
+    "liberar-acesso-aluno",
+    "criar-modelo-treino"
+  ]
+}

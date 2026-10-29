@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Aluno;
 use App\Models\StudentAccount;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class StudentAccessService
@@ -30,7 +31,9 @@ class StudentAccessService
             Aluno::whereKey($student->id)->lockForUpdate()->firstOrFail();
             $account = StudentAccount::where('aluno_id', $student->id)->lockForUpdate()->first();
             abort_if($account && ! $reset, 422, 'Este aluno já possui acesso. Use gerar nova senha.');
-            $password = Str::password(12, symbols: false);
+            do {
+                $password = (string) random_int(10000000, 99999999);
+            } while ($account && Hash::check($password, $account->password));
             if ($account) {
                 $account->update(['password' => $password, 'must_change_password' => true, 'credential_version' => $account->credential_version + 1]);
             } else {
