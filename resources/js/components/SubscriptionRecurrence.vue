@@ -3,8 +3,8 @@
         <summary class="cursor-pointer text-sm font-semibold">Vigência e recorrência das mensalidades</summary>
         <p class="mt-3 text-sm text-[var(--wn-muted)]">Revise competências faltantes e datas de pausa ou encerramento. Cobranças existentes serão preservadas e nenhuma mensagem será enviada.</p>
         <button v-if="!loaded" class="btn-secondary mt-3" :disabled="busy" @click="load">Carregar assinatura</button>
-        <p v-if="error" role="alert" class="mt-3 text-sm text-rose-700">{{ error }}</p>
-        <p v-if="success" role="status" class="mt-3 text-sm text-emerald-700">{{ success }}</p>
+        <ActionFeedback :message="error" type="error" />
+        <ActionFeedback v-model="success" />
         <form v-if="loaded" class="mt-4 space-y-3" @submit.prevent="preview">
             <label class="block text-sm">Primeiro vencimento da recorrência<input v-model="form.start" required type="date" class="form-control mt-1" :disabled="busy" @input="invalidate" /></label>
             <label class="block text-sm">Pausar a partir de<input v-model="form.pause" type="date" class="form-control mt-1" :disabled="busy" @input="invalidate" /></label>

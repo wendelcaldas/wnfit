@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import DashboardView from '../views/DashboardView.vue';
 import FinanceView from '../views/FinanceView.vue';
 import LoginView from '../views/LoginView.vue';
-import MessagingSettingsView from '../views/MessagingSettingsView.vue';
+import ComingSoonView from '../views/ComingSoonView.vue';
 import RegisterView from '../views/RegisterView.vue';
 import StudentDetailView from '../views/StudentDetailView.vue';
 import StudentFormView from '../views/StudentFormView.vue';
@@ -28,8 +28,10 @@ export const router = createRouter({
         { path: '/aluno/treinos', component: () => import('../views/StudentWorkoutsView.vue'), meta: { studentPortal: true } },
         { path: '/aluno/sessao/:id', component: () => import('../views/StudentSessionView.vue'), meta: { studentPortal: true } },
         { path: '/evento/:slug', component: () => import('../views/PublicEventView.vue'), meta: { public: true } },
-        { path: '/eventos', component: () => import('../views/EventsView.vue'), meta: { requiresAuth: true } },
+        { path: '/eventos', component: ComingSoonView, meta: { requiresAuth: true, moduleTitle: 'Eventos' } },
         { path: '/configuracoes', redirect: '/configuracoes/usuarios' },
+        { path: '/agendar/:token', component: () => import('../views/PublicBookingView.vue'), meta: { public: true } },
+        { path: '/configuracoes/horarios', component: () => import('../views/HoursSettingsView.vue'), meta: { requiresAuth: true } },
         { path: '/configuracoes/unidades', component: () => import('../views/UnitsSettingsView.vue'), meta: { requiresAuth: true } },
         { path: '/configuracoes/planos', component: () => import('../views/PlansSettingsView.vue'), meta: { requiresAuth: true } },
         { path: '/financeiro', name: 'financeiro', component: FinanceView, meta: { requiresAuth: true } },
@@ -106,8 +108,8 @@ export const router = createRouter({
         {
             path: '/configuracoes/mensagens',
             name: 'configuracoes.mensagens',
-            component: MessagingSettingsView,
-            meta: { requiresAuth: true },
+            component: ComingSoonView,
+            meta: { requiresAuth: true, moduleTitle: 'Comunicações' },
         },
         {
             path: '/login',

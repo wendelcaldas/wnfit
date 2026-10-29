@@ -5,7 +5,7 @@
             <p id="delete-unit-description" class="mt-3 text-sm leading-6">Excluir <strong>{{ unit.name }}</strong>? Esta ação remove a unidade definitivamente. Os cadastros dos alunos serão preservados.</p>
             <form class="mt-4 grid gap-4" @submit.prevent="remove">
                 <template v-if="unit.students"><p class="text-sm text-[var(--wn-muted)]">Esta unidade tem {{ unit.students }} {{ unit.students === 1 ? 'aluno vinculado' : 'alunos vinculados' }}. Escolha para onde transferir antes de excluir.</p><label class="grid gap-2 text-sm">Transferir alunos para<select v-model="destinationId" class="form-control" required :disabled="busy"><option v-for="item in destinations" :key="item.id" :value="item.id">{{ item.name }}{{ item.default ? ' · Padrão' : '' }}</option></select></label></template>
-                <p v-if="error" role="alert" class="text-sm text-rose-700">{{ error }}</p>
+                <ActionFeedback :message="error" type="error" />
                 <div class="mt-2 flex justify-end gap-3"><button ref="cancelButton" type="button" class="btn-secondary" :disabled="busy" @click="close">Cancelar</button><button class="btn-primary !bg-rose-700 !text-white" :disabled="busy || (unit.students > 0 && !destinationId)">{{ busy ? 'Excluindo…' : unit.students ? 'Transferir e excluir' : 'Excluir unidade' }}</button></div>
             </form>
         </section>

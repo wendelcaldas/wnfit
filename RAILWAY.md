@@ -2,6 +2,8 @@
 
 O projeto usa uma unica imagem Docker com Nginx e PHP-FPM. O Railway constroi o `Dockerfile`, executa as migrations antes do deploy e verifica a aplicacao em `/up`.
 
+Para ativar as notificações WebSocket, veja [a configuração do Reverb](docs/NOTIFICACOES_TEMPO_REAL.md). O processo já está previsto no Supervisor, condicionado a `REVERB_ENABLED=true`; configure também as chaves e `BROADCAST_CONNECTION=reverb` no serviço. Mantenha o scheduler de avisos de vencimento ativo.
+
 ## 1. Banco de dados
 
 Adicione um servico MySQL ao projeto no Railway. No servico da aplicacao, configure `DB_URL` como referencia para `MYSQL_URL` do MySQL.

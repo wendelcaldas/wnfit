@@ -326,18 +326,7 @@
                 </section>
             </main>
         </div>
-        <p
-            v-if="message"
-            class="mt-5 rounded-xl p-4 text-sm"
-            :class="
-                hasError
-                    ? 'student-error'
-                    : 'bg-[var(--wn-primary-soft)] text-[var(--wn-primary-strong)]'
-            "
-            role="status"
-        >
-            {{ message }}
-        </p>
+        <ActionFeedback v-model="message" :type="hasError ? 'error' : 'success'" />
         <div
             v-if="pickerOpen"
             class="student-modal-backdrop"

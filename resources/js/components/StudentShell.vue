@@ -61,12 +61,7 @@
                 }"
                 ><Dumbbell :size="22" />Treinos</RouterLink
             >
-            <RouterLink
-                v-if="auth.student?.canAccessEvents"
-                to="/aluno/evento"
-                :class="{ selected: route.path.startsWith('/aluno/evento') }"
-                ><CalendarDays :size="22" />Eventos</RouterLink
-            >
+            <span v-if="auth.student?.canAccessEvents" class="student-events-soon" aria-label="Eventos: indisponível" aria-disabled="true"><CalendarDays :size="22" /><span>Eventos</span></span>
         </nav>
     </div>
 </template>
@@ -93,3 +88,8 @@ async function logout() {
     router.replace("/aluno/entrar");
 }
 </script>
+
+<style scoped>
+.student-events-soon { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 12px; color: var(--wn-muted); font-size: 11px; opacity: .4; }
+
+</style>

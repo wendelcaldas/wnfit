@@ -5,7 +5,7 @@
 </template>
 <script setup>
 import { RouterLink, useRoute } from 'vue-router';
-import { Users, Tags, MapPin } from 'lucide-vue-next';
+import { Users, Tags, MapPin, Clock3 } from 'lucide-vue-next';
 const route = useRoute();
-const items = [{ label: 'Usuários', to: '/configuracoes/usuarios', icon: Users }, { label: 'Planos', to: '/configuracoes/planos', icon: Tags }, { label: 'Unidades', to: '/configuracoes/unidades', icon: MapPin }];
+const items = [{ label: 'Usuários', to: '/configuracoes/usuarios', icon: Users }, { label: 'Planos', to: '/configuracoes/planos', icon: Tags }, { label: 'Unidades', to: '/configuracoes/unidades', icon: MapPin }, { label: 'Horários', to: '/configuracoes/horarios', icon: Clock3 }];
 </script>

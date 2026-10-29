@@ -1,8 +1,8 @@
 <template>
     <AppShell eyebrow="Configurações > Unidades" title="Unidades" description="Organize as unidades da sua academia, estúdio ou atendimento personal.">
         <SettingsNavigation />
-        <p v-if="notice" role="status" class="mb-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">{{ notice }}</p>
-        <p v-if="loadError" role="alert" class="mb-4 rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{{ loadError }} <button class="underline" @click="load">Tentar novamente</button></p>
+        <ActionFeedback v-model="notice" />
+        <ActionFeedback :message="loadError" type="error" :action="load" />
         <div class="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
             <section class="panel-card !p-0 overflow-hidden" aria-labelledby="units-title">
                 <div class="flex items-center justify-between gap-3 border-b border-[var(--wn-line)] p-5"><div><h2 id="units-title" class="text-lg font-semibold">Unidades do seu negócio</h2><p class="mt-1 text-sm text-[var(--wn-muted)]">A unidade padrão vem selecionada no cadastro de alunos.</p></div><button v-if="canManage" class="btn-primary whitespace-nowrap" :disabled="saving" @click="create"><Plus :size="16" />Nova unidade</button></div>
@@ -17,7 +17,7 @@
                     <label class="flex items-center gap-2 text-sm"><input v-model="form.default" type="checkbox" :disabled="saving || isCurrentDefault || !form.active" />Usar como unidade padrão</label>
                     <p v-if="isCurrentDefault" class="text-xs leading-5 text-[var(--wn-muted)]">Para desativar esta unidade, defina outra como padrão primeiro.</p>
                     <p class="rounded-xl bg-[var(--wn-surface-soft)] p-3 text-xs leading-5 text-[var(--wn-muted)]">Renomear atualiza a identificação dos alunos vinculados. Desativar retira a unidade das opções de novos cadastros, preservando os alunos atuais. Alterar a unidade padrão não transfere alunos entre unidades.</p>
-                    <p v-if="error" role="alert" class="text-sm text-rose-700">{{ error }}</p>
+                    <ActionFeedback :message="error" type="error" />
                     <div class="flex gap-2"><button class="btn-primary flex-1 justify-center" :disabled="saving || loading">{{ saving ? 'Salvando…' : editingId ? 'Salvar alterações' : 'Criar unidade' }}</button><button v-if="editingId" type="button" class="btn-secondary" :disabled="saving" @click="create">Cancelar</button></div>
                 </form>
             </aside>

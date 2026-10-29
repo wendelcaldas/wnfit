@@ -2,6 +2,8 @@
 set -eu
 
 export PORT="${PORT:-8080}"
+export REVERB_ENABLED="${REVERB_ENABLED:-false}"
+export SCHEDULER_ENABLED="${SCHEDULER_ENABLED:-false}"
 
 mkdir -p \
     storage/framework/cache/data \

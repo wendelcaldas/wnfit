@@ -5,8 +5,8 @@
             <div v-if="!editing" class="assessment-toolbar"><button v-if="current" class="btn-secondary" type="button" :disabled="comparing" :title="comparing ? 'Selecione apenas uma avaliação para editar' : undefined" @click="beginEdit"><Pencil class="h-4 w-4" />Editar avaliação</button><button class="btn-primary" type="button" :disabled="loading" @click="beginNew"><Plus class="h-4 w-4" />Nova avaliação</button></div>
         </header>
         <p v-if="loading" class="mt-5 text-sm" role="status">Carregando avaliações…</p>
-        <p v-if="error" class="mt-4 text-sm text-rose-700" role="alert">{{ error }} <button v-if="loadFailed" class="underline" @click="load">Tentar novamente</button></p>
-        <p v-if="message" class="mt-4 text-sm" role="status">{{ message }}</p>
+        <ActionFeedback :message="error" type="error" :action="loadFailed ? load : undefined" />
+        <ActionFeedback v-model="message" />
         <template v-if="!loading && !loadFailed">
             <div v-if="!assessments.length && !editing" class="assessment-empty"><p class="font-semibold">Nenhuma avaliação registrada.</p><p class="mt-2 text-sm text-[var(--wn-muted)]">Registre medidas aos poucos e acompanhe a evolução nas próximas avaliações.</p><p v-if="student.health.weight || student.health.height" class="mt-3 text-xs text-[var(--wn-muted)]">Cadastro anterior, sem data de avaliação: {{ student.health.weight ? `${format(student.health.weight)} kg` : '' }} {{ student.health.height ? `· ${format(student.health.height)} cm` : '' }}. Esses valores não foram transformados em avaliação.</p></div>
             <section v-if="assessments.length" class="assessment-history mt-5" aria-label="Selecionar avaliações">

@@ -3,19 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\StaffNotification;
-use App\Services\WorkoutNotificationService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StaffNotificationController extends Controller
 {
-    private function inbox(Request $request, bool $syncDeadlines = false): Builder
+    private function inbox(Request $request): Builder
     {
         $organization = $request->user()->organizacoes()->where('organizacoes.ativa', true)->wherePivot('status', 'ativo')->firstOrFail();
-        if ($syncDeadlines) {
-            app(WorkoutNotificationService::class)->syncDeadlines($organization->id);
-        }
 
         return StaffNotification::where('organizacao_id', $organization->id)->where('user_id', $request->user()->id);
     }
@@ -23,7 +20,7 @@ class StaffNotificationController extends Controller
     public function index(Request $request): JsonResponse
     {
         $data = $request->validate(['before' => ['nullable', 'integer', 'min:1']]);
-        $query = $this->inbox($request, true);
+        $query = $this->inbox($request);
         $unreadCount = (clone $query)->whereNull('read_at')->count();
         $items = $query->when($data['before'] ?? null, fn ($q, $id) => $q->where('id', '<', $id))->latest('id')->limit(21)->get();
         $hasMore = $items->count() > 20;
@@ -39,7 +36,12 @@ class StaffNotificationController extends Controller
     {
         $query = $this->inbox($request);
         $item = (clone $query)->whereKey($notification)->firstOrFail();
-        (clone $query)->whereKey($notification)->whereNull('read_at')->update(['read_at' => now()]);
+        DB::transaction(function () use ($query, $notification) {
+            $item = (clone $query)->whereKey($notification)->lockForUpdate()->firstOrFail();
+            if ($item->read_at === null) {
+                $item->update(['read_at' => now()]);
+            }
+        });
 
         return response()->json([
             'notification' => $item->fresh()->payload(),

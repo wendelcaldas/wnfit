@@ -13,7 +13,7 @@ async function save(){busy.value=true;error.value='';try{await window.axios.post
 <template>
   <button v-if="!open" type="button" class="btn-primary" @click="show">Adicionar participante</button>
   <section v-else class="add-person">
-    <h3>Adicionar participante</h3><p v-if="error" role="alert">{{error}}</p>
+    <h3>Adicionar participante</h3><ActionFeedback :message="error" type="error" />
     <form @submit.prevent="search()"><label>Buscar na base<input v-model="query" maxlength="120" /></label><button class="btn-secondary" :disabled="busy">Buscar</button></form>
     <form @submit.prevent="save">
       <label v-for="p in people.data" :key="p.id" class="person-option"><input v-model="student" type="radio" :value="p.id" @change="creating=false" /><span>{{p.nome}} · {{p.telefone||'Sem telefone'}} · {{p.perfil_tipo==='aluno'?'Aluno':'Participante'}}</span></label>

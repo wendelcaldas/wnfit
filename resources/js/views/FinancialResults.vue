@@ -1,7 +1,7 @@
 <template>
     <section>
-        <p v-if="error" role="alert" class="mb-4 rounded-xl bg-rose-50 p-4 text-rose-700">{{ error }} <button class="underline" @click="load(page)">Tentar novamente</button></p>
-        <p v-if="notice" role="status" class="mb-4 rounded-xl bg-emerald-50 p-4 text-emerald-800">{{ notice }}</p>
+        <ActionFeedback :message="error" type="error" :action="() => load(page)" />
+        <ActionFeedback v-model="notice" />
         <FinanceOverview :month="month" :summary="summary" :dashboard="dashboard" :loading="loading" :error="error" :status="status" @month="setMonth" @filter="filterCharges" @create="createOpen = true"><template #movements><FinanceMovements :month="month" :revision="movementRevision" @updated="incomeCreated" /></template></FinanceOverview>
         <section ref="chargeList" class="panel-card finance-charge-list !p-0" aria-labelledby="charges-title">
             <div class="border-b border-[var(--wn-line)] p-5">
@@ -55,7 +55,7 @@
             <div class="flex items-center justify-between gap-3 border-t border-[var(--wn-line)] p-4 text-sm"><span>{{ total }} itens · {{ money(listTotal) }} · página {{ page }} de {{ lastPage }}</span><div class="flex gap-2"><button class="btn-secondary" :disabled="loading || page <= 1" @click="load(page - 1)">Anterior</button><button class="btn-secondary" :disabled="loading || page >= lastPage" @click="load(page + 1)">Próxima</button></div></div>
         </section>
 
-        <div class="finance-footnote"><details><summary>Como os indicadores são calculados</summary><p>Previsto = Recebido + Em aberto + Vencido. Recebido inclui todos os valores pagos no mês, entradas avulsas, recuperações e antecipações. Em aberto considera somente valores a vencer (incluindo hoje); Vencido considera os que passaram do vencimento. Mensalidades recorrentes são geradas automaticamente conforme o ciclo do plano. No gráfico, verde usa a data de recebimento; amarelo (a vencer) e vermelho (vencido) usam o vencimento.</p></details><RouterLink to="/configuracoes/mensagens">Modelos de mensagem</RouterLink></div>
+        <div class="finance-footnote"><details><summary>Como os indicadores são calculados</summary><p>Previsto = Recebido + Em aberto + Vencido. Recebido inclui todos os valores pagos no mês, entradas avulsas, recuperações e antecipações. Em aberto considera somente valores a vencer (incluindo hoje); Vencido considera os que passaram do vencimento. Mensalidades recorrentes são geradas automaticamente conforme o ciclo do plano. No gráfico, verde usa a data de recebimento; amarelo (a vencer) e vermelho (vencido) usam o vencimento.</p></details></div>
         <ChargeActionDialog v-if="messageCharge || payment" :charge="messageCharge || payment" :action="payment ? 'payment' : 'message'" @close="messageCharge = null; payment = null" @updated="updated" />
         <GenerateChargeDialog v-if="createOpen" @close="createOpen = false" @created="created" />
     </section>

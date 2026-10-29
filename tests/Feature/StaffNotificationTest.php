@@ -149,7 +149,9 @@ class StaffNotificationTest extends TestCase
         $this->member($f['organization'], 'professor', 'Inativo', 'inativo');
         $plan = StudentWorkoutPlan::findOrFail($f['session']->student_workout_plan_id);
         $plan->update(['ends_on' => today(), 'snapshot' => ['name' => 'Programa ABC', 'durationWeeks' => 4]]);
-        $first = $this->actingAs($f['owner'], 'web')->getJson('/api/notifications')->assertOk()
+        $this->actingAs($f['owner'], 'web')->getJson('/api/notifications')->assertOk()->assertJsonCount(0, 'notifications');
+        $this->artisan('workouts:notify-deadlines')->assertSuccessful();
+        $first = $this->getJson('/api/notifications')->assertOk()
             ->assertJsonCount(1, 'notifications')->assertJsonPath('unreadCount', 1)
             ->assertJsonPath('notifications.0.type', 'workout_plan_ends_today')
             ->assertJsonPath('notifications.0.data.endsOn', today()->toDateString())

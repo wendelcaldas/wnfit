@@ -77,7 +77,7 @@
                         <span class="text-sm font-medium text-[var(--wn-muted)]">Senha inicial</span>
                         <input v-model="form.password" class="form-control" type="password" minlength="8" required />
                     </label>
-                    <p v-if="error" class="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-600">{{ error }}</p>
+                    <ActionFeedback :message="error" type="error" />
                     <button class="btn-primary w-full justify-center" :disabled="saving">
                         {{ saving ? 'Salvando...' : 'Cadastrar usuário' }}
                     </button>
@@ -89,6 +89,7 @@
 
 <script setup>
 import SettingsNavigation from '../components/SettingsNavigation.vue';
+import { notify } from '../composables/useNotifications';
 import { onMounted, reactive, ref } from 'vue';
 import { UserPlus } from 'lucide-vue-next';
 import AppShell from '../components/AppShell.vue';
@@ -116,6 +117,7 @@ const createUser = async () => {
         users.value.push(data.user);
         users.value.sort((a, b) => a.name.localeCompare(b.name));
         Object.assign(form, { name: '', email: '', role: 'professor', password: '' });
+        notify('Usuário cadastrado.');
     } catch (exception) {
         const errors = exception.response?.data?.errors;
         error.value = errors ? Object.values(errors).flat()[0] : 'Nao foi possivel cadastrar o usuário.';
@@ -127,6 +129,7 @@ const updateUser = async (user, changes) => {
     try {
         const { data } = await window.axios.patch(`/api/organization/users/${user.id}`, changes);
         Object.assign(user, data.user);
+        notify('Usuário atualizado.');
     } catch (exception) {
         error.value = exception.response?.data?.message ?? 'Nao foi possivel atualizar o usuário.';
         await loadUsers();

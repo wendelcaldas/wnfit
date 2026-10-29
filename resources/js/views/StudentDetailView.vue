@@ -6,6 +6,7 @@
         search-placeholder="Buscar alunos, treinos, planos..."
     >
         <RouterLink to="/alunos" class="inline-flex items-center gap-2 text-sm text-[var(--wn-muted)]"><ArrowLeft class="h-4 w-4" />Voltar para alunos</RouterLink>
+        <ActionFeedback v-model="formMessage" :type="formMessageType" />
         <p v-if="studentError" class="panel-card mt-5" role="alert">{{ studentError }} <button class="student-detail-link" @click="loadStudent">Tentar novamente</button></p>
         <div v-if="student" class="student-detail-layout">
             <StudentContext :student="student" :tabs="tabs" :active-tab="activeTab" @select="selectTab" @photo-updated="({ studentId, photoUrl }) => { if (student.id === studentId) student.photoUrl = photoUrl; }" />
@@ -63,7 +64,6 @@
                     <ProfileField label="CEP" v-model="profileForm.cep" />
                     <label class="block text-sm font-medium">Modalidade de acompanhamento<select v-model="profileForm.modalidade" class="form-control mt-2"><option value="">Não informado</option><option v-for="option in studentModalities" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
                 </div>
-                <FormMessage :text="formMessage" />
             </form>
             <aside class="space-y-5">
                 <section class="panel-card"><h2 class="text-lg font-semibold">Contato de emergencia</h2><div class="mt-4 space-y-4"><ProfileField label="Nome do contato" v-model="profileForm.contato_emergencia" /><ProfileField label="Telefone" v-model="profileForm.telefone_emergencia" /></div></section>
@@ -83,7 +83,6 @@
                     <TextField label="Restricoes medicas" v-model="healthForm.restricoes_medicas" /><TextField label="Lesoes ou limitacoes" v-model="healthForm.lesoes" /><TextField label="Medicamentos" v-model="healthForm.medicamentos" />
                     <div class="md:col-span-3"><TextField label="Observacoes do acompanhamento" v-model="healthForm.observacoes" /></div>
                 </div>
-                <FormMessage :text="formMessage" />
             </form>
         </section>
 
@@ -94,8 +93,6 @@
                 <div><h2 class="text-xl font-semibold">Treino do aluno</h2><p class="mt-1 text-sm text-[var(--wn-muted)]">Acompanhe o programa atual ou atribua uma nova rotina.</p></div>
                 <div class="flex flex-wrap gap-3"><button class="btn-secondary" type="button" @click="workoutPickerOpen = true"><Library class="h-5 w-5" />Usar modelo existente</button><RouterLink :to="`/treinos/novo?student=${student.id}`" class="btn-primary"><Plus class="h-5 w-5" />Criar novo treino</RouterLink></div>
             </div>
-
-            <FormMessage :text="formMessage" />
             <p v-if="workoutsError" class="panel-card" role="alert">{{ workoutsError }} <button class="student-detail-link" @click="loadWorkouts">Tentar novamente</button></p>
             <div v-else-if="workoutsLoading" class="panel-card p-10 text-center text-sm text-[var(--wn-muted)]">Carregando treino...</div>
             <section v-else-if="currentWorkout" class="panel-card !p-0 overflow-hidden">
@@ -161,7 +158,6 @@
                 </div>
 
                 <div class="px-5 pb-5">
-                    <FormMessage :text="formMessage" />
                 </div>
             </section>
 
@@ -202,7 +198,7 @@
             <div class="space-y-5">
                 <section class="panel-card">
                     <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Resumo financeiro</h2>
-                    <p v-if="formMessage" role="status" class="mt-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{{ formMessage }}</p>
+
                     <SubscriptionRecurrence :student-id="student.id" @updated="loadStudent" />
                     <div class="mt-5 grid gap-4 md:grid-cols-5">
                         <MiniKpi label="Status financeiro" :value="student.financial.status" caption="Nenhuma pendência" />
@@ -345,10 +341,7 @@ const TextField = defineComponent({
     ]),
 });
 
-const FormMessage = defineComponent({
-    props: { text: String },
-    setup: (props) => () => props.text ? h('p', { class: 'mt-5 rounded-lg bg-[var(--wn-primary-soft)] px-4 py-3 text-sm text-[var(--wn-primary-strong)]' }, props.text) : null,
-});
+
 
 const PlanCard = defineComponent({
     props: { student: Object },
@@ -392,7 +385,7 @@ async function personalizeWorkout(plan) {
     if (!chosen) return;
     assigningWorkout.value = true;
     try { const { data } = await window.axios.post(`/api/students/${student.value.id}/workout-plans/${chosen.assignmentId}/personalize`); router.push(`/treinos/${data.workout.id}/editar?student=${student.value.id}`); }
-    catch (e) { formMessage.value = e.response?.data?.message ?? 'Não foi possível preparar a nova versão.'; }
+    catch (e) { formMessageType.value = 'error'; formMessage.value = e.response?.data?.message ?? 'Não foi possível preparar a nova versão.'; }
     finally { assigningWorkout.value = false; }
 }
 const student = ref(null);
@@ -400,9 +393,10 @@ const activeTab = ref(['overview', 'profile', 'workouts', 'financial', 'communic
 const profileSection = ref(route.query.tab === 'health' ? 'health' : 'personal');
 const studentError = ref('');
 const workoutsError = ref('');
-const selectTab = key => { activeTab.value = key; formMessage.value = ''; };
+const selectTab = key => { activeTab.value = key; formMessageType.value = 'success'; formMessage.value = ''; };
 const saving = ref(false);
 const formMessage = ref('');
+const formMessageType = ref('success');
 const profileForm = reactive({});
 const healthForm = reactive({});
 const currentWorkout = ref(null);
@@ -459,13 +453,14 @@ const loadStudent = async () => {
 
 const saveChanges = async (payload) => {
     saving.value = true;
-    formMessage.value = '';
+    formMessageType.value = 'success'; formMessage.value = '';
     try {
         const { data } = await window.axios.patch(`/api/students/${student.value.id}`, payload);
         student.value = data.student;
         formMessage.value = 'Alteracoes salvas com sucesso.';
     } catch (exception) {
         const errors = exception.response?.data?.errors;
+        formMessageType.value = 'error';
         formMessage.value = errors ? Object.values(errors).flat()[0] : 'Nao foi possivel salvar as alteracoes.';
     } finally { saving.value = false; }
 };
@@ -498,12 +493,13 @@ const assignWorkout = async (workout) => {
 const renewWorkout = async (plan) => {
     if (!window.confirm(`Renovar esta versão por ${plan.durationWeeks} semanas a partir de hoje? Ela passará a ser a ficha atual do aluno. As versões anteriores serão preservadas.`)) return;
     assigningWorkout.value = true;
-    formMessage.value = '';
+    formMessageType.value = 'success'; formMessage.value = '';
     try {
         await window.axios.post(`/api/students/${student.value.id}/workout-plans/${plan.assignmentId}/renew`);
         await loadWorkouts();
         formMessage.value = 'Ficha renovada e liberada para o aluno.';
     } catch (e) {
+        formMessageType.value = 'error';
         formMessage.value = e.response?.data?.message ?? 'Não foi possível renovar a ficha.';
     } finally { assigningWorkout.value = false; }
 };
@@ -534,7 +530,7 @@ const markMessageSent = async (message) => {
     messageActionId.value = message.id;
     try {
         await window.axios.post(`/api/messages/${message.id}/sent`);
-        formMessage.value = 'Mensagem marcada como enviada.';
+        formMessageType.value = 'success'; formMessage.value = 'Mensagem marcada como enviada.';
         await loadStudent();
     } finally {
         messageActionId.value = null;
@@ -543,11 +539,11 @@ const markMessageSent = async (message) => {
 
 const copyMessage = async (message) => {
     await navigator.clipboard.writeText(message.content);
-    formMessage.value = 'Texto da mensagem copiado.';
+    formMessageType.value = 'success'; formMessage.value = 'Texto da mensagem copiado.';
 };
 
 const onChargeUpdated = async (message) => {
-    formMessage.value = message;
+    formMessageType.value = 'success'; formMessage.value = message;
     await loadStudent();
 };
 

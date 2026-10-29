@@ -55,9 +55,7 @@
                             </label>
                         </div>
 
-                        <p v-if="error" role="alert" class="auth-login-error">
-                            {{ error }}
-                        </p>
+                        <ActionFeedback :message="error" type="error" />
 
                         <button type="submit" class="btn-primary w-full justify-center" :disabled="loading">
                             {{ loading ? 'Entrando…' : 'Entrar' }}<ArrowRight :size="18" />

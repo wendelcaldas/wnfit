@@ -28,6 +28,9 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('api')->group(function () {
+    Route::get('/public/booking/{token}', [\App\Http\Controllers\PublicBookingController::class, 'show'])->middleware('throttle:60,1');
+    Route::get('/public/booking/{token}/availability', [\App\Http\Controllers\PublicBookingController::class, 'availability'])->middleware('throttle:60,1');
+    Route::post('/public/booking/{token}', [\App\Http\Controllers\PublicBookingController::class, 'store'])->middleware('throttle:10,1');
     Route::prefix('student')->group(function () {
         Route::get('/me', [StudentPortalAuthController::class, 'me']);
         Route::post('/login', [StudentPortalAuthController::class, 'login'])->middleware('throttle:10,1');
@@ -102,6 +105,11 @@ Route::prefix('api')->group(function () {
         Route::post('/collections/{student}/message', [CollectionsController::class, 'message']);
         Route::post('/collections/{student}/pay', [CollectionsController::class, 'pay']);
         Route::post('/collections/{student}/recurrence', [CollectionsController::class, 'recurrence']);
+        Route::post('/organization/booking-links', [\App\Http\Controllers\OrganizationScheduleController::class, 'saveLink']);
+        Route::put('/organization/booking-links/{link}', [\App\Http\Controllers\OrganizationScheduleController::class, 'saveLink'])->whereNumber('link');
+        Route::delete('/organization/booking-links/{link}', [\App\Http\Controllers\OrganizationScheduleController::class, 'deleteLink'])->whereNumber('link');
+        Route::get('/organization/schedule-settings', [\App\Http\Controllers\OrganizationScheduleController::class, 'show']);
+        Route::put('/organization/schedule-settings', [\App\Http\Controllers\OrganizationScheduleController::class, 'save']);
         Route::get('/schedule', [ScheduleController::class, 'index']);
         Route::get('/schedule/options', [ScheduleController::class, 'options']);
         Route::post('/schedule', [ScheduleController::class, 'store']);

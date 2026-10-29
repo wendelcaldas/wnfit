@@ -339,13 +339,7 @@
                                 class="text-sm text-rose-600"
                                 >{{ fieldErrors.terms }}</span
                             >
-                            <p
-                                v-if="error"
-                                role="alert"
-                                class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600"
-                            >
-                                {{ error }}
-                            </p>
+                            <ActionFeedback :message="error" type="error" />
                         </div>
                         <div class="register-actions">
                             <button
