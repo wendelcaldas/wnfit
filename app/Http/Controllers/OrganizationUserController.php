@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Rules\BrazilianPhone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -42,7 +43,7 @@ class OrganizationUserController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
             'role' => ['required', Rule::in(['administrador', 'professor', 'atendimento'])],
-            'phone' => ['nullable', 'string', 'max:30', 'regex:/\A\+?[0-9\s().-]+\z/'],
+            'phone' => ['nullable', 'string', 'max:30', new BrazilianPhone],
         ], [
             'email.unique' => 'Ja existe um usuario com este e-mail.',
             'password.min' => 'A senha inicial deve ter pelo menos 8 caracteres.',
@@ -84,7 +85,7 @@ class OrganizationUserController extends Controller
         $data = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-            'phone' => ['sometimes', 'nullable', 'string', 'max:30', 'regex:/\A\+?[0-9\s().-]+\z/'],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:30', new BrazilianPhone],
             'role' => ['sometimes', Rule::in(['administrador', 'professor', 'atendimento'])],
             'status' => ['sometimes', Rule::in(['ativo', 'inativo'])],
         ]);

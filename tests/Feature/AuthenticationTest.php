@@ -230,11 +230,19 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_registration_accepts_masked_phone(): void
+    {
+        $profile = ['student_range' => 'starting', 'service_mode' => 'online', 'team' => 'solo', 'priorities' => ['workouts']];
+        $payload = $this->profileRegistration($profile);
+        $payload['phone'] = '(71) 99999-1234';
+        $this->postJson('/api/register', $payload)->assertCreated()->assertJsonPath('organization.phone', '(71) 99999-1234');
+    }
+
     public function test_registration_validates_phone_and_short_names_without_partial_records(): void
     {
         $this->withoutMiddleware(ThrottleRequests::class);
         $profile = ['student_range' => 'starting', 'service_mode' => 'online', 'team' => 'solo', 'priorities' => ['workouts']];
-        foreach ([['phone', '123'], ['phone', '7199999abcd'], ['phone', '(71) 99999-1234'], ['phone', '1234567890123456'], ['name', ' '], ['name', 'A'], ['company', 'X']] as [$field, $value]) {
+        foreach ([['phone', '123'], ['phone', '7199999abcd'], ['phone', '1234567890123456'], ['name', ' '], ['name', 'A'], ['company', 'X']] as [$field, $value]) {
             $payload = $this->profileRegistration($profile);
             $payload[$field] = $value;
             $this->postJson('/api/register', $payload)->assertUnprocessable()->assertJsonValidationErrors($field);

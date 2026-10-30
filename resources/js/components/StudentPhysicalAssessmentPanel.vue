@@ -32,7 +32,7 @@
                         <div class="assessment-input-grid mt-3">
                             <div v-for="field in generalFields" :key="field.key" class="assessment-field">
                                 <label :for="'assessment-' + field.key">{{ field.label }} ({{ field.unit }})</label>
-                                <input :id="'assessment-' + field.key" class="form-control" type="text" inputmode="decimal" v-model="form[field.key]" :aria-invalid="!!errors[field.key]" />
+                                <input :id="'assessment-' + field.key" class="form-control" type="text" inputmode="decimal" v-input-mask="'decimal'" v-model="form[field.key]" :aria-invalid="!!errors[field.key]" />
                                 <small v-if="errors[field.key]" role="alert">{{ errors[field.key][0] }}</small>
                             </div>
                         </div>
@@ -41,7 +41,7 @@
                         <div class="assessment-input-grid mt-3">
                             <div v-for="field in circumferenceFields" :key="field.key" class="assessment-field">
                                 <label :for="'assessment-' + field.key">{{ field.label }}</label>
-                                <input :id="'assessment-' + field.key" class="form-control" type="text" inputmode="decimal" v-model="form[field.key]" :aria-invalid="!!errors[field.key]" />
+                                <input :id="'assessment-' + field.key" class="form-control" type="text" inputmode="decimal" v-input-mask="'decimal'" v-model="form[field.key]" :aria-invalid="!!errors[field.key]" />
                                 <small v-if="errors[field.key]" role="alert">{{ errors[field.key][0] }}</small>
                             </div>
                         </div>

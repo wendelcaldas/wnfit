@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Agendamento;
 use App\Models\Organizacao;
 use App\Models\PublicScheduleBooking;
+use App\Rules\BrazilianPhone;
 use App\Services\PublicBookingNotificationService;
 use App\Services\ScheduleAvailabilityService;
 use Illuminate\Http\Request;
@@ -42,8 +43,9 @@ class PublicBookingController extends Controller
     public function store(Request $r, string $token, ScheduleAvailabilityService $availability)
     {
         $s = $availability->publicSettings($token);
-        $r->merge(['name' => trim((string) $r->input('name')), 'phone' => preg_replace('/\D/', '', (string) $r->input('phone'))]);
-        $data = $r->validate(['startsAt' => 'required|date', 'name' => 'required|string|max:120', 'phone' => ['required', 'string', 'regex:/^[0-9]{10,15}$/'], 'email' => 'nullable|email|max:255', 'requestId' => 'required|uuid']);
+        $r->merge(['name' => trim((string) $r->input('name'))]);
+        $data = $r->validate(['startsAt' => 'required|date', 'name' => 'required|string|max:120', 'phone' => ['required', 'string', new BrazilianPhone], 'email' => 'nullable|email|max:255', 'requestId' => 'required|uuid']);
+        $data['phone'] = preg_replace('/\D/', '', $data['phone']);
         $start = Carbon::parse($data['startsAt'])->setTimezone(config('app.timezone'));
         $created = false;
         $booking = DB::transaction(function () use ($s, $token, $availability, $data, $start, &$created) {

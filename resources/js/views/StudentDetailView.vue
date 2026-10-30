@@ -46,27 +46,27 @@
         </section>
 
         <section v-if="student && activeTab === 'profile' && profileSection === 'personal'" class="mt-5 grid gap-5 xl:grid-cols-[1fr_320px]">
-            <form class="panel-card" @submit.prevent="saveProfile">
+            <form id="student-profile-form" class="panel-card" @submit.prevent="saveProfile">
                 <div class="flex items-center justify-between gap-4">
                     <div><h2 class="text-xl font-semibold">Dados pessoais</h2><p class="mt-1 text-sm text-[var(--wn-muted)]">Contato, documentos e endereco do aluno.</p></div>
                     <button class="btn-primary" :disabled="saving">{{ saving ? 'Salvando...' : 'Salvar alteracoes' }}</button>
                 </div>
                 <div class="mt-6 grid gap-4 md:grid-cols-2">
                     <ProfileField label="Nome completo *" v-model="profileForm.nome" required />
-                    <ProfileField label="Telefone *" v-model="profileForm.telefone" required />
+                    <ProfileField label="Telefone *" v-model="profileForm.telefone" type="tel" mask="phone" required />
                     <ProfileField label="E-mail" v-model="profileForm.email" type="email" />
                     <ProfileField label="Data de nascimento" v-model="profileForm.data_nascimento" type="date" />
-                    <ProfileField label="CPF" v-model="profileForm.cpf" /><ProfileField label="RG" v-model="profileForm.rg" />
-                    <ProfileField label="Profissao" v-model="profileForm.profissao" /><ProfileField label="Genero" v-model="profileForm.genero" />
-                    <ProfileField label="Endereco" v-model="profileForm.endereco" /><ProfileField label="Numero" v-model="profileForm.numero" />
+                    <ProfileField label="CPF" v-model="profileForm.cpf" mask="cpf" /><ProfileField label="RG" v-model="profileForm.rg" maxlength="30" />
+                    <ProfileField label="Profissao" v-model="profileForm.profissao" /><ProfileField label="Genero" v-model="profileForm.genero" maxlength="30" />
+                    <ProfileField label="Endereco" v-model="profileForm.endereco" /><ProfileField label="Numero" v-model="profileForm.numero" maxlength="20" />
                     <ProfileField label="Complemento" v-model="profileForm.complemento" /><ProfileField label="Bairro" v-model="profileForm.bairro" />
-                    <ProfileField label="Cidade" v-model="profileForm.cidade" /><ProfileField label="Estado" v-model="profileForm.estado" maxlength="2" />
-                    <ProfileField label="CEP" v-model="profileForm.cep" />
+                    <ProfileField label="Cidade" v-model="profileForm.cidade" /><ProfileField label="Estado" v-model="profileForm.estado" mask="uf" maxlength="2" />
+                    <ProfileField label="CEP" v-model="profileForm.cep" mask="cep" />
                     <label class="block text-sm font-medium">Modalidade de acompanhamento<select v-model="profileForm.modalidade" class="form-control mt-2"><option value="">Não informado</option><option v-for="option in studentModalities" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
                 </div>
             </form>
             <aside class="space-y-5">
-                <section class="panel-card"><h2 class="text-lg font-semibold">Contato de emergencia</h2><div class="mt-4 space-y-4"><ProfileField label="Nome do contato" v-model="profileForm.contato_emergencia" /><ProfileField label="Telefone" v-model="profileForm.telefone_emergencia" /></div></section>
+                <section class="panel-card"><h2 class="text-lg font-semibold">Contato de emergencia</h2><div class="mt-4 space-y-4"><ProfileField label="Nome do contato" v-model="profileForm.contato_emergencia" form="student-profile-form" /><ProfileField label="Telefone" v-model="profileForm.telefone_emergencia" form="student-profile-form" type="tel" mask="phone" /></div></section>
                 <section class="panel-card bg-[var(--wn-primary-soft)]"><h2 class="font-semibold">Preencha aos poucos</h2><p class="mt-2 text-sm leading-6 text-[var(--wn-muted)]">Os campos complementares ajudam no atendimento, mas nao bloqueiam a matricula.</p></section>
             </aside>
         </section>
@@ -78,7 +78,7 @@
                     <button class="btn-primary justify-center" :disabled="saving">{{ saving ? 'Salvando...' : 'Salvar saude' }}</button>
                 </div>
                 <div class="mt-6 grid gap-4 md:grid-cols-3">
-                    <ProfileField label="Objetivo principal" v-model="healthForm.objetivo" /><div class="text-sm"><p class="text-[var(--wn-muted)]">Peso de referência</p><strong>{{ student.health.weight ?? 'Não informado' }}<template v-if="student.health.weight"> kg</template></strong></div><div class="text-sm"><p class="text-[var(--wn-muted)]">Altura de referência</p><strong>{{ student.health.height ?? 'Não informado' }}<template v-if="student.health.height"> cm</template></strong></div>
+                    <ProfileField label="Objetivo principal" v-model="healthForm.objetivo" maxlength="80" /><div class="text-sm"><p class="text-[var(--wn-muted)]">Peso de referência</p><strong>{{ student.health.weight ?? 'Não informado' }}<template v-if="student.health.weight"> kg</template></strong></div><div class="text-sm"><p class="text-[var(--wn-muted)]">Altura de referência</p><strong>{{ student.health.height ?? 'Não informado' }}<template v-if="student.health.height"> cm</template></strong></div>
                     <p class="md:col-span-3 text-xs text-[var(--wn-muted)]">Peso e altura usam a medida mais recente registrada em Avaliação física. Na ausência de medida, preservamos o valor do cadastro anterior, sem criar histórico.</p>
                     <TextField label="Restricoes medicas" v-model="healthForm.restricoes_medicas" /><TextField label="Lesoes ou limitacoes" v-model="healthForm.lesoes" /><TextField label="Medicamentos" v-model="healthForm.medicamentos" />
                     <div class="md:col-span-3"><TextField label="Observacoes do acompanhamento" v-model="healthForm.observacoes" /></div>
@@ -296,7 +296,8 @@
 </template>
 
 <script setup>
-import { defineComponent, h, onMounted, reactive, ref } from 'vue';
+import { defineComponent, h, onMounted, reactive, ref, withDirectives } from 'vue';
+import { inputMask } from '../forms/inputMasks';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { ArrowLeft, CheckCircle2, Copy, Dumbbell, ExternalLink, Library, Mail, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Plus, ReceiptText, Send, X } from 'lucide-vue-next';
 
@@ -324,11 +325,11 @@ const MiniKpi = defineComponent({
 });
 
 const ProfileField = defineComponent({
-    props: { label: String, modelValue: [String, Number], type: { type: String, default: 'text' }, required: Boolean, maxlength: [String, Number] },
+    props: { label: String, modelValue: [String, Number], type: { type: String, default: 'text' }, mask: String, form: String, maxlength: { type: [String, Number], default: 255 }, required: Boolean },
     emits: ['update:modelValue'],
     setup: (props, { emit }) => () => h('label', { class: 'block space-y-2' }, [
         h('span', { class: 'text-sm font-medium text-[var(--wn-muted)]' }, props.label),
-        h('input', { value: props.modelValue ?? '', type: props.type, required: props.required, maxlength: props.maxlength, class: 'form-control', onInput: (event) => emit('update:modelValue', event.target.value) }),
+        withDirectives(h('input', { value: props.modelValue ?? '', type: props.type, required: props.required, form: props.form, maxlength: props.maxlength, max: props.type === 'date' && props.label.includes('nascimento') ? new Date().toLocaleDateString('sv-SE') : undefined, class: 'form-control', onInput: (event) => emit('update:modelValue', event.target.value) }), props.mask ? [[inputMask, props.mask]] : []),
     ]),
 });
 
@@ -337,7 +338,7 @@ const TextField = defineComponent({
     emits: ['update:modelValue'],
     setup: (props, { emit }) => () => h('label', { class: 'block space-y-2' }, [
         h('span', { class: 'text-sm font-medium text-[var(--wn-muted)]' }, props.label),
-        h('textarea', { value: props.modelValue ?? '', rows: 5, class: 'form-control', onInput: (event) => emit('update:modelValue', event.target.value) }),
+        h('textarea', { value: props.modelValue ?? '', rows: 5, maxlength: 5000, class: 'form-control', onInput: (event) => emit('update:modelValue', event.target.value) }),
     ]),
 });
 
