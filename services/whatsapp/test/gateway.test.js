@@ -13,7 +13,7 @@ async function fixture(t, adapter, database = ':memory:') {
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
   t.after(() => new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }));
-  return (data = message, auth = token) => fetch(`http://127.0.0.1:${server.address().port}/welcome`, {
+  return (data = message, auth = token, path = '/welcome') => fetch(`http://127.0.0.1:${server.address().port}${path}`, {
     method: 'POST', headers: { authorization: `Bearer ${auth}` }, body: JSON.stringify(data),
   });
 }
@@ -24,6 +24,18 @@ test('auth and validation prevent sending', async t => {
   assert.equal((await send({ ...message, to: '123' })).status, 422);
   assert.equal((await send({ ...message, key: 'charge:1:2' })).status, 422);
   assert.equal(calls, 0);
+});
+test('staff alerts use their own endpoint and deduplicate each event', async t => {
+  let calls = 0;
+  const send = await fixture(t, { ready: () => true, send: async () => { calls++; return 'staff-id'; } });
+  const alert = { ...message, key: 'staff:1:workout_completed:7' };
+  assert.equal((await send(alert)).status, 422);
+  assert.equal((await send(message, token, '/staff-notifications')).status, 422);
+  assert.equal((await send(alert, token, '/staff-notifications')).status, 200);
+  assert.equal((await send(alert, token, '/staff-notifications')).status, 200);
+  assert.equal(calls, 1);
+  assert.equal((await send({ ...alert, key: 'staff:1:charge:7' }, token, '/staff-notifications')).status, 422);
+  assert.equal((await send({ ...alert, key: 'staff:1:workout_plan_expired:8' }, token, '/staff-notifications')).status, 200);
 });
 test('same key sends once and conflicting content is rejected', async t => {
   let calls = 0;
@@ -42,7 +54,6 @@ test('disconnection is retryable without reserving a send', async t => {
 });
 test('uncertain send is never retried, including across restart', async t => {
   const directory = mkdtempSync(join(tmpdir(), 'wnfit-wa-'));
-  t.after(() => rmSync(directory, { recursive: true, force: true }));
   let calls = 0;
   const database = join(directory, 'sends.sqlite');
   const send = await fixture(t, { ready: () => true, send: async () => { calls++; throw new Error('connection lost'); } }, database);
@@ -50,6 +61,8 @@ test('uncertain send is never retried, including across restart', async t => {
   const restarted = await fixture(t, { ready: () => true, send: async () => { calls++; return 'duplicate'; } }, database);
   assert.equal((await restarted()).status, 409);
   assert.equal(calls, 1);
+  // Close both SQLite connections before removing their files on Windows.
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
 });
 test('concurrent request for same key cannot duplicate', async t => {
   let release;
