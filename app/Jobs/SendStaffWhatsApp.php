@@ -31,6 +31,11 @@ class SendStaffWhatsApp implements ShouldQueue
         if (! $delivery || $delivery->status !== 'pending') {
             return;
         }
+        if (str_contains($delivery->event_key, ':workout_plan_expired:') && now()->lt(today()->setHour(6))) {
+            $this->release(now()->diffInSeconds(today()->setHour(6)));
+
+            return;
+        }
         $url = config('services.messaging.baileys.url');
         $token = config('services.messaging.baileys.token');
         if ($service->recipient($delivery->organizacao_id) !== $delivery->recipient || ! $url || ! $token ||

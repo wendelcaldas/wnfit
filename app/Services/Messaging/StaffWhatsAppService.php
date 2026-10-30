@@ -13,7 +13,14 @@ class StaffWhatsAppService
     public function recipient(int $organizationId): ?string
     {
         $targets = config('services.messaging.staff_whatsapp.targets', []);
-        $phone = is_array($targets) ? ($targets[$organizationId] ?? null) : null;
+        if (! is_array($targets) || empty($targets[$organizationId])) {
+            return null;
+        }
+        $phone = preg_replace('/\D/', '', (string) Organizacao::whereKey($organizationId)->value('telefone_contato'));
+        if (strlen($phone) === 10 || strlen($phone) === 11) {
+            $phone = '55'.$phone;
+        }
+        $phone = '+'.$phone;
 
         return is_string($phone) && preg_match('/^\+55[1-9]\d{9,10}$/', $phone) ? $phone : null;
     }
@@ -58,7 +65,10 @@ class StaffWhatsAppService
             'recipient' => $phone, 'body' => "WNFit · {$organization->nome_fantasia}\n{$text}\nVer no sistema: {$url}",
         ]);
         if ($delivery->wasRecentlyCreated) {
-            SendStaffWhatsApp::dispatch($delivery->id)->onConnection('database')->onQueue('whatsapp')->afterCommit();
+            $job = SendStaffWhatsApp::dispatch($delivery->id)->onConnection('database')->onQueue('whatsapp')->afterCommit();
+            if ($notification->type === 'workout_plan_expired' && now()->lt(today()->setHour(6))) {
+                $job->delay(today()->setHour(6));
+            }
         }
     }
 }
