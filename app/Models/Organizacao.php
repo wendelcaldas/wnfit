@@ -40,7 +40,7 @@ class Organizacao extends Model
     {
         return $this->belongsToMany(User::class, 'organizacao_usuario')
             ->using(OrganizacaoUsuario::class)
-            ->withPivot(['papel', 'status'])
+            ->withPivot(['papel', 'status', 'telefone'])
             ->withTimestamps();
     }
 

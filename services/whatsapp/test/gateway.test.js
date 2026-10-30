@@ -35,7 +35,7 @@ test('staff alerts use their own endpoint and deduplicate each event', async t =
   assert.equal((await send(alert, token, '/staff-notifications')).status, 200);
   assert.equal(calls, 1);
   assert.equal((await send({ ...alert, key: 'staff:1:charge:7' }, token, '/staff-notifications')).status, 422);
-  assert.equal((await send({ ...alert, key: 'staff:1:workout_plan_expired:8' }, token, '/staff-notifications')).status, 200);
+  assert.equal((await send({ ...alert, key: 'staff:1:workout_plan_expired:8' }, token, '/staff-notifications')).status, 422);
 });
 test('same key sends once and conflicting content is rejected', async t => {
   let calls = 0;

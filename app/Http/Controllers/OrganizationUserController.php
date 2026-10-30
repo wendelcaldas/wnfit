@@ -17,8 +17,7 @@ class OrganizationUserController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
 
         return response()->json([
-            'contact' => ['phone' => $organization->telefone_contato],
-            'canManageContact' => $organization->ativa && $organization->pivot->status === 'ativo'
+            'canManage' => $organization->ativa && $organization->pivot->status === 'ativo'
                 && in_array($organization->pivot->papel, ['proprietario', 'administrador'], true),
             'users' => $organization->usuarios()
                 ->orderBy('name')
@@ -43,6 +42,7 @@ class OrganizationUserController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
             'role' => ['required', Rule::in(['administrador', 'professor', 'atendimento'])],
+            'phone' => ['nullable', 'string', 'max:30', 'regex:/\A\+?[0-9\s().-]+\z/'],
         ], [
             'email.unique' => 'Ja existe um usuario com este e-mail.',
             'password.min' => 'A senha inicial deve ter pelo menos 8 caracteres.',
@@ -58,6 +58,7 @@ class OrganizationUserController extends Controller
             $organization->usuarios()->attach($user->id, [
                 'papel' => $data['role'],
                 'status' => 'ativo',
+                'telefone' => $this->phone($data['phone'] ?? null),
             ]);
 
             return $user;
@@ -66,23 +67,6 @@ class OrganizationUserController extends Controller
         return response()->json([
             'user' => $this->payload($organization->usuarios()->findOrFail($user->id)),
         ], 201);
-    }
-
-    public function updateContact(Request $request): JsonResponse
-    {
-        $organization = $request->user()->organizacoes()->where('organizacoes.ativa', true)
-            ->wherePivot('status', 'ativo')->firstOrFail();
-        abort_unless(in_array($organization->pivot->papel, ['proprietario', 'administrador'], true), 403);
-        $data = $request->validate([
-            'phone' => ['present', 'nullable', 'string', 'max:30', 'regex:/\A\+?[0-9\s().-]+\z/'],
-        ], ['phone.regex' => 'Informe um telefone válido com DDD.']);
-        $digits = preg_replace('/\D/', '', $data['phone'] ?? '');
-        if ($digits !== '' && ! preg_match('/\A(?:55)?[1-9][0-9]{9,10}\z/', $digits)) {
-            throw ValidationException::withMessages(['phone' => 'Informe um telefone válido com DDD.']);
-        }
-        $organization->update(['telefone_contato' => $digits ?: null]);
-
-        return response()->json(['contact' => ['phone' => $organization->telefone_contato]]);
     }
 
     public function update(Request $request, User $user): JsonResponse
@@ -98,6 +82,9 @@ class OrganizationUserController extends Controller
         }
 
         $data = $request->validate([
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:30', 'regex:/\A\+?[0-9\s().-]+\z/'],
             'role' => ['sometimes', Rule::in(['administrador', 'professor', 'atendimento'])],
             'status' => ['sometimes', Rule::in(['ativo', 'inativo'])],
         ]);
@@ -106,10 +93,25 @@ class OrganizationUserController extends Controller
             return response()->json(['message' => 'Voce nao pode inativar o proprio acesso.'], 422);
         }
 
-        $organization->usuarios()->updateExistingPivot($user->id, array_filter([
-            'papel' => $data['role'] ?? null,
-            'status' => $data['status'] ?? null,
-        ]));
+        $identity = array_intersect_key($data, array_flip(['name', 'email']));
+        $changedIdentity = array_filter($identity, fn ($value, $key) => $value !== $user->$key, ARRAY_FILTER_USE_BOTH);
+        if ($changedIdentity && ! $request->user()->is($user) && $user->organizacoes()->count() > 1) {
+            throw ValidationException::withMessages(['name' => 'Esta conta é compartilhada entre ambientes. O próprio usuário deve alterar nome e e-mail.']);
+        }
+        DB::transaction(function () use ($organization, $user, $data, $identity, $currentRole) {
+            $user->update($identity);
+            $pivot = array_filter([
+                'papel' => $data['role'] ?? null,
+                'status' => $data['status'] ?? null,
+            ]);
+            if (array_key_exists('phone', $data)) {
+                $pivot['telefone'] = $this->phone($data['phone']);
+                if ($currentRole === 'proprietario') {
+                    $organization->update(['telefone_contato' => $pivot['telefone']]);
+                }
+            }
+            $organization->usuarios()->updateExistingPivot($user->id, $pivot);
+        });
 
         return response()->json(['user' => $this->payload($organization->usuarios()->findOrFail($user->id))]);
     }
@@ -119,7 +121,29 @@ class OrganizationUserController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
         $role = $organization->usuarios()->whereKey($request->user()->id)->first()?->pivot?->papel;
 
-        abort_unless(in_array($role, ['proprietario', 'administrador'], true), 403);
+        abort_unless($organization->ativa && $organization->pivot->status === 'ativo'
+            && in_array($role, ['proprietario', 'administrador'], true), 403);
+    }
+
+    public function destroy(Request $request, User $user): JsonResponse
+    {
+        $organization = $request->user()->organizacoes()->firstOrFail();
+        $this->ensureManager($request);
+        $member = $organization->usuarios()->findOrFail($user->id);
+        abort_if($request->user()->is($user) || $member->pivot->papel === 'proprietario', 422, 'O proprietário e o próprio acesso não podem ser excluídos.');
+        $organization->usuarios()->detach($user->id);
+
+        return response()->json(['ok' => true]);
+    }
+
+    private function phone(?string $value): ?string
+    {
+        $digits = preg_replace('/\D/', '', $value ?? '');
+        if ($digits !== '' && ! preg_match('/\A(?:55)?[1-9][0-9]{9,10}\z/', $digits)) {
+            throw ValidationException::withMessages(['phone' => 'Informe um telefone válido com DDD.']);
+        }
+
+        return $digits ?: null;
     }
 
     private function payload(User $user): array
@@ -131,6 +155,7 @@ class OrganizationUserController extends Controller
             'initials' => collect(explode(' ', $user->name))->filter()->take(2)->map(fn ($part) => mb_substr($part, 0, 1))->implode(''),
             'role' => $user->pivot?->papel,
             'status' => $user->pivot?->status,
+            'phone' => $user->pivot?->telefone,
         ];
     }
 }

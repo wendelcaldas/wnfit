@@ -3,11 +3,13 @@
 ## Piloto de avisos ao gestor
 
 O canal de avisos do gestor é independente das boas-vindas. Ao criar uma notificação
-`workout_completed` ou `workout_plan_expired` para um proprietário/administrador ativo,
+`workout_completed` para um proprietário/administrador ativo,
 o sistema registra um envio em `staff_whatsapp_deliveries` e o enfileira em `whatsapp`.
-O piloto é habilitado por organização. O destinatário é o `telefone_contato` da
-organização, informado no cadastro e editável em Configurações → Usuários por gestores
-ativos. Telefone vazio desativa os avisos. Alterações cancelam envios pendentes para
+O piloto é habilitado por organização. O destinatário é o telefone do proprietário
+ativo, editável na linha dele em Configurações → Usuários → Equipe cadastrada.
+O cadastro inicial preenche esse telefone e a migration preserva o contato existente.
+Os telefones da equipe são salvos por vínculo com o ambiente. Editar o telefone do
+proprietário também atualiza o contato do ambiente. Telefone vazio desativa os avisos. Alterações cancelam envios pendentes para
 o número anterior; os próximos eventos usam o novo contato.
 
 ```env
@@ -17,13 +19,11 @@ WHATSAPP_STAFF_SINCE=2026-10-30T18:00:00-03:00
 
 Configurar os mesmos valores na aplicação e no worker, além das variáveis da ponte.
 Implantar primeiro a ponte com o endpoint privado `POST /staff-notifications`, executar
-as migrations e depois ativar o canal. A data de ativação impede envio de fichas que
-já estavam vencidas antes daquele dia. Avisos de "vence hoje" não são enviados por
-este piloto. Não há importação do histórico de notificações nem alteração no canal
-de boas-vindas. A verificação de vencimentos continua às `00:05` no fuso do app,
-mas o job fica disponível para envio somente às `06:00`. O worker também impede
-envios de fichas vencidas antes das 06h, inclusive para tarefas antigas ou repetidas.
-Os avisos de treino concluído continuam imediatos.
+as migrations e depois ativar o canal. Não há importação do histórico de notificações
+nem alteração no canal de boas-vindas. A verificação de vencimentos continua às
+`00:05` somente para os avisos internos do sistema. Não há envio de ficha vencida
+por WhatsApp nem agendamento às 06h. A migration cancela envios antigos pendentes;
+o worker e a ponte também bloqueiam esse tipo. Treinos concluídos continuam imediatos.
 
 Cada evento tem uma chave única por organização, tipo e sessão/ficha, independente
 do número de gestores notificados no painel. A ponte persiste essa chave antes do

@@ -55,7 +55,7 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Organizacao::class, 'organizacao_usuario')
             ->using(OrganizacaoUsuario::class)
-            ->withPivot(['papel', 'status'])
+            ->withPivot(['papel', 'status', 'telefone'])
             ->withTimestamps();
     }
 }

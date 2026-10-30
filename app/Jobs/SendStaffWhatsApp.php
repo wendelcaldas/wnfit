@@ -31,8 +31,8 @@ class SendStaffWhatsApp implements ShouldQueue
         if (! $delivery || $delivery->status !== 'pending') {
             return;
         }
-        if (str_contains($delivery->event_key, ':workout_plan_expired:') && now()->lt(today()->setHour(6))) {
-            $this->release(now()->diffInSeconds(today()->setHour(6)));
+        if (! preg_match('/^staff:\d+:workout_completed:\d+$/', $delivery->event_key)) {
+            $delivery->update(['status' => 'cancelled', 'error' => 'Avisos de ficha por WhatsApp desativados.']);
 
             return;
         }

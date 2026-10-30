@@ -72,11 +72,11 @@ class StaffWhatsAppTest extends TestCase
         Queue::assertNothingPushed();
     }
 
-    public function test_new_expiration_sends_once_and_bridge_uses_persistent_event_key(): void
+    public function test_completion_sends_once_and_bridge_uses_persistent_event_key(): void
     {
         $this->travelTo(today()->setHour(9));
         $attributes = $this->fixture();
-        StaffNotification::create([...$attributes, 'type' => 'workout_plan_expired', 'data' => [...$attributes['data'], 'endsOn' => today()->toDateString()]]);
+        StaffNotification::create($attributes);
         $delivery = StaffWhatsAppDelivery::firstOrFail();
         Http::fake(['bridge/*' => Http::response(['id' => 'wa-123'])]);
         $job = new SendStaffWhatsApp($delivery->id);
@@ -116,21 +116,24 @@ class StaffWhatsAppTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_midnight_expiration_is_delayed_until_six_but_completion_is_immediate(): void
+    public function test_expiration_stays_in_system_and_old_queued_expiration_is_cancelled(): void
     {
         $this->travelTo(today()->setTime(0, 5));
         $attributes = $this->fixture();
         StaffNotification::create([...$attributes, 'type' => 'workout_plan_expired', 'data' => [...$attributes['data'], 'endsOn' => today()->toDateString()]]);
-        Queue::assertPushed(SendStaffWhatsApp::class, fn ($job) => $job->delay?->equalTo(today()->setHour(6)));
-        $delivery = StaffWhatsAppDelivery::firstOrFail();
-        Http::fake(['bridge/*' => Http::response(['id' => 'morning-id'])]);
+        $this->assertDatabaseCount('staff_notifications', 1);
+        $this->assertDatabaseCount('staff_whatsapp_deliveries', 0);
+        Queue::assertNothingPushed();
+        $notification = StaffNotification::firstOrFail();
+        $delivery = StaffWhatsAppDelivery::create(['organizacao_id' => $notification->organizacao_id,
+            'staff_notification_id' => $notification->id, 'event_key' => 'staff:'.$notification->organizacao_id.':workout_plan_expired:1',
+            'recipient' => '+5571996651964', 'body' => 'Aviso antigo']);
+        Http::fake();
         (new SendStaffWhatsApp($delivery->id))->handle(app(StaffWhatsAppService::class));
+        $this->assertSame('cancelled', $delivery->fresh()->status);
         Http::assertNothingSent();
         StaffNotification::create($attributes);
         Queue::assertPushed(SendStaffWhatsApp::class, fn ($job) => $job->delay === null);
-        $this->travelTo(today()->setHour(6));
-        (new SendStaffWhatsApp($delivery->id))->handle(app(StaffWhatsAppService::class));
-        Http::assertSentCount(1);
     }
 
     public function test_contact_changes_affect_future_messages_and_cancel_old_destination(): void
