@@ -38,6 +38,10 @@ return [
     'messaging' => [
         'mode' => env('MESSAGING_MODE', 'manual'),
         'welcome_driver' => env('WHATSAPP_WELCOME_DRIVER', 'default'),
+        'staff_whatsapp' => [
+            'targets' => json_decode(env('WHATSAPP_STAFF_TARGETS', '{}'), true) ?: [],
+            'since' => env('WHATSAPP_STAFF_SINCE'),
+        ],
         'baileys' => [
             'url' => env('WHATSAPP_BRIDGE_URL'),
             'token' => env('WHATSAPP_BRIDGE_TOKEN'),

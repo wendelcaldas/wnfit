@@ -23,7 +23,7 @@ export function createGateway({ token, database, adapter }) {
     }
     if (req.method === 'GET' && req.url === '/pairing') return reply(200, { connected: adapter.ready(), qr: adapter.pairing?.() || null });
     if (req.method === 'GET' && req.url === '/health') return reply(adapter.ready() ? 200 : 503, { connected: adapter.ready() });
-    if (req.method !== 'POST' || req.url !== '/welcome') return reply(404, { error: 'not_found' });
+    if (req.method !== 'POST' || !['/welcome', '/staff-notifications'].includes(req.url)) return reply(404, { error: 'not_found' });
     try {
       let raw = '';
       for await (const chunk of req) {
@@ -33,7 +33,10 @@ export function createGateway({ token, database, adapter }) {
       let data;
       try { data = JSON.parse(raw); } catch { return reply(400, { error: 'invalid_json' }); }
       const { key, to, body } = data || {};
-      if (typeof key !== 'string' || !/^(?:welcome:\d+:\d+|welcome-test:\d+:[A-Za-z0-9_-]+)$/.test(key) || key.length > 100 ||
+      const keyPattern = req.url === '/staff-notifications'
+        ? /^staff:\d+:(?:workout_completed|workout_plan_expired):\d+$/
+        : /^(?:welcome:\d+:\d+|welcome-test:\d+:[A-Za-z0-9_-]+)$/;
+      if (typeof key !== 'string' || !keyPattern.test(key) || key.length > 100 ||
           typeof to !== 'string' || !/^\+55[1-9]\d{9,10}$/.test(to) ||
           typeof body !== 'string' || !body.trim() || body.length > 2000) return reply(422, { error: 'invalid_welcome' });
       const fingerprint = digest(`${to}\n${body}`).toString('hex');

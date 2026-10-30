@@ -1,5 +1,32 @@
 # Boas-vindas automáticas — piloto Baileys
 
+## Piloto de avisos ao gestor
+
+O canal de avisos do gestor é independente das boas-vindas. Ao criar uma notificação
+`workout_completed` ou `workout_plan_expired` para um proprietário/administrador ativo,
+o sistema registra um envio em `staff_whatsapp_deliveries` e o enfileira em `whatsapp`.
+O destinatário do piloto é explícito por organização, sem usar o telefone de outro studio:
+
+```env
+WHATSAPP_STAFF_TARGETS='{"ID_DO_STUDIO":"+55DDDNUMERO"}'
+WHATSAPP_STAFF_SINCE=2026-10-30T18:00:00-03:00
+```
+
+Configurar os mesmos valores na aplicação e no worker, além das variáveis da ponte.
+Implantar primeiro a ponte com o endpoint privado `POST /staff-notifications`, executar
+as migrations e depois ativar o canal. A data de ativação impede envio de fichas que
+já estavam vencidas antes daquele dia. Avisos de "vence hoje" não são enviados por
+este piloto. Não há importação do histórico de notificações nem alteração no canal
+de boas-vindas. O vencimento usa o agendamento existente de `00:05` no fuso do app.
+
+Cada evento tem uma chave única por organização, tipo e sessão/ficha, independente
+do número de gestores notificados no painel. A ponte persiste essa chave antes do
+envio. Desconexão/ocupação permite nova tentativa; resultado ambíguo fica `uncertain`
+para conferência, sem reenvio cego. `sent` indica aceitação com ID, não entrega.
+Os recibos continuam consultáveis em `GET /messages/{id}`. Para desativar, definir
+`WHATSAPP_STAFF_TARGETS={}` na aplicação e no worker e reiniciar ambos. Jobs pendentes
+revalidam o destinatário e a organização ativa antes de enviar.
+
 O novo aluno cadastrado em `POST /api/students` recebe o texto de boas-vindas configurado em Comunicacoes. O envio usa o numero WNFit vinculado ao servico Node.js. Nao ha navegador, Twilio, disparo retroativo nem cobranca automatica. Participantes criados por outros fluxos nao disparam esta mensagem.
 
 Baileys e uma integracao nao oficial, com risco de desconexao, quebra de compatibilidade e restricao do numero. A dependencia esta fixada em 7.0.0-rc14; testar antes de atualizar.

@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Events\StaffNotificationChanged;
 use App\Models\StaffNotification;
+use App\Services\Messaging\StaffWhatsAppService;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -12,6 +13,7 @@ class StaffNotificationObserver
     public function created(StaffNotification $notification): void
     {
         $this->publish($notification, 'created');
+        app(StaffWhatsAppService::class)->enqueue($notification);
     }
 
     public function updated(StaffNotification $notification): void
