@@ -68,7 +68,7 @@
                                     autocomplete="name"
                                     class="form-control mt-2" /></label
                             ><label class="mt-4 block text-sm font-semibold"
-                                >Telefone com DDD<input
+                                >Telefone com DDD<input v-input-mask="'phone'"
                                     v-model.trim="phone"
                                     required
                                     type="tel"

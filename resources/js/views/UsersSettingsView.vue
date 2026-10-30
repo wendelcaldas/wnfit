@@ -30,7 +30,7 @@
                 <form class="mt-5 space-y-4" @submit.prevent="createUser">
                     <label class="block space-y-2"><span class="text-sm font-medium">Nome completo</span><input v-model="form.name" class="form-control" required maxlength="255" /></label>
                     <label class="block space-y-2"><span class="text-sm font-medium">E-mail</span><input v-model="form.email" class="form-control" type="email" required maxlength="255" /></label>
-                    <label class="block space-y-2"><span class="text-sm font-medium">Telefone com DDD</span><input v-model="form.phone" class="form-control" type="tel" maxlength="30" placeholder="(71) 99999-9999" /></label>
+                    <label class="block space-y-2"><span class="text-sm font-medium">Telefone com DDD</span><input v-input-mask="'phone'" v-model="form.phone" class="form-control" type="tel" maxlength="30" placeholder="(71) 99999-9999" /></label>
                     <label class="block space-y-2"><span class="text-sm font-medium">Função</span><select v-model="form.role" class="form-control"><option value="professor">Professor</option><option value="administrador">Administrador</option><option value="atendimento">Atendimento</option></select></label>
                     <label class="block space-y-2"><span class="text-sm font-medium">Senha inicial</span><input v-model="form.password" class="form-control" type="password" minlength="8" required autocomplete="new-password" /></label>
                     <button class="btn-primary w-full justify-center" :disabled="saving">{{ saving ? 'Salvando...' : 'Cadastrar usuário' }}</button>
@@ -42,7 +42,7 @@
                 <h2 id="edit-team-title" class="text-lg font-semibold">Editar integrante</h2>
                 <label class="block space-y-2"><span class="text-sm font-medium">Nome completo</span><input v-model="editForm.name" class="form-control" required maxlength="255" /></label>
                 <label class="block space-y-2"><span class="text-sm font-medium">E-mail</span><input v-model="editForm.email" class="form-control" type="email" required maxlength="255" /></label>
-                <label class="block space-y-2"><span class="text-sm font-medium">Telefone com DDD</span><input ref="phoneInput" v-model="editForm.phone" class="form-control" type="tel" maxlength="30" placeholder="(71) 99999-9999" /></label>
+                <label class="block space-y-2"><span class="text-sm font-medium">Telefone com DDD</span><input v-input-mask="'phone'" ref="phoneInput" v-model="editForm.phone" class="form-control" type="tel" maxlength="30" placeholder="(71) 99999-9999" /></label>
                 <p v-if="editing.role === 'proprietario'" class="text-xs text-[var(--wn-muted)]">Este telefone recebe os avisos de treino concluído quando o WhatsApp está habilitado para o ambiente.</p>
                 <label class="block space-y-2"><span class="text-sm font-medium">Função</span><select v-model="editForm.role" class="form-control" :disabled="editing.role === 'proprietario'"><option value="proprietario" disabled>Proprietário</option><option value="administrador">Administrador</option><option value="professor">Professor</option><option value="atendimento">Atendimento</option></select></label>
                 <label class="block space-y-2"><span class="text-sm font-medium">Status</span><select v-model="editForm.status" class="form-control" :disabled="editing.id === auth.user?.id"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></label>

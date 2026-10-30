@@ -58,7 +58,7 @@
                             :error="fieldError('nome')"
                             placeholder="Ex.: Hipertrofia ABC"
                         /><Field
-                            label="Objetivo"
+                            label="Objetivo" maxlength="80"
                             v-model="form.objetivo"
                             :error="fieldError('objetivo')"
                         />
@@ -158,11 +158,11 @@
                 <section v-if="currentDay" class="panel-card !p-5">
                     <div class="grid gap-4 sm:grid-cols-2">
                         <Field
-                            label="Nome da divisão"
+                            label="Nome da divisão" maxlength="100"
                             v-model="currentDay.name"
                             :error="fieldError(`days.${activeDay}.name`)"
                         /><Field
-                            label="Foco muscular"
+                            label="Foco muscular" maxlength="120"
                             v-model="currentDay.focus"
                             placeholder="Ex.: Peito e tríceps"
                         />
@@ -269,12 +269,12 @@
                                     v-model="e.sets"
                                     :error="exerciseError(i, 'sets')"
                                 /><Field
-                                    label="Repetições"
+                                    label="Repetições" maxlength="30"
                                     v-model="e.repetitions"
                                     placeholder="8–12"
                                     :error="exerciseError(i, 'repetitions')"
                                 /><Field
-                                    label="Carga prescrita"
+                                    label="Carga prescrita" maxlength="50"
                                     v-model="e.load"
                                     placeholder="Ex.: 20 kg"
                                     :error="exerciseError(i, 'load')"
@@ -577,6 +577,7 @@ const Field = defineComponent({
         modelValue: [String, Number],
         type: { type: String, default: "text" },
         placeholder: String,
+        maxlength: { type: [String, Number], default: 255 },
         error: String,
         min: String,
         max: String,
@@ -591,6 +592,7 @@ const Field = defineComponent({
                     value: p.modelValue ?? "",
                     type: p.type,
                     placeholder: p.placeholder,
+                    maxlength: p.maxlength,
                     min: p.min,
                     max: p.max,
                     class: `form-control mt-2 ${p.error ? "!border-rose-400" : ""}`,

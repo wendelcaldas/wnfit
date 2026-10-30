@@ -25,7 +25,7 @@
                             <label for="teacher-email">E-mail</label>
                             <div class="input-shell">
                                 <Mail class="h-5 w-5 text-[var(--wn-muted)]" />
-                                <input id="teacher-email" v-model="form.email" type="email" placeholder="Digite seu e-mail" class="auth-input" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+                                <input maxlength="255" id="teacher-email" v-model="form.email" type="email" placeholder="Digite seu e-mail" class="auth-input" autocomplete="username" autocapitalize="none" spellcheck="false" required />
                             </div>
                         </div>
 

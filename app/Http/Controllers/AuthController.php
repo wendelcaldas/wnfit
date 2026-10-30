@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Organizacao;
 use App\Models\Plano;
 use App\Models\User;
+use App\Rules\BrazilianPhone;
 use App\Services\OrganizationUnitService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -99,13 +100,12 @@ class AuthController extends Controller
             'onboarding_profile.team' => ['required_with:onboarding_profile', 'string', 'in:solo,team'],
             'onboarding_profile.priorities' => ['required_with:onboarding_profile', 'array', 'min:1', 'max:3'],
             'onboarding_profile.priorities.*' => ['required', 'string', 'distinct', 'in:workouts,schedule,finance,progress,events'],
-            'phone' => ['nullable', 'string', 'regex:/\A[0-9]{10,15}\z/'],
+            'phone' => ['nullable', 'string', new BrazilianPhone],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'terms' => ['accepted'],
         ], [
             'name.min' => 'Informe seu nome com pelo menos dois caracteres.',
             'company.min' => 'Informe um nome com pelo menos dois caracteres.',
-            'phone.regex' => 'Informe de 10 a 15 números, incluindo o DDD.',
             'phone.string' => 'Informe o telefone como uma sequência de números.',
             'name.required' => 'Informe seu nome completo.',
             'email.required' => 'Informe seu e-mail.',

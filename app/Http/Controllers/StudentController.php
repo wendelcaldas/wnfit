@@ -9,9 +9,11 @@ use App\Models\StudentPhysicalAssessment;
 use App\Models\StudentWorkoutPlan;
 use App\Models\StudentWorkoutSession;
 use App\Models\Treino;
+use App\Rules\BrazilianPhone;
 use App\Services\BillingService;
 use App\Services\EventBillingService;
 use App\Services\Messaging\MessagingService;
+use App\Services\OrganizationUnitService;
 use App\Services\StudentAccessService;
 use App\Services\WorkoutPublishingService;
 use Illuminate\Http\JsonResponse;
@@ -20,6 +22,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class StudentController extends Controller
 {
@@ -105,6 +108,9 @@ class StudentController extends Controller
     public function store(Request $request): JsonResponse
     {
         $organization = $request->user()->organizacoes()->firstOrFail();
+        if (is_string($request->input('estado'))) {
+            $request->merge(['estado' => strtoupper($request->input('estado'))]);
+        }
         $data = $request->validate($this->validationRules());
         $this->messaging->normalizeBrazilianPhone($data['telefone']);
 
@@ -113,19 +119,19 @@ class StudentController extends Controller
             $plan = isset($data['plan_id'])
                 ? Plano::where('organizacao_id', $organization->id)->where('ativo', true)->findOrFail($data['plan_id'])
                 : Plano::query()->firstOrCreate(
-                ['organizacao_id' => $organization->id, 'nome' => $data['plano']],
-                [
-                    'valor_mensal' => $data['valor_mensal'] ?? 120,
-                    'ciclo' => 'mensal',
-                    'ativo' => true,
-                ],
-            );
+                    ['organizacao_id' => $organization->id, 'nome' => $data['plano']],
+                    [
+                        'valor_mensal' => $data['valor_mensal'] ?? 120,
+                        'ciclo' => 'mensal',
+                        'ativo' => true,
+                    ],
+                );
 
             if (! $plan->ativo) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['plan_id' => 'Selecione um plano ativo para cadastrar o aluno.']);
+                throw ValidationException::withMessages(['plan_id' => 'Selecione um plano ativo para cadastrar o aluno.']);
             }
 
-            $unit = app(\App\Services\OrganizationUnitService::class)->resolve($organization->id, $data);
+            $unit = app(OrganizationUnitService::class)->resolve($organization->id, $data);
             $student = Aluno::query()->create([
                 ...$this->studentPayload($data),
                 'organizacao_id' => $organization->id,
@@ -171,14 +177,18 @@ class StudentController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
         abort_unless($student->organizacao_id === $organization->id, 404);
 
+        if (is_string($request->input('estado'))) {
+            $request->merge(['estado' => strtoupper($request->input('estado'))]);
+        }
         $data = $request->validate($this->profileValidationRules());
         if (isset($data['telefone'])) {
             $this->messaging->normalizeBrazilianPhone($data['telefone']);
         }
         if (array_key_exists('unit_id', $data)) {
-            $unit = app(\App\Services\OrganizationUnitService::class)->resolve($organization->id, $data);
+            $unit = app(OrganizationUnitService::class)->resolve($organization->id, $data);
             unset($data['unit_id']);
-            $data['unidade_id'] = $unit->id; $data['unidade'] = $unit->nome;
+            $data['unidade_id'] = $unit->id;
+            $data['unidade'] = $unit->nome;
         }
         $student->update($data);
 
@@ -233,7 +243,7 @@ class StudentController extends Controller
                 ->orderBy('name')
                 ->pluck('name')
                 ->values(),
-            'defaultUnitId' => app(\App\Services\OrganizationUnitService::class)->defaultFor($organization->id)->id,
+            'defaultUnitId' => app(OrganizationUnitService::class)->defaultFor($organization->id)->id,
             'units' => $organization->unidades()->where('ativa', true)->orderByDesc('padrao')->orderBy('nome')->get(['id', 'nome', 'padrao']),
         ]);
     }
@@ -300,7 +310,7 @@ class StudentController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
         abort_unless($charge->organizacao_id === $organization->id, 404);
 
-        $data = $request->validate(['manual' => ['sometimes', 'boolean'], 'telefone' => ['sometimes', 'required', 'string', 'max:30']]);
+        $data = $request->validate(['manual' => ['sometimes', 'boolean'], 'telefone' => ['sometimes', 'required', 'string', 'max:30', new BrazilianPhone]]);
         abort_unless(in_array($charge->status, ['pendente', 'atrasado'], true), 422, 'Esta cobranca nao esta em aberto.');
         if (isset($data['telefone'])) {
             $phone = $this->messaging->normalizeBrazilianPhone($data['telefone']);
@@ -331,10 +341,10 @@ class StudentController extends Controller
             'username' => ['nullable', 'string', 'min:3', 'max:60', 'regex:/^[a-z0-9][a-z0-9._-]+$/', 'unique:student_accounts,username'],
             'nome' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
-            'telefone' => ['required', 'string', 'max:20'],
-            'data_nascimento' => ['nullable', 'date'],
+            'telefone' => ['required', 'string', 'max:20', new BrazilianPhone],
+            'data_nascimento' => ['nullable', 'date', 'before_or_equal:today'],
             'genero' => ['nullable', 'string', 'max:30'],
-            'cpf' => ['nullable', 'string', 'max:20'],
+            'cpf' => ['nullable', 'string', 'max:20', 'regex:/\A(?:[0-9]{11}|[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2})\z/'],
             'rg' => ['nullable', 'string', 'max:30'],
             'profissao' => ['nullable', 'string', 'max:255'],
             'endereco' => ['nullable', 'string', 'max:255'],
@@ -342,16 +352,16 @@ class StudentController extends Controller
             'complemento' => ['nullable', 'string', 'max:255'],
             'bairro' => ['nullable', 'string', 'max:255'],
             'cidade' => ['nullable', 'string', 'max:255'],
-            'estado' => ['nullable', 'string', 'max:2'],
-            'cep' => ['nullable', 'string', 'max:20'],
-            'peso' => ['nullable', 'numeric'],
-            'altura' => ['nullable', 'integer'],
+            'estado' => ['nullable', 'string', 'max:2', Rule::in(explode(' ', 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'))],
+            'cep' => ['nullable', 'string', 'max:20', 'regex:/\A[0-9]{5}-?[0-9]{3}\z/'],
+            'peso' => ['nullable', 'numeric', 'gt:0', 'max:500'],
+            'altura' => ['nullable', 'integer', 'gt:0', 'max:300'],
             'objetivo' => ['nullable', 'string', 'max:80'],
             'treinador' => ['nullable', 'string', 'max:80'],
             'unidade' => ['nullable', 'string', 'max:255'],
             'unit_id' => ['nullable', 'integer', Rule::exists('unidades', 'id')->where('organizacao_id', request()->user()->organizacoes()->firstOrFail()->id)->where('ativa', true)],
             'como_conheceu' => ['nullable', 'string', 'max:255'],
-            'observacoes' => ['nullable', 'string'],
+            'observacoes' => ['nullable', 'string', 'max:5000'],
             'plan_id' => ['nullable', 'integer', Rule::exists('planos', 'id')->where('organizacao_id', request()->user()->organizacoes()->firstOrFail()->id)->where('ativo', true)],
             'plano' => ['required_without:plan_id', 'nullable', 'string', 'max:80'],
             'status' => ['required', 'string', 'max:30'],
@@ -359,7 +369,7 @@ class StudentController extends Controller
             'data_vencimento' => ['required', 'date'],
             'auto_renovacao' => ['sometimes', 'boolean'],
             'metodo_pagamento' => ['nullable', 'string', 'max:30'],
-            'valor_mensal' => ['nullable', 'numeric'],
+            'valor_mensal' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
         ];
     }
 
@@ -370,12 +380,12 @@ class StudentController extends Controller
             'modalidade' => ['sometimes', 'nullable', Rule::in(array_keys(Aluno::MODALIDADES))],
             'nome' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'nullable', 'email', 'max:255'],
-            'telefone' => ['sometimes', 'required', 'string', 'max:20'],
+            'telefone' => ['sometimes', 'required', 'string', 'max:20', new BrazilianPhone],
             'contato_emergencia' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'telefone_emergencia' => ['sometimes', 'nullable', 'string', 'max:20'],
-            'data_nascimento' => ['sometimes', 'nullable', 'date'],
+            'telefone_emergencia' => ['sometimes', 'nullable', 'string', 'max:20', new BrazilianPhone],
+            'data_nascimento' => ['sometimes', 'nullable', 'date', 'before_or_equal:today'],
             'genero' => ['sometimes', 'nullable', 'string', 'max:30'],
-            'cpf' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'cpf' => ['sometimes', 'nullable', 'string', 'max:20', 'regex:/\A(?:[0-9]{11}|[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2})\z/'],
             'rg' => ['sometimes', 'nullable', 'string', 'max:30'],
             'profissao' => ['sometimes', 'nullable', 'string', 'max:255'],
             'endereco' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -383,15 +393,15 @@ class StudentController extends Controller
             'complemento' => ['sometimes', 'nullable', 'string', 'max:255'],
             'bairro' => ['sometimes', 'nullable', 'string', 'max:255'],
             'cidade' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'estado' => ['sometimes', 'nullable', 'string', 'max:2'],
-            'cep' => ['sometimes', 'nullable', 'string', 'max:20'],
-            'peso' => ['sometimes', 'nullable', 'numeric'],
-            'altura' => ['sometimes', 'nullable', 'integer'],
+            'estado' => ['sometimes', 'nullable', 'string', 'max:2', Rule::in(explode(' ', 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'))],
+            'cep' => ['sometimes', 'nullable', 'string', 'max:20', 'regex:/\A[0-9]{5}-?[0-9]{3}\z/'],
+            'peso' => ['sometimes', 'nullable', 'numeric', 'gt:0', 'max:500'],
+            'altura' => ['sometimes', 'nullable', 'integer', 'gt:0', 'max:300'],
             'objetivo' => ['sometimes', 'nullable', 'string', 'max:80'],
-            'restricoes_medicas' => ['sometimes', 'nullable', 'string'],
-            'lesoes' => ['sometimes', 'nullable', 'string'],
-            'medicamentos' => ['sometimes', 'nullable', 'string'],
-            'observacoes' => ['sometimes', 'nullable', 'string'],
+            'restricoes_medicas' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'lesoes' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'medicamentos' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'observacoes' => ['sometimes', 'nullable', 'string', 'max:5000'],
         ];
     }
 

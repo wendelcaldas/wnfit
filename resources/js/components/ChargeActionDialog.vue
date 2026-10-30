@@ -9,7 +9,7 @@
                 <p v-if="loading" class="mt-5 text-sm">Preparando a mensagem padrão…</p>
                 <form v-else-if="needsPhone" class="mt-5" @submit.prevent="prepare(true)">
                     <p class="text-sm text-[var(--wn-muted)]">Informe o número usado pelo aluno no WhatsApp. Ele será salvo no cadastro para os próximos contatos.</p>
-                    <label class="mt-4 block text-sm font-semibold">Telefone com DDD<input ref="phoneInput" v-model="phone" type="tel" autocomplete="tel" required maxlength="30" placeholder="(71) 99999-9999" class="form-control mt-2" :disabled="busy" /></label>
+                    <label class="mt-4 block text-sm font-semibold">Telefone com DDD<input v-input-mask="'phone'" ref="phoneInput" v-model="phone" type="tel" autocomplete="tel" required maxlength="30" placeholder="(71) 99999-9999" class="form-control mt-2" :disabled="busy" /></label>
                     <button class="btn-primary mt-4" :disabled="busy || !phone.trim()">Salvar telefone e continuar</button>
                 </form>
                 <button v-else-if="!message" class="btn-secondary mt-4" @click="prepare">Tentar novamente</button>

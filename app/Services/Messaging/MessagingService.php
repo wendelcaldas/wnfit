@@ -8,6 +8,7 @@ use App\Models\Cobranca;
 use App\Models\Mensagem;
 use App\Models\MensagemConfiguracao;
 use App\Models\Organizacao;
+use App\Rules\BrazilianPhone;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -402,6 +403,9 @@ class MessagingService
 
     public function normalizeBrazilianPhone(?string $phone): string
     {
+        if (! BrazilianPhone::valid($phone)) {
+            throw ValidationException::withMessages(['telefone' => 'Informe um telefone válido com DDD.']);
+        }
         $digits = preg_replace('/\D+/', '', $phone ?? '') ?: '';
 
         if (in_array(strlen($digits), [12, 13], true) && str_starts_with($digits, '55')) {

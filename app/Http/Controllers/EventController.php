@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Aluno;
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Rules\BrazilianPhone;
 use App\Services\EventAccess;
 use App\Services\EventBillingService;
 use App\Services\EventRegistrationService;
@@ -34,7 +35,7 @@ class EventController extends Controller
     public function addParticipant(Request $request, Event $event)
     {
         EventAccess::staff($request, $event);
-        $data = $request->validate(['request_id' => 'required_without:student_id|uuid', 'allow_shared_phone' => 'sometimes|boolean', 'student_id' => 'nullable|integer', 'name' => 'required_without:student_id|string|min:2|max:120', 'phone' => 'nullable|string|max:30', 'paid' => 'sometimes|boolean', 'method' => 'required_if:paid,true|in:PIX,Crédito,Débito,Dinheiro,Transferência,Boleto', 'paid_at' => 'required_if:paid,true|date|before_or_equal:today']);
+        $data = $request->validate(['request_id' => 'required_without:student_id|uuid', 'allow_shared_phone' => 'sometimes|boolean', 'student_id' => 'nullable|integer', 'name' => 'required_without:student_id|string|min:2|max:120', 'phone' => ['nullable', 'string', new BrazilianPhone], 'paid' => 'sometimes|boolean', 'method' => 'required_if:paid,true|in:PIX,Crédito,Débito,Dinheiro,Transferência,Boleto', 'paid_at' => 'required_if:paid,true|date|before_or_equal:today']);
         if (! empty($data['phone'])) {
             $data['phone'] = app(MessagingService::class)->normalizeBrazilianPhone($data['phone']);
         }
@@ -92,7 +93,7 @@ class EventController extends Controller
             'instructions' => 'nullable|string|max:3000', 'after_content' => 'nullable|string|max:3000',
             'starts_at' => 'required|date', 'ends_at' => 'required|date|after:starts_at',
             'checkin_opens_at' => 'required|date|before_or_equal:ends_at',
-            'capacity' => 'nullable|integer|min:1', 'status' => 'required|in:draft,published,cancelled',
+            'capacity' => 'nullable|integer|min:1|max:4294967295', 'status' => 'required|in:draft,published,cancelled',
         ]);
 
         foreach (['starts_at', 'ends_at', 'checkin_opens_at'] as $field) {

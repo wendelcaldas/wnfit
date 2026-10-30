@@ -71,7 +71,7 @@
                                     <UserRound class="h-5 w-5 text-[var(--wn-muted)]" />
                                     <input
                                         v-model.trim="form.name"
-                                        name="name"
+                                        name="name" maxlength="255"
                                         minlength="2"
                                         :aria-invalid="Boolean(fieldErrors.name)"
                                         :aria-describedby="fieldErrors.name ? 'error-name' : undefined"
@@ -79,7 +79,7 @@
                                         placeholder="Seu nome"
                                         class="auth-input"
                                         autocomplete="name"
-                                        maxlength="255"
+
                                         required
                                     />
                                 </div>
@@ -167,7 +167,7 @@
                                     <Building2 class="h-5 w-5 text-[var(--wn-muted)]" />
                                     <input
                                         v-model.trim="form.company"
-                                        name="company"
+                                        name="company" maxlength="255"
                                         minlength="2"
                                         :aria-invalid="Boolean(fieldErrors.company)"
                                         :aria-describedby="fieldErrors.company ? 'error-company' : undefined"
@@ -175,7 +175,7 @@
                                         placeholder="Como seus alunos conhecem você"
                                         class="auth-input"
                                         autocomplete="organization"
-                                        maxlength="255"
+
                                         required
                                     />
                                 </div>
@@ -193,23 +193,20 @@
                                 >
                                 <div class="input-shell">
                                     <Phone class="h-5 w-5 text-[var(--wn-muted)]" />
-                                    <input
+                                    <input v-input-mask="'phone'"
                                         v-model="form.phone"
                                         name="phone"
                                         :aria-invalid="Boolean(fieldErrors.phone)"
                                         :aria-describedby="fieldErrors.phone ? 'phone-help error-phone' : 'phone-help'"
                                         type="tel"
-                                        minlength="10"
                                         inputmode="numeric"
-                                        pattern="[0-9]{10,15}"
-                                        @input="sanitizePhone"
-                                        placeholder="71999991234"
+                                        placeholder="(71) 99999-9999"
                                         class="auth-input"
                                         autocomplete="tel"
                                     />
                                 </div>
                                 <span id="phone-help" class="register-field-help"
-                                    >Somente números, com DDD. De 10 a 15 dígitos.</span
+                                    >Informe o DDD e o telefone. Ex.: (71) 99999-9999.</span
                                 >
                                 <span v-if="fieldErrors.phone" id="error-phone" class="block text-sm text-rose-600">{{
                                     fieldErrors.phone
@@ -392,6 +389,7 @@
 </template>
 
 <script setup>
+import { validPhone } from '../forms/inputMasks';
 import { RouterLink, useRouter } from 'vue-router';
 import { computed, nextTick, reactive, ref } from 'vue';
 import {
@@ -509,11 +507,6 @@ const clearFieldError = (event) => {
     if (field) delete fieldErrors.value[field];
     error.value = '';
 };
-const sanitizePhone = (event) => {
-    const digits = event.target.value.replace(/[^0-9]/g, '').slice(0, 15);
-    form.phone = digits;
-    event.target.value = digits;
-};
 const validateStep = () => {
     const errors = {};
     for (const field of fieldsByStep[step.value]) {
@@ -530,8 +523,8 @@ const validateStep = () => {
                     ? 'Escolha de 1 a 3 prioridades para começar.'
                     : 'Selecione uma opção para continuar.';
     }
-    if (step.value === 7 && form.phone && !/^[0-9]{10,15}$/.test(form.phone))
-        errors.phone = 'Informe de 10 a 15 números, incluindo o DDD.';
+    if (step.value === 7 && form.phone && !validPhone(form.phone))
+        errors.phone = 'Informe um telefone válido com DDD.';
     if (step.value === 2 && Array.from(form.password).length < 8)
         errors.password = 'A senha deve ter pelo menos 8 caracteres.';
     if (step.value === 2 && form.password !== form.password_confirmation)

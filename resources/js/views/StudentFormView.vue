@@ -19,7 +19,7 @@
                     </div>
                     <div class="mt-6 space-y-4">
                         <Field label="Nome completo *" v-model="form.nome" required />
-                        <Field label="Telefone *" v-model="form.telefone" required />
+                        <Field label="Telefone *" v-model="form.telefone" type="tel" mask="phone" required />
                         <Field label="E-mail" v-model="form.email" type="email" />
                         <Field label="Data de nascimento" v-model="form.data_nascimento" type="date" />
                         <div class="rounded-xl bg-[var(--wn-primary-soft)] p-4"><label class="block text-sm font-medium">Usuário do portal<input v-model="form.username" class="form-control mt-2" placeholder="Sugerido pelo nome" minlength="3" maxlength="60" pattern="[a-z0-9][a-z0-9._\-]+" @input="usernameEdited = true" /></label><p class="mt-2 text-xs leading-5 text-[var(--wn-muted)]">A senha provisória será gerada ao salvar. O aluno vai escolher uma nova senha no primeiro acesso.</p></div>
@@ -59,7 +59,8 @@
 </template>
 
 <script setup>
-import { computed, defineComponent, h, onMounted, reactive, ref, watch } from 'vue';
+import { computed, defineComponent, h, onMounted, reactive, ref, watch, withDirectives } from 'vue';
+import { inputMask } from '../forms/inputMasks';
 import { RouterLink, useRouter } from 'vue-router';
 import { CalendarDays, Sparkles, UserRound } from 'lucide-vue-next';
 import AppShell from '../components/AppShell.vue';
@@ -68,11 +69,11 @@ import { useStudentCredentialsStore } from '../stores/studentCredentials';
 const usernameEdited = ref(false);
 
 const Field = defineComponent({
-    props: { label: String, modelValue: [String, Number], type: { type: String, default: 'text' }, required: Boolean },
+    props: { label: String, modelValue: [String, Number], type: { type: String, default: 'text' }, mask: String, maxlength: { type: [String, Number], default: 255 }, required: Boolean },
     emits: ['update:modelValue'],
     setup: (props, { emit }) => () => h('label', { class: 'block space-y-2' }, [
         h('span', { class: 'text-sm font-medium text-[var(--wn-muted)]' }, props.label),
-        h('input', { value: props.modelValue, type: props.type, required: props.required, class: 'form-control', onInput: (event) => emit('update:modelValue', event.target.value) }),
+        withDirectives(h('input', { value: props.modelValue, type: props.type, required: props.required, maxlength: props.maxlength, max: props.type === 'date' && props.label.includes('nascimento') ? new Date().toLocaleDateString('sv-SE') : undefined, class: 'form-control', onInput: (event) => emit('update:modelValue', event.target.value) }), props.mask ? [[inputMask, props.mask]] : []),
     ]),
 });
 

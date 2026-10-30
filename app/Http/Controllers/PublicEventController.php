@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Rules\BrazilianPhone;
 use App\Services\EventFeedbackService;
 use App\Services\EventRegistrationService;
 use App\Services\Messaging\MessagingService;
@@ -51,7 +52,7 @@ class PublicEventController extends Controller
     public function register(Request $request, Event $event, MessagingService $messaging)
     {
         $this->visible($request, $event);
-        $data = $request->validate(['name' => 'required|string|min:2|max:120', 'phone' => 'required|string|max:30', 'privacy' => 'accepted', 'marketing' => 'sometimes|boolean']);
+        $data = $request->validate(['name' => 'required|string|min:2|max:120', 'phone' => ['required', 'string', new BrazilianPhone], 'privacy' => 'accepted', 'marketing' => 'sometimes|boolean']);
         $phone = $messaging->normalizeBrazilianPhone($data['phone']);
         [$participant, $token, $recovery] = app(EventRegistrationService::class)->register($event, null, [...$data, 'phone' => $phone], 'public');
 
