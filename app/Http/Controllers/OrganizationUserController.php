@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class OrganizationUserController extends Controller
 {
@@ -16,6 +17,9 @@ class OrganizationUserController extends Controller
         $organization = $request->user()->organizacoes()->firstOrFail();
 
         return response()->json([
+            'contact' => ['phone' => $organization->telefone_contato],
+            'canManageContact' => $organization->ativa && $organization->pivot->status === 'ativo'
+                && in_array($organization->pivot->papel, ['proprietario', 'administrador'], true),
             'users' => $organization->usuarios()
                 ->orderBy('name')
                 ->get()
@@ -62,6 +66,23 @@ class OrganizationUserController extends Controller
         return response()->json([
             'user' => $this->payload($organization->usuarios()->findOrFail($user->id)),
         ], 201);
+    }
+
+    public function updateContact(Request $request): JsonResponse
+    {
+        $organization = $request->user()->organizacoes()->where('organizacoes.ativa', true)
+            ->wherePivot('status', 'ativo')->firstOrFail();
+        abort_unless(in_array($organization->pivot->papel, ['proprietario', 'administrador'], true), 403);
+        $data = $request->validate([
+            'phone' => ['present', 'nullable', 'string', 'max:30', 'regex:/\A\+?[0-9\s().-]+\z/'],
+        ], ['phone.regex' => 'Informe um telefone válido com DDD.']);
+        $digits = preg_replace('/\D/', '', $data['phone'] ?? '');
+        if ($digits !== '' && ! preg_match('/\A(?:55)?[1-9][0-9]{9,10}\z/', $digits)) {
+            throw ValidationException::withMessages(['phone' => 'Informe um telefone válido com DDD.']);
+        }
+        $organization->update(['telefone_contato' => $digits ?: null]);
+
+        return response()->json(['contact' => ['phone' => $organization->telefone_contato]]);
     }
 
     public function update(Request $request, User $user): JsonResponse

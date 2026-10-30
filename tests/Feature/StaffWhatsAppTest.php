@@ -23,14 +23,14 @@ class StaffWhatsAppTest extends TestCase
     private function fixture(): array
     {
         Queue::fake();
-        $organization = Organizacao::create(['nome_fantasia' => 'Piloto', 'slug' => 'piloto', 'tipo' => 'studio', 'ativa' => true]);
+        $organization = Organizacao::create(['nome_fantasia' => 'Piloto', 'slug' => 'piloto', 'tipo' => 'studio', 'ativa' => true, 'telefone_contato' => '71996651964']);
         $manager = User::factory()->create();
         $organization->usuarios()->attach($manager, ['papel' => 'proprietario', 'status' => 'ativo']);
         $student = Aluno::create(['organizacao_id' => $organization->id, 'nome' => 'Ana', 'status' => 'ativo']);
         $plan = StudentWorkoutPlan::create(['aluno_id' => $student->id, 'snapshot' => [], 'starts_on' => today(), 'ends_on' => today()->addMonth()]);
         $session = StudentWorkoutSession::create(['aluno_id' => $student->id, 'student_workout_plan_id' => $plan->id, 'day_index' => 0, 'snapshot' => [], 'progress' => [], 'started_at' => now()]);
         config([
-            'services.messaging.staff_whatsapp.targets' => [$organization->id => '+5571996651964'],
+            'services.messaging.staff_whatsapp.targets' => [$organization->id => true],
             'services.messaging.staff_whatsapp.since' => now()->subMinute()->toISOString(),
             'services.messaging.baileys.url' => 'http://bridge',
             'services.messaging.baileys.token' => 'test-token',
@@ -74,6 +74,7 @@ class StaffWhatsAppTest extends TestCase
 
     public function test_new_expiration_sends_once_and_bridge_uses_persistent_event_key(): void
     {
+        $this->travelTo(today()->setHour(9));
         $attributes = $this->fixture();
         StaffNotification::create([...$attributes, 'type' => 'workout_plan_expired', 'data' => [...$attributes['data'], 'endsOn' => today()->toDateString()]]);
         $delivery = StaffWhatsAppDelivery::firstOrFail();
@@ -113,5 +114,38 @@ class StaffWhatsAppTest extends TestCase
         (new SendStaffWhatsApp($delivery->id))->handle(app(StaffWhatsAppService::class));
         $this->assertSame('cancelled', $delivery->fresh()->status);
         Http::assertNothingSent();
+    }
+
+    public function test_midnight_expiration_is_delayed_until_six_but_completion_is_immediate(): void
+    {
+        $this->travelTo(today()->setTime(0, 5));
+        $attributes = $this->fixture();
+        StaffNotification::create([...$attributes, 'type' => 'workout_plan_expired', 'data' => [...$attributes['data'], 'endsOn' => today()->toDateString()]]);
+        Queue::assertPushed(SendStaffWhatsApp::class, fn ($job) => $job->delay?->equalTo(today()->setHour(6)));
+        $delivery = StaffWhatsAppDelivery::firstOrFail();
+        Http::fake(['bridge/*' => Http::response(['id' => 'morning-id'])]);
+        (new SendStaffWhatsApp($delivery->id))->handle(app(StaffWhatsAppService::class));
+        Http::assertNothingSent();
+        StaffNotification::create($attributes);
+        Queue::assertPushed(SendStaffWhatsApp::class, fn ($job) => $job->delay === null);
+        $this->travelTo(today()->setHour(6));
+        (new SendStaffWhatsApp($delivery->id))->handle(app(StaffWhatsAppService::class));
+        Http::assertSentCount(1);
+    }
+
+    public function test_contact_changes_affect_future_messages_and_cancel_old_destination(): void
+    {
+        $attributes = $this->fixture();
+        StaffNotification::create($attributes);
+        $delivery = StaffWhatsAppDelivery::firstOrFail();
+        Organizacao::findOrFail($attributes['organizacao_id'])->update(['telefone_contato' => '(71) 99988-7766']);
+        $service = app(StaffWhatsAppService::class);
+        $this->assertSame('+5571999887766', $service->recipient($attributes['organizacao_id']));
+        Http::fake();
+        (new SendStaffWhatsApp($delivery->id))->handle($service);
+        $this->assertSame('cancelled', $delivery->fresh()->status);
+        Http::assertNothingSent();
+        Organizacao::findOrFail($attributes['organizacao_id'])->update(['telefone_contato' => null]);
+        $this->assertNull($service->recipient($attributes['organizacao_id']));
     }
 }
