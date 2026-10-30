@@ -16,7 +16,12 @@ class StaffWhatsAppService
         if (! is_array($targets) || empty($targets[$organizationId])) {
             return null;
         }
-        $phone = preg_replace('/\D/', '', (string) Organizacao::whereKey($organizationId)->value('telefone_contato'));
+        $organization = Organizacao::find($organizationId);
+        $owner = $organization?->usuarios()->wherePivot('papel', 'proprietario')->wherePivot('status', 'ativo')->first();
+        if (! $owner) {
+            return null;
+        }
+        $phone = preg_replace('/\D/', '', (string) ($owner->pivot->telefone ?? $organization->telefone_contato));
         if (strlen($phone) === 10 || strlen($phone) === 11) {
             $phone = '55'.$phone;
         }
@@ -28,7 +33,7 @@ class StaffWhatsAppService
     public function enqueue(StaffNotification $notification): void
     {
         $phone = $this->recipient($notification->organizacao_id);
-        if (! $phone || ! in_array($notification->type, ['workout_completed', 'workout_plan_expired'], true)) {
+        if (! $phone || $notification->type !== 'workout_completed') {
             return;
         }
         $organization = Organizacao::whereKey($notification->organizacao_id)->where('ativa', true)->first();
@@ -42,20 +47,13 @@ class StaffWhatsAppService
         if (! $since || $notification->created_at->lt(Carbon::parse($since))) {
             return;
         }
-        if ($notification->type === 'workout_plan_expired' &&
-            (empty($data['endsOn']) || Carbon::parse($data['endsOn'])->lt(Carbon::parse($since)->startOfDay()))) {
-            return;
-        }
-        $eventId = $notification->type === 'workout_completed'
-            ? $notification->student_workout_session_id : $notification->student_workout_plan_id;
+        $eventId = $notification->student_workout_session_id;
         if (! $eventId) {
             return;
         }
         $student = $data['studentName'] ?? 'Aluno';
         $workout = $data['workoutName'] ?? 'Treino';
-        $text = $notification->type === 'workout_completed'
-            ? "Treino concluído: {$student} finalizou {$workout}."
-            : "Ficha vencida: {$student} — {$workout}. Vigência até ".Carbon::parse($data['endsOn'])->format('d/m/Y').'.';
+        $text = "Treino concluído: {$student} finalizou {$workout}.";
         // Build our own path; notification data cannot inject an external link.
         $url = rtrim(config('app.url'), '/').'/alunos/'.(int) ($data['studentId'] ?? 0).'?tab=workouts';
         $delivery = StaffWhatsAppDelivery::firstOrCreate([
@@ -65,10 +63,7 @@ class StaffWhatsAppService
             'recipient' => $phone, 'body' => "WNFit · {$organization->nome_fantasia}\n{$text}\nVer no sistema: {$url}",
         ]);
         if ($delivery->wasRecentlyCreated) {
-            $job = SendStaffWhatsApp::dispatch($delivery->id)->onConnection('database')->onQueue('whatsapp')->afterCommit();
-            if ($notification->type === 'workout_plan_expired' && now()->lt(today()->setHour(6))) {
-                $job->delay(today()->setHour(6));
-            }
+            SendStaffWhatsApp::dispatch($delivery->id)->onConnection('database')->onQueue('whatsapp')->afterCommit();
         }
     }
 }

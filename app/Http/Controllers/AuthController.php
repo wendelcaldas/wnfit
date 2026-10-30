@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Organizacao;
 use App\Models\Plano;
 use App\Models\User;
+use App\Services\OrganizationUnitService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -135,10 +136,11 @@ class AuthController extends Controller
                 'telefone_contato' => $data['phone'] ?? null,
             ]);
 
-            app(\App\Services\OrganizationUnitService::class)->defaultFor($organization->id);
+            app(OrganizationUnitService::class)->defaultFor($organization->id);
 
             $organization->usuarios()->attach($user->id, [
                 'papel' => 'proprietario',
+                'telefone' => $data['phone'] ?? null,
                 'status' => 'ativo',
             ]);
 

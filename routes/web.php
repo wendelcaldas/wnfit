@@ -130,9 +130,9 @@ Route::prefix('api')->group(function () {
         Route::post('/organization/plans', [\App\Http\Controllers\OrganizationPlanController::class, 'save']);
         Route::put('/organization/plans/{plan}', [\App\Http\Controllers\OrganizationPlanController::class, 'save']);
         Route::get('/organization/users', [OrganizationUserController::class, 'index']);
-        Route::patch('/organization/contact', [OrganizationUserController::class, 'updateContact']);
         Route::post('/organization/users', [OrganizationUserController::class, 'store']);
         Route::patch('/organization/users/{user}', [OrganizationUserController::class, 'update']);
+        Route::delete('/organization/users/{user}', [OrganizationUserController::class, 'destroy']);
         Route::get('/organization/messaging', [OrganizationMessagingController::class, 'show']);
         Route::get('/organization/messaging/twilio-templates', [OrganizationMessagingController::class, 'twilioTemplates']);
         Route::patch('/organization/messaging', [OrganizationMessagingController::class, 'update']);

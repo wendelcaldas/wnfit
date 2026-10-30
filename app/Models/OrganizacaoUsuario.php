@@ -18,5 +18,6 @@ class OrganizacaoUsuario extends Pivot
         'user_id',
         'papel',
         'status',
+        'telefone',
     ];
 }

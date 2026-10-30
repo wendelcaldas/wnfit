@@ -34,7 +34,7 @@ export function createGateway({ token, database, adapter }) {
       try { data = JSON.parse(raw); } catch { return reply(400, { error: 'invalid_json' }); }
       const { key, to, body } = data || {};
       const keyPattern = req.url === '/staff-notifications'
-        ? /^staff:\d+:(?:workout_completed|workout_plan_expired):\d+$/
+        ? /^staff:\d+:workout_completed:\d+$/
         : /^(?:welcome:\d+:\d+|welcome-test:\d+:[A-Za-z0-9_-]+)$/;
       if (typeof key !== 'string' || !keyPattern.test(key) || key.length > 100 ||
           typeof to !== 'string' || !/^\+55[1-9]\d{9,10}$/.test(to) ||
