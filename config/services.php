@@ -41,6 +41,7 @@ return [
         'staff_whatsapp' => [
             'targets' => json_decode(env('WHATSAPP_STAFF_TARGETS', '{}'), true) ?: [],
             'since' => env('WHATSAPP_STAFF_SINCE'),
+            'multiple_owners' => env('WHATSAPP_STAFF_MULTIPLE_OWNERS', true),
         ],
         'baileys' => [
             'url' => env('WHATSAPP_BRIDGE_URL'),

@@ -31,14 +31,14 @@ class SendStaffWhatsApp implements ShouldQueue
         if (! $delivery || $delivery->status !== 'pending') {
             return;
         }
-        if (! preg_match('/^staff:\d+:workout_completed:\d+$/', $delivery->event_key)) {
+        if (! preg_match('/^staff:\d+:workout_completed:\d+(?::to:[a-f0-9]{16})?$/', $delivery->event_key)) {
             $delivery->update(['status' => 'cancelled', 'error' => 'Avisos de ficha por WhatsApp desativados.']);
 
             return;
         }
         $url = config('services.messaging.baileys.url');
         $token = config('services.messaging.baileys.token');
-        if ($service->recipient($delivery->organizacao_id) !== $delivery->recipient || ! $url || ! $token ||
+        if (! in_array($delivery->recipient, $service->recipients($delivery->organizacao_id), true) || ! $url || ! $token ||
             ! Organizacao::whereKey($delivery->organizacao_id)->where('ativa', true)->exists()) {
             $delivery->update(['status' => 'cancelled', 'error' => 'Piloto desativado ou configuração alterada.']);
 
