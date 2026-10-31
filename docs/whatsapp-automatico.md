@@ -3,18 +3,22 @@
 ## Piloto de avisos ao gestor
 
 O canal de avisos do gestor é independente das boas-vindas. Ao criar uma notificação
-`workout_completed` para um proprietário/administrador ativo,
+`workout_completed` para um proprietário ativo,
 o sistema registra um envio em `staff_whatsapp_deliveries` e o enfileira em `whatsapp`.
-O piloto é habilitado por organização. O destinatário é o telefone do proprietário
-ativo, editável na linha dele em Configurações → Usuários → Equipe cadastrada.
+O piloto é habilitado por organização. Todos os proprietários ativos com telefone
+individual válido recebem a mensagem, nos números editáveis em Configurações →
+Usuários → Equipe cadastrada. Administradores e professores não recebem por este canal.
+Telefones iguais, mesmo com pontuação ou +55 diferentes, recebem uma única mensagem.
+Não há fallback para o contato compartilhado se o telefone individual estiver vazio.
 O cadastro inicial preenche esse telefone e a migration preserva o contato existente.
 Os telefones da equipe são salvos por vínculo com o ambiente. Editar o telefone do
-proprietário também atualiza o contato do ambiente. Telefone vazio desativa os avisos. Alterações cancelam envios pendentes para
+proprietário também atualiza o contato do ambiente. Telefone vazio desativa os avisos para esse proprietário. Alterações cancelam envios pendentes para
 o número anterior; os próximos eventos usam o novo contato.
 
 ```env
 WHATSAPP_STAFF_TARGETS='{"ID_DO_STUDIO":true}'
 WHATSAPP_STAFF_SINCE=2026-10-30T18:00:00-03:00
+WHATSAPP_STAFF_MULTIPLE_OWNERS=true
 ```
 
 Configurar os mesmos valores na aplicação e no worker, além das variáveis da ponte.
@@ -25,13 +29,20 @@ nem alteração no canal de boas-vindas. A verificação de vencimentos continua
 por WhatsApp nem agendamento às 06h. A migration cancela envios antigos pendentes;
 o worker e a ponte também bloqueiam esse tipo. Treinos concluídos continuam imediatos.
 
-Cada evento tem uma chave única por organização, tipo e sessão/ficha, independente
-do número de gestores notificados no painel. A ponte persiste essa chave antes do
+Cada evento tem uma chave única por organização, sessão e telefone normalizado,
+com hash do destinatário no sufixo `:to:`. A ponte persiste essa chave antes do
 envio. Desconexão/ocupação permite nova tentativa; resultado ambíguo fica `uncertain`
 para conferência, sem reenvio cego. `sent` indica aceitação com ID, não entrega.
 Os recibos continuam consultáveis em `GET /messages/{id}`. Para desativar, definir
 `WHATSAPP_STAFF_TARGETS={}` na aplicação e no worker e reiniciar ambos. Jobs pendentes
 revalidam o destinatário e a organização ativa antes de enviar.
+
+Ao atualizar versões antigas, manter `WHATSAPP_STAFF_MULTIPLE_OWNERS=false` na
+aplicação durante o deploy da ponte e do worker. Só ativar após os três serviços
+estarem atualizados: workers e ponte antigos não conhecem o novo sufixo. O modo
+temporário usa a chave antiga e um único destinatário. Reservas antigas são
+preservadas para o mesmo telefone em qualquer estado, evitando duplicação durante
+a transição. A ativação não reprocessa o histórico nem envia mensagens de teste.
 
 O novo aluno cadastrado em `POST /api/students` recebe o texto de boas-vindas configurado em Comunicacoes. O envio usa o numero WNFit vinculado ao servico Node.js. Nao ha navegador, Twilio, disparo retroativo nem cobranca automatica. Participantes criados por outros fluxos nao disparam esta mensagem.
 

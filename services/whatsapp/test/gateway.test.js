@@ -37,6 +37,20 @@ test('staff alerts use their own endpoint and deduplicate each event', async t =
   assert.equal((await send({ ...alert, key: 'staff:1:charge:7' }, token, '/staff-notifications')).status, 422);
   assert.equal((await send({ ...alert, key: 'staff:1:workout_plan_expired:8' }, token, '/staff-notifications')).status, 422);
 });
+test('owner-specific event keys send independently and retries cannot duplicate', async t => {
+  let calls = 0;
+  const send = await fixture(t, { ready: () => true, send: async () => 'id-' + (++calls) });
+  const first = { ...message, key: 'staff:1:workout_completed:7:to:1234567890abcdef' };
+  const second = { ...message, to: '+5511988887777', key: 'staff:1:workout_completed:7:to:abcdef1234567890' };
+  assert.equal((await send(first, token, '/staff-notifications')).status, 200);
+  assert.equal((await send(second, token, '/staff-notifications')).status, 200);
+  assert.equal((await send(first, token, '/staff-notifications')).status, 200);
+  assert.equal((await send(second, token, '/staff-notifications')).status, 200);
+  assert.equal((await send({ ...first, to: second.to }, token, '/staff-notifications')).status, 409);
+  assert.equal((await send({ ...first, key: 'staff:1:workout_plan_expired:7:to:1234567890abcdef' }, token, '/staff-notifications')).status, 422);
+  assert.equal(calls, 2);
+});
+
 test('same key sends once and conflicting content is rejected', async t => {
   let calls = 0;
   const send = await fixture(t, { ready: () => true, send: async () => { calls++; return 'wa-id'; } });
