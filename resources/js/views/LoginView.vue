@@ -2,7 +2,7 @@
     <div class="student-login-page teacher-portal-login auth-login-ui">
             <section class="student-login-story">
                 <div class="flex items-center gap-3">
-                    <span class="brand-emblem">W</span>
+                    <img :src="'/icons/wnfit-symbol.svg'" alt="" class="h-10 w-10 shrink-0 object-contain">
                     <strong class="font-display text-2xl">WNFit</strong>
                 </div>
                 <div class="student-login-message">
