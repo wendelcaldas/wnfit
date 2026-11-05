@@ -7,9 +7,7 @@
                 <div class="register-topbar flex items-center justify-between gap-4">
                     <div class="auth-wordmark auth-wordmark-small">
                         <div class="flex items-center gap-3">
-                            <div class="brand-emblem">
-                                <span>W</span>
-                            </div>
+                            <img :src="'/icons/wnfit-symbol-forest.svg'" alt="" class="h-10 w-10 shrink-0 object-contain">
                             <p>WN<span>Fit</span></p>
                         </div>
                     </div>

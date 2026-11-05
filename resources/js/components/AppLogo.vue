@@ -1,8 +1,6 @@
 <template>
     <div class="flex items-center gap-3">
-        <div class="brand-emblem">
-            <span>W</span>
-        </div>
+        <img :src="brandIcon" alt="" class="h-12 w-12 shrink-0 object-contain" :class="{ 'rounded-xl': !dark }">
         <div>
             <p :class="titleClass">WN<span class="text-[var(--wn-primary-strong)]">Fit</span></p>
             <p :class="subtitleClass">{{ subtitle }}</p>
@@ -21,6 +19,8 @@ const props = defineProps({
         default: 'Gestao que move resultados.',
     },
 });
+
+const brandIcon = props.dark ? '/icons/wnfit-symbol.svg' : '/icons/wnfit.svg';
 
 const titleClass = props.dark
     ? 'font-display text-[2rem] font-bold leading-none text-white'

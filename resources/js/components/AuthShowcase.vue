@@ -1,6 +1,6 @@
 <template>
     <section class="student-login-story">
-        <div class="flex items-center gap-3"><span class="brand-emblem">W</span><strong class="font-display text-2xl">WNFit</strong></div>
+        <div class="flex items-center gap-3"><img :src="'/icons/wnfit-symbol.svg'" alt="" class="h-10 w-10 shrink-0 object-contain"><strong class="font-display text-2xl">WNFit</strong></div>
         <div class="student-login-message">
             <span class="student-overline">SEU ESPAÇO DE GESTÃO</span>
             <h2 class="mt-5 font-display font-bold leading-tight">Seu estúdio. Uma nova <span class="student-brand-accent">experiência.</span></h2>

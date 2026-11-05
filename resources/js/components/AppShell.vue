@@ -4,7 +4,7 @@
 
         <div class="dashboard-main min-h-screen lg:pl-[292px]">
             <header class="dashboard-topbar"><div class="dashboard-container px-4 py-3 sm:px-6 xl:px-8"><div class="flex items-start justify-between gap-4"><div class="min-w-0 flex-1"><p class="text-xs font-semibold text-[var(--wn-primary-strong)]">{{ eyebrow }}</p><h1 class="mt-0.5 truncate text-xl font-bold text-[var(--wn-ink)] sm:text-2xl">{{ title }}</h1><p v-if="description" class="mt-0.5 hidden max-w-2xl truncate text-sm text-[var(--wn-muted)] sm:block">{{ description }}</p></div>
-                        <div class="flex shrink-0 items-start gap-3"><div v-if="$slots['page-actions']" class="hidden items-center gap-3 md:flex"><slot name="page-actions" /></div><NotificationBell /><HeaderAccount /></div></div><div v-if="$slots['page-actions']" class="mt-3 border-t border-[var(--wn-line)] pt-3 md:hidden"><slot name="page-actions" /></div></div></header>
+                        <div class="flex shrink-0 items-start gap-3"><div v-if="$slots['page-actions']" class="hidden items-center gap-3 md:flex"><slot name="page-actions" /></div><a href="/ajuda" class="header-support-link" aria-label="Central de suporte" title="Central de suporte"><CircleHelp :size="21" aria-hidden="true" /></a><NotificationBell /><HeaderAccount /></div></div><div v-if="$slots['page-actions']" class="mt-3 border-t border-[var(--wn-line)] pt-3 md:hidden"><slot name="page-actions" /></div></div></header>
 
             <main class="dashboard-content px-4 py-5 sm:px-6 xl:px-8"><div class="dashboard-container"><slot /></div></main>
             <nav class="mobile-tabbar lg:hidden"><RouterLink v-for="item in mobileNavigation" :key="item.label" :to="item.to" class="mobile-tabbar-item" :class="isActive(item) ? 'mobile-tabbar-item-active' : ''"><component :is="item.icon" class="h-5 w-5" /><span>{{ item.label }}</span></RouterLink></nav>
@@ -14,6 +14,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import { CircleHelp } from 'lucide-vue-next';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 
 import AppLogo from './AppLogo.vue';
@@ -29,3 +30,9 @@ const mobileNavigation = computed(() => appNavigation.filter((item) => ['Painel'
 const isActive = (item) => item.activePaths ? item.activePaths.includes(currentPath.value) : item.to !== '#' && currentPath.value.startsWith(item.to);
 const handleLogout = async () => { await auth.logout(); router.push('/entrar'); };
 </script>
+
+<style scoped>
+.header-support-link { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; color: var(--wn-muted); }
+.header-support-link:hover { background: var(--wn-neutral-soft); color: var(--wn-ink); }
+.header-support-link:focus-visible { outline: 2px solid var(--wn-primary-strong); outline-offset: 3px; }
+</style>
