@@ -71,9 +71,11 @@ Objetivo: o produto não pode errar com quem chega pelos anúncios, e cada cadas
 - **FUN-02 · Landing no `/`, Pixel e UTMs** — o `/` ainda redireciona para `/entrar`.
   - Aceite: `/` serve a landing. UTMs gravadas na organização no cadastro. Pixel Meta na landing e no cadastro, com banner de cookies.
 - **ATV-01 · Esconder Eventos e Comunicações do menu** — evita sinal de produto incompleto.
-  - Aceite: itens fora da navegação. Eventos continua acessível para organizações com o módulo ativo.
-- **ALU-00 · Validar portal do aluno em produção** — roteiro no celular real: login, troca de senha, ficha, sessão, retomada, histórico.
+  - Aceite: itens fora da navegação da gestão e da barra inferior do portal do aluno. Eventos continua acessível para organizações com o módulo ativo.
+- **ALU-00 · Validar portal do aluno em produção** — o fluxo básico já foi testado localmente em 07/11. Falta, no celular real: concluir um treino, histórico, retomada, sinal fraco/modo avião, instalação como PWA e eventos.
   - Aceite: roteiro executado em Android e iPhone e bugs registrados como cards.
+- **ALU-05 · Primeiro acesso sem atrito + erro de login claro** — a troca de senha pede de novo a provisória, e o erro de login é genérico.
+  - Aceite: nova senha + confirmação apenas. Mensagens distintas para credencial inválida e falha de servidor. Testes.
 - **OPS-01 · Suíte e build verdes no `main`** — o último registro é de 17/10.
   - Aceite: `php artisan test` e `npm run build` passando, resultado registrado. Se possível, CI rodando os dois a cada PR.
 
@@ -99,6 +101,12 @@ Objetivo: cobrar pelo produto e encurtar o caminho até o primeiro aluno treinan
   - Aceite: área restrita ao time WNFit, com auditoria das ações.
 - **ALU-01 · Convite do aluno por link mágico** — o professor envia o link pelo WhatsApp e o aluno entra sem usuário e senha provisória. Login por telefone + código como alternativa.
   - Aceite: link de uso único com expiração. Login por senha mantido para quem já usa.
+- **ALU-06 · Modo foco na execução do treino** — barra inferior oculta na sessão, "Finalizar" secundário até concluir as séries, "Encerrar" num menu, colunas alinhadas e diálogos do app no lugar de `window.confirm`.
+  - Aceite: validado em 375px.
+- **ALU-07 · Última carga usada no exercício** — "Última vez: 12 kg × 10 (dd/mm)" e campos pré-preenchidos com a última carga (editáveis).
+  - Aceite: só sessões do próprio aluno; sem histórico, nada aparece. Base do ALU-02.
+- **ALU-08 · Ficha do aluno: divisões sem quebra e miniatura do exercício** — cards A/B/C sem quebrar palavras e miniatura da ilustração na ficha e na execução.
+  - Aceite: validado em 320 e 375px.
 - **ATV-02 · Dados de exemplo e estados vazios úteis** — conta nova não deve ver gráficos zerados.
   - Aceite: opção "explorar com dados de exemplo" (removível com 1 clique). Cada tela vazia mostra o próximo passo.
 - **ATV-03 · Onboarding por tipo de negócio** — ampliar o perfil do checklist (`onboarding/profile.js`) para personal, studio, box, corrida, luta e esportes de areia.
