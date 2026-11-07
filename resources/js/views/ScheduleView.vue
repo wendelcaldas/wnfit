@@ -305,7 +305,7 @@ const loadError = ref('');
 const dayScroll = ref(null);
 const hours = Array.from({ length: 24 }, (_, index) => index);
 const selectedDate = ref(linkedDate && !Number.isNaN(linkedDate.getTime()) ? linkedDate : new Date());
-const view = ref('day');
+const view = ref('week');
 const events = ref([]);
 const instructors = ref([]);
 const students = ref([]);
