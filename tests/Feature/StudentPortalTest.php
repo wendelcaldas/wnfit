@@ -154,7 +154,15 @@ class StudentPortalTest extends TestCase
             ->assertJsonPath('student.recentActivity.6.completedSessions', 1)
             ->json('student.recentActivity');
         $this->assertSame(1, array_sum(array_column($activity, 'completedSessions')));
-        StudentWorkoutSession::findOrFail($id)->update(['finished_at' => now()->subDays(7)]);
+        $completed = StudentWorkoutSession::findOrFail($id);
+        $secondCompletion = $completed->replicate();
+        $secondCompletion->save();
+        $this->getJson('/api/dashboard')->assertOk()->assertJsonPath('chart.6.value', 1);
+
+        $completed->update(['finished_at' => today()->subDays(6)]);
+        $secondCompletion->update(['finished_at' => today()->subDays(7)->endOfDay()]);
+        $dashboard = $this->getJson('/api/dashboard')->assertOk()->assertJsonCount(7, 'chart')->json('chart');
+        $this->assertSame([1, 0, 0, 0, 0, 0, 0], array_column($dashboard, 'value'));
         $this->actingAs($owner)->getJson("/api/students/{$student->id}")
             ->assertJsonPath('student.recentActivity.6.completedSessions', 0);
         $this->actingAs($owner)->getJson('/api/students')->assertOk()->assertJsonPath('students.0.lastWorkout', StudentWorkoutSession::findOrFail($id)->finished_at->format('d/m/Y H:i'));
