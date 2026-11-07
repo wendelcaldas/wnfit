@@ -40,6 +40,8 @@ class DashboardController extends Controller
 
     public function __invoke(Request $request): JsonResponse
     {
+        $filters = $request->validate(['days' => ['sometimes', 'integer', 'in:7,15,30']]);
+        $days = (int) ($filters['days'] ?? 7);
         $organization = $request->user()->organizacoes()->firstOrFail();
         $organizationId = $organization->id;
         $today = Carbon::today();
@@ -75,7 +77,7 @@ class DashboardController extends Controller
                 ['label' => 'Aulas hoje', 'value' => (string) $todayClasses, 'caption' => $this->nextClassCaption($organizationId, $today), 'badge' => 'Agenda', 'type' => 'classes'],
                 ['label' => 'Reservas hoje', 'value' => (string) $todayReservations, 'caption' => 'Inscrições confirmadas nas aulas de hoje', 'badge' => 'Agenda', 'type' => 'reservations'],
             ],
-            'chart' => $this->studentsWithCompletedWorkoutsByDay($organizationId, $today),
+            'chart' => $this->studentsWithCompletedWorkoutsByDay($organizationId, $today, $days),
             'classes' => $this->upcomingClasses($organizationId, $today),
             'clients' => $this->recentClients($organizationId),
             'organization' => [
@@ -84,9 +86,9 @@ class DashboardController extends Controller
         ]);
     }
 
-    private function studentsWithCompletedWorkoutsByDay(int $organizationId, Carbon $today): array
+    private function studentsWithCompletedWorkoutsByDay(int $organizationId, Carbon $today, int $days): array
     {
-        $start = $today->copy()->subDays(6)->startOfDay();
+        $start = $today->copy()->subDays($days - 1)->startOfDay();
         $end = $today->copy()->addDay()->startOfDay();
 
         $rows = StudentWorkoutSession::query()
@@ -99,7 +101,7 @@ class DashboardController extends Controller
             ->groupBy('day')
             ->pluck('total', 'day');
 
-        return collect(range(0, 6))->map(function (int $offset) use ($start, $rows) {
+        return collect(range(0, $days - 1))->map(function (int $offset) use ($start, $rows) {
             $date = $start->copy()->addDays($offset);
 
             return [

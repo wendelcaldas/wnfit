@@ -18,37 +18,52 @@
         </section>
 
         <section class="dashboard-calendar-row mt-6 grid gap-4">
-            <article class="panel-card min-w-0">
+            <article class="panel-card min-w-0" aria-labelledby="attendance-heading">
                 <div class="flex items-center justify-between gap-4">
                     <div>
-                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Frequência dos alunos</h2>
-                        <p class="mt-2 text-sm text-[var(--wn-muted)]">Visão de atividade e frequência recente dos alunos.</p>
+                        <h2 id="attendance-heading" class="text-xl font-semibold text-[var(--wn-ink)]">Frequência dos alunos</h2>
+                        <p class="mt-2 text-sm text-[var(--wn-muted)]">Alunos que concluíram pelo menos um treino por dia.</p>
                     </div>
-                    <button class="btn-secondary">7 dias</button>
+                    <select v-model.number="chartDays" class="attendance-period" aria-label="Período da frequência">
+                        <option :value="7">7 dias</option>
+                        <option :value="15">15 dias</option>
+                        <option :value="30">30 dias</option>
+                    </select>
                 </div>
 
-                <div class="mt-8">
-                    <div class="dashboard-line-chart">
-                        <div class="absolute inset-x-0 top-0 flex flex-col gap-[2.35rem]">
-                            <div v-for="line in 5" :key="line" class="border-t border-[var(--wn-line)]"></div>
+                <p v-if="chartLoading || chartError" class="attendance-status" role="status">
+                    {{ chartLoading ? 'Carregando frequência…' : 'Não foi possível carregar a frequência.' }}
+                </p>
+                <div v-else-if="chart.length" class="attendance-chart" :class="{ 'attendance-chart-dense': chart.length > 7 }">
+                    <div class="attendance-guides" aria-hidden="true">
+                        <div v-for="(tick, index) in chartTicks" :key="tick" class="attendance-guide" :style="{ bottom: `${index * 25}%` }">
+                            <span>{{ tick }}</span>
                         </div>
-
-                        <svg viewBox="0 0 600 220" preserveAspectRatio="none" class="absolute inset-0 h-full w-full">
+                        <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="attendance-trend">
                             <defs>
-                                <linearGradient id="checkinArea" x1="0" x2="0" y1="0" y2="1">
-                                    <stop offset="0%" stop-color="#8fd400" stop-opacity="0.35" />
-                                    <stop offset="100%" stop-color="#8fd400" stop-opacity="0" />
+                                <linearGradient id="attendance-fill" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="var(--wn-primary)" stop-opacity=".25" />
+                                    <stop offset="100%" stop-color="var(--wn-primary)" stop-opacity="0" />
                                 </linearGradient>
                             </defs>
-                            <polygon :points="chartAreaPoints" fill="url(#checkinArea)" />
-                            <polyline :points="chartLinePoints" fill="none" stroke="#5aa400" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-                            <circle v-for="point in chartSvgPoints" :key="point.label" :cx="point.x" :cy="point.y" r="5" fill="#5aa400" />
+                            <path :d="chartAreaPath" fill="url(#attendance-fill)" />
+                            <path :d="chartLinePath" fill="none" stroke="var(--wn-primary-strong)" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke" />
                         </svg>
-
-                        <div class="absolute inset-x-0 bottom-0 grid" :style="{ gridTemplateColumns: `repeat(${chart.length}, minmax(0, 1fr))` }">
-                            <span v-for="point in chart" :key="point.day" class="text-center text-xs font-medium text-[var(--wn-muted)]">{{ point.day }}</span>
-                        </div>
                     </div>
+
+                    <ol class="attendance-days" :style="{ gridTemplateColumns: `repeat(${chart.length}, minmax(0, 1fr))` }" role="list">
+                        <li v-for="(point, index) in chart" :key="point.day" class="attendance-day" :aria-current="index === chart.length - 1 ? 'date' : undefined" :title="`${point.day}: ${point.value} ${point.value === 1 ? 'aluno' : 'alunos'}`">
+                            <div class="attendance-plot">
+                                <div class="attendance-point" :style="{ bottom: `${point.value / chartMax * 100}%` }">
+                                    <span :class="chartLabels.has(index) ? 'attendance-value' : 'sr-only'">{{ point.value }}<span class="sr-only"> {{ point.value === 1 ? 'aluno' : 'alunos' }}</span></span>
+                                </div>
+                            </div>
+                            <span :class="chartLabels.has(index) ? 'attendance-date' : 'sr-only'">
+                                <template v-if="index === chart.length - 1">Hoje<span class="sr-only">, {{ point.day }}</span></template>
+                                <template v-else>{{ point.day }}</template>
+                            </span>
+                        </li>
+                    </ol>
                 </div>
             </article>
 
@@ -111,7 +126,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import {
 
@@ -156,40 +171,78 @@ const statMeta = {
 
 const stats = ref([]);
 const chart = ref([]);
-
+const chartDays = ref(7);
+const chartLoading = ref(false);
+const chartError = ref(false);
 const clients = ref([]);
 
+const chartLabels = computed(() => {
+    const count = chart.value.length;
 
-const chartSvgPoints = computed(() => {
-    if (!chart.value.length) {
-        return [];
+    if (count <= 7) {
+        return new Set(chart.value.keys());
     }
 
-    const max = Math.max(...chart.value.map((point) => point.value), 1);
-    const step = chart.value.length > 1 ? 600 / (chart.value.length - 1) : 600;
-
-    return chart.value.map((point, index) => ({
-        label: point.day,
-        x: index * step,
-        y: 190 - (point.value / max) * 145,
-    }));
+    return new Set([0, 1, 2, 3, 4].map((index) => Math.round(index * (count - 1) / 4)));
 });
 
-const chartLinePoints = computed(() => chartSvgPoints.value.map((point) => `${point.x},${point.y}`).join(' '));
-const chartAreaPoints = computed(() => (chartLinePoints.value ? `0,220 ${chartLinePoints.value} 600,220` : ''));
+const chartStep = computed(() => Math.max(1, Math.ceil(Math.max(0, ...chart.value.map((point) => point.value)) / 4)));
+const chartMax = computed(() => chartStep.value * 4);
+const chartTicks = computed(() => [0, 1, 2, 3, 4].map((index) => index * chartStep.value));
+const chartPoints = computed(() => chart.value.map((point, index) => ({
+    x: (index + 0.5) * 100 / chart.value.length,
+    y: 100 - point.value / chartMax.value * 100,
+})));
+const chartLinePath = computed(() => {
+    const [first, ...rest] = chartPoints.value;
+    if (!first) return '';
 
-onMounted(async () => {
-    const { data } = await window.axios.get('/api/dashboard');
+    const points = chartPoints.value;
+    const changes = rest.map((point, index) => point.y - points[index].y);
+    // Share a tangent at each point and flatten it where the direction changes.
+    const tangents = points.map((_, index) => {
+        const before = changes[index - 1] ?? changes[index] ?? 0;
+        const after = changes[index] ?? before;
+        return before * after > 0 ? 2 * before * after / (before + after) : 0;
+    });
+    const segments = rest.map((point, index) => {
+        const previous = points[index];
+        const third = (point.x - previous.x) / 3;
+        const startControl = `${previous.x + third},${previous.y + tangents[index] / 3}`;
+        const endControl = `${point.x - third},${point.y - tangents[index + 1] / 3}`;
+        return `C ${startControl} ${endControl} ${point.x},${point.y}`;
+    });
 
-    stats.value = data.stats.map((stat) => ({
-        ...stat,
-        ...(statMeta[stat.type] ?? statMeta.students),
-    }));
-    chart.value = data.chart;
-
-    clients.value = data.clients;
-
+    return [`M ${first.x},${first.y}`, ...segments].join(' ');
 });
+const chartAreaPath = computed(() => {
+    const first = chartPoints.value[0];
+    const last = chartPoints.value.at(-1);
+    return first ? `${chartLinePath.value} L ${last.x},100 ${first.x},100 Z` : '';
+});
+
+watch(chartDays, async (days, _previous, onCleanup) => {
+    const controller = new AbortController();
+    onCleanup(() => controller.abort());
+    chartLoading.value = true;
+    chartError.value = false;
+
+    try {
+        const { data } = await window.axios.get('/api/dashboard', { params: { days }, signal: controller.signal });
+        if (controller.signal.aborted) return;
+
+        stats.value = data.stats.map((stat) => ({
+            ...stat,
+            ...(statMeta[stat.type] ?? statMeta.students),
+        }));
+        chart.value = data.chart;
+        clients.value = data.clients;
+    } catch {
+        if (!controller.signal.aborted) chartError.value = true;
+    } finally {
+        if (!controller.signal.aborted) chartLoading.value = false;
+    }
+}, { immediate: true });
 </script>
 
 <style scoped>
@@ -202,6 +255,86 @@ onMounted(async () => {
 @media (min-width: 768px) { .dashboard-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 359px) { .dashboard-metrics .dashboard-metric { gap: .4rem; padding: .8rem .65rem; } .metric-copy { gap: .3rem; } .metric-icon { width: 1rem; height: 1rem; } .metric-value { font-size: 1.2rem; } }
 .dashboard-calendar-row { grid-template-columns: minmax(0, 1fr); }
+.attendance-period {
+    flex-shrink: 0;
+    min-height: 2rem;
+    padding: .25rem .5rem;
+    border: 1px solid var(--wn-line);
+    border-radius: .5rem;
+    background: var(--wn-surface-soft);
+    color: var(--wn-ink);
+    font-size: .75rem;
+    font-weight: 600;
+}
+.attendance-status { min-height: 11rem; margin-top: 2.75rem; color: var(--wn-muted); font-size: .875rem; }
+.attendance-chart {
+    --attendance-plot-height: 10rem;
+    position: relative;
+    margin-top: 2.75rem;
+    margin-left: 1.75rem;
+}
+.attendance-guides {
+    position: absolute;
+    inset: 0 0 auto;
+    height: var(--attendance-plot-height);
+    pointer-events: none;
+}
+.attendance-guide {
+    position: absolute;
+    inset-inline: 0;
+    border-top: 1px solid var(--wn-line);
+}
+.attendance-guide span {
+    position: absolute;
+    right: calc(100% + .375rem);
+    transform: translateY(-50%);
+    color: var(--wn-muted);
+    font-size: .625rem;
+    font-variant-numeric: tabular-nums;
+}
+.attendance-trend { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.attendance-days { display: grid; }
+.attendance-day { min-width: 0; text-align: center; }
+.attendance-plot { position: relative; height: var(--attendance-plot-height); }
+.attendance-point {
+    position: absolute;
+    left: 50%;
+    width: .5rem;
+    height: .5rem;
+    transform: translate(-50%, 50%);
+    border: 1.5px solid var(--wn-primary-strong);
+    border-radius: 50%;
+    background: white;
+}
+.attendance-value {
+    position: absolute;
+    bottom: calc(100% + .375rem);
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--wn-ink);
+    font-size: .75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.attendance-date {
+    display: block;
+    margin-top: .55rem;
+    color: var(--wn-muted);
+    font-size: .6875rem;
+    line-height: 1.2;
+}
+.attendance-day[aria-current='date'] .attendance-point { background: var(--wn-primary-strong); }
+.attendance-chart-dense .attendance-point { width: .3125rem; height: .3125rem; border-width: 1px; }
+.attendance-chart-dense .attendance-date {
+    position: relative;
+    left: 50%;
+    width: max-content;
+    transform: translateX(-50%);
+}
+.attendance-day[aria-current='date'] :is(.attendance-value, .attendance-date) {
+    color: var(--wn-primary-strong);
+    font-weight: 700;
+}
 @media (min-width: 768px) {
     .dashboard-calendar-row { grid-template-columns: minmax(0, 1fr) minmax(15rem, 19rem); align-items: stretch; }
 }
