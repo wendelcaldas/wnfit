@@ -166,6 +166,15 @@ class StudentPortalTest extends TestCase
         $this->actingAs($owner)->getJson("/api/students/{$student->id}")
             ->assertJsonPath('student.recentActivity.6.completedSessions', 0);
         $this->actingAs($owner)->getJson('/api/students')->assertOk()->assertJsonPath('students.0.lastWorkout', StudentWorkoutSession::findOrFail($id)->finished_at->format('d/m/Y H:i'));
+
+        $secondCompletion->update(['finished_at' => today()->subDays(14)]);
+        $this->getJson('/api/dashboard?days=15')->assertOk()->assertJsonCount(15, 'chart')
+            ->assertJsonPath('chart.0.value', 1)->assertJsonPath('chart.14.value', 0);
+
+        $secondCompletion->update(['finished_at' => today()->subDays(29)]);
+        $this->getJson('/api/dashboard?days=30')->assertOk()->assertJsonCount(30, 'chart')
+            ->assertJsonPath('chart.0.value', 1)->assertJsonPath('chart.29.value', 0);
+        $this->getJson('/api/dashboard?days=8')->assertUnprocessable()->assertJsonValidationErrors('days');
     }
 
     public function test_invalid_days_series_duplicates_and_empty_finish_are_rejected(): void
