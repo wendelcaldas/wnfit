@@ -1,196 +1,191 @@
-# WNFit Kanban
+# WNFit — Kanban
 
-Este quadro organiza as proximas features por prioridade e reduz ambiguidade antes de iniciar implementacao.
+Reestruturado em 07/11/2026. O quadro anterior está no histórico do Git (último commit de `KANBAN.md` antes desta data). Análise que originou este plano: [Análise de produto e prioridades](https://claude.ai/artifact/KgK75fpd1c1zFcupKqWbWN).
 
-## Prioridades
+## Para onde vamos
 
-## Implementação de eventos — 17/10/2026
+**Visão.** Ser o sistema de gestão de qualquer negócio de saúde e bem-estar que acompanha pessoas treinando: personal, studio, box de CrossFit, assessoria de corrida, academia de luta, escola de futevôlei, academia.
 
-As seis entregas do plano revisado foram implementadas em branches encadeadas: inscrição unificada, experiência configurável, presentes, álbum moderado, pesquisa integrada e cobrança avulsa. Publicação em produção pendente; storage externo e piloto precisam de conferência no ambiente de destino.
+**Foco até mar/2027.** Personal trainers e studios pequenos (até ~150 alunos). É onde o produto atual já entrega valor e onde a venda é mais curta. Cada decisão técnica, porém, deve funcionar para outros segmentos. Nada de "personal" ou "musculação" fixo no código.
 
-Documento vigente: [eventos — comportamento, branches e publicação](docs/EVENTOS.md). Os blocos anteriores abaixo preservam o histórico do planejamento.
+**Métrica norte.** Organizações com pelo menos 3 alunos que treinaram pelo portal nos últimos 7 dias.
 
-## Foco de 17/10/2026 — evento WNFit + Team Peu em 18/10
+**Funil acompanhado.** Visita → cadastro → 1º aluno → 1ª ficha publicada → 1ª sessão concluída pelo aluno → assinatura paga.
 
-Plano vigente: [entregas, critérios de aceite e operação do evento](docs/PLANO_EVENTO_2026-10-18.md).
+## Decisões registradas (07/11/2026)
 
-1. Preparar base atualizada preservando as alterações locais de avaliação física.
-2. P0: vincular participantes às contas de aluno e preparar acesso sem cobranças involuntárias.
-3. P0: página do evento no portal, boas-vindas e módulos configuráveis pelo gestor em cada evento (raspadinha, álbum e pesquisa).
-4. P0: raspadinha com uma nécessaire garantida para cada um dos 20 alunos e controle de retirada; sem bônus nesta edição.
-5. P0: álbum colaborativo com armazenamento persistente e aprovação pela equipe.
-6. P0: integrar avaliação existente, ensaiar a jornada e conferir publicação real.
+| Tema | Decisão |
+| --- | --- |
+| Cobrança | Novos ambientes já nascem com plano e cobrança. A gratuidade é concedida por cupom (período grátis) para ambientes selecionados. Validar disposição a pagar faz parte do teste. Lançar com preço provisório (MON-02) e revisar com dados. |
+| Processo | Todo card vira spec em `docs/specs/` antes de ir para o desenvolvimento. Produto escreve, Wendel aprova e os agentes de dev executam (ver `docs/specs/README.md`). |
+| Segmento | Começar por personal e studio, sem perder do radar os demais segmentos (ver "Radar — multissegmento"). |
+| Eventos | Módulo adicional com custo extra. Precisa de uma revisão de entrega de valor antes de voltar. Fica escondido do menu até lá. |
+| Gateway | Ainda não escolhido. Spike comparativa no card MON-01. |
+| Comunicação | Segue assistida (copiar/abrir WhatsApp). Disparo automático só como add-on futuro. |
+| Execução | Wendel + agentes (Codex/Claude). Ondas de cerca de 2 semanas, com no máximo 2 cards em andamento. |
 
-O andamento de cada entrega é registrado abaixo. Acesso, fotos, prêmio e avaliação devem ser validados no celular. Operação manual de WhatsApp permanece; planos comerciais, trial, automações e demais evoluções voltam após o evento. O “Próximo Plano Sugerido” antigo abaixo é histórico e não substitui esta ordem.
+## Como usar este quadro
 
-### Entrega 1 implementada — participantes e acesso — 17/10
+- Cada card tem um ID (`TEMA-NN`), um título, o resultado esperado e critérios de aceite curtos. Antes de ir para o desenvolvimento, ganha uma spec em `docs/specs/<ID>.md`.
+- Fluxo: **Agora → Em andamento → Em validação → Feito**. "Próximo" e "Depois" só sobem quando a onda anterior fecha.
+- No máximo **2 cards em andamento** ao mesmo tempo, porque toda entrega passa pela revisão do Wendel.
+- Ao concluir um card, mova-o para "Feito" com data e branch/PR, e atualize a documentação afetada em `docs/knowledge`.
+- Bugs novos entram em "Agora" se afetam dados, cobrança ou o cliente final. Os demais entram em "Próximo".
 
-- Branch `codex/event-participant-access`, baseada na main atualizada.
-- Vínculo explícito inscrição/aluno, sugestões por telefone e criação de participante sem assinatura/cobrança.
-- Conta existente preservada; senha provisória somente para quem ainda não possui acesso; mensagem para cópia e envio individual.
-- 85 testes (1.220 assertions), build e conferência dos dois caminhos no navegador local.
-- Publicação pendente. Módulos e página do aluno seguem na próxima entrega.
-- Roteiro: [validação dos acessos](docs/VALIDACAO_ACESSO_EVENTO.md).
+Temas: **CONF** confiança e qualidade · **FUN** funil e medição · **MON** monetização · **ATV** ativação do gestor · **ALU** experiência e retenção do aluno · **DS** design system · **DIST** distribuição · **OPS** operação e engenharia · **SEG** multissegmento.
 
-## Entrega para validação — portal do aluno e treinos — 02/10/2026
+---
 
-- Conta criada junto com o aluno: usuário sugerido/editável, senha provisória aleatória e troca obrigatória no primeiro acesso.
-- Alunos existentes: criar acesso e redefinir senha pelo perfil; sessões antigas são invalidadas na redefinição.
-- Portal com login próprio, início, ficha vigente, divisões do programa, execução por séries, descanso, retomada e histórico.
-- Montador com prescrição compacta, reordenação de exercícios/dias, duplicação de dias, busca paginada, rascunho incompleto, prévia do aluno e publicação explícita.
-- Biblioteca: duplicar, atribuir ficha, arquivar e restaurar rascunho.
-- Fichas publicadas guardam cópias da prescrição e vigência; personalização cria uma nova versão sem mudar o histórico.
-- Professor acompanha fichas e sessões no perfil do aluno. Dados antigos são preservados pela migração.
-- Roteiro e ambiente de demonstração: `docs/VALIDACAO_PORTAL_ALUNO.md` e `scripts/start-student-preview.ps1`.
-- Próximo passo: validação do usuário no celular e na gestão antes de integrar a entrega à `main`.
+## Em andamento
 
-## Direcao do MVP — 21/09/2026
+_(vazio — puxar de "Agora")_
 
-- Financeiro como centro da operacao: previsibilidade, recebimentos e acompanhamento de cobrancas.
-- Comunicacao assistida pelo gestor: revisar texto, copiar/abrir WhatsApp e confirmar envio no historico.
-- Twilio e disparos automaticos ficam fora do MVP. A integracao existente permanece inativa no modo manual padrao.
-- Direcao revisada: Financeiro abre diretamente a visao mensal de Resultados, sem abas e sem a tela Cobrar e acompanhar. Filtros por mes, aluno e situacao; mensagem manual e baixa por cobranca.
-- Revisao de competencias antigas e datas de vigencia permanece acessivel no financeiro do perfil do aluno.
-- Acoes no financeiro do aluno: popup de mensagem com template configurado, revisao, copia, abertura explicita do WhatsApp Web e confirmacao manual de envio; popup de baixa com escolha obrigatoria entre PIX, credito, debito, dinheiro, transferencia e boleto. Forma efetiva persistida no pagamento e na cobranca.
-- Telefone ausente/invalido: mensagem clara com cadastro do numero no proprio popup, salvando no aluno e continuando a preparacao manual; mesmo fluxo na central financeira.
-- Resultados usa periodo mensal: recebido por data de pagamento, decompondo mensalidades do mes, recuperacao de meses anteriores e antecipacoes. Aberto/vencido nessa area usa vencimento no mes.
-- Recorrencia independente de pagamento, com ancora de vencimento sem deriva em fevereiro e ciclos mensal/trimestral/semestral/anual. Gera ate o fim do mes ou proximos 7 dias, o que for maior; respeita status, auto-renovacao e datas de pausa/encerramento. Nao recria competencias existentes, inclusive canceladas.
-- Assinaturas antigas exigem revisao explicita da vigencia e valores antes de reconstruir competencias faltantes; previa com total e verificacao contra mudancas antes da confirmacao. Dados existentes preservados.
-- Perfil do aluno e central compartilham cobrancas, pagamentos e historico de contato. Baixa repetida nao duplica recebimentos.
-- Proxima evolucao: pagamentos parciais dentro de uma competencia, historico de multiplos intervalos de pausa/retomada, valores historicos de plano e retorno combinado de contato.
-- Validacao automatizada: testes de recorrencia, migracao assistida, cobranca conjunta, baixa seletiva/duplicada, isolamento de dados e resultados por periodo, alem da suite existente e build.
+## Em validação
 
-As prioridades abaixo registram o planejamento anterior; itens de automacao/Twilio nao fazem parte do MVP atual.
+_(vazio)_
 
-- P0: estabilidade, bugs bloqueantes e fluxos essenciais quebrados.
-- P1: features centrais para operacao diaria do studio.
-- P2: melhorias importantes, mas que podem esperar uma entrega principal.
-- P3: ideias futuras ou refinamentos de baixo risco.
+---
 
-## Done
+## Agora — Onda 1: confiança e funil (09/11 → 20/11)
 
-- Base Twilio WhatsApp para cobrancas: driver, configuracao, historico de mensagens e webhook de status.
-- Configuracao de mensagens por studio: remetente WhatsApp, template editavel e preview operacional.
-- Mensagem automatica de boas-vindas ao cadastrar novo aluno, com template configuravel e historico.
-- Autenticacao: login, registro, logout e sessao atual.
-- Dashboard inicial com indicadores operacionais.
-- Alunos: listagem, filtros, cadastro, edicao e detalhe.
-- Financeiro por aluno: assinatura, cobranca, envio e baixa de pagamento.
-- Treinos: listagem, criacao, edicao, exercicios e vinculo treino-aluno.
-- Catalogo de exercicios com filtros e cadastro.
-- Agenda: criacao/edicao de agendamentos, recorrencia e alunos vinculados.
-- Usuarios da organizacao: listagem, cadastro e atualizacao.
-- Deploy Railway com ajustes para proxy.
+Objetivo: o produto não pode errar com quem chega pelos anúncios, e cada cadastro precisa ser medido.
 
-## QA / Stabilize
+- **CONF-01 · Remover script do Figma de produção** — `resources/views/app.blade.php` carrega `mcp.figma.com/.../capture.js` em todas as páginas logadas.
+  - Aceite: script removido. Se for útil no dev, carregar só com `app()->isLocal()`. Conferir em produção que não aparece.
+- **CONF-02 · Revisão de acesso entre organizações** — endpoint por endpoint, incluindo usuário com múltiplos vínculos (hoje usa a primeira organização ativa).
+  - Aceite: teste de isolamento para cada recurso (alunos, treinos, financeiro, agenda, reservas, eventos, notificações). Usuário com 2 organizações acessa só a organização selecionada.
+- **CONF-03 · Mensagem de cobrança correta** — tratar vencida e a vencer separadamente, com acentos e o nome do plano escrito corretamente.
+  - Aceite: template de vencida diz "venceu em" com dias de atraso, e o template a vencer diz "vence em". Teste cobrindo os dois casos.
+- **CONF-04 · Usernames de aluno únicos por organização** — hoje são globais e usam o primeiro nome.
+  - Aceite: unicidade por organização (ou login por telefone, ver ALU-01). Migração preserva acessos existentes. Conta demo deixa de bloquear nomes comuns.
+- **CONF-05 · Avaliação física: comparação com a anterior** — "Anterior" e "Variação" aparecem como "—".
+  - Aceite: variação calculada contra a avaliação imediatamente anterior, com teste.
+- **CONF-06 · Camada de formatação pt-BR (`format.js`)** — datas, data relativa, moeda, telefone e capitalização em um só módulo.
+  - Aceite: itens 4–17 do QA de 07/11 corrigidos (datas ISO, "6 minutes ago", "Novembro De", telefone sem máscara, paginação com 8 alunos, sábado cortado na agenda, eixo negativo e período cortado no Financeiro, fuso exibido na reserva, falta de acentos).
+- **CONF-07 · Status do aluno com uma única fonte** — Painel e Alunos mostram status diferentes para o mesmo aluno.
+  - Aceite: status calculado no backend e reutilizado em todas as telas.
+- **CONF-08 · LGPD mínima no cadastro** — termos de uso, política de privacidade e consentimento. O gestor é o controlador dos dados dos alunos.
+  - Aceite: páginas públicas publicadas, aceite registrado com data no cadastro e links no rodapé e no portal do aluno.
+- **FUN-01 · Analytics de produto e funil** — eventos: `signup_started`, `signup_completed`, `student_created`, `workout_published`, `student_first_login`, `session_completed`, `checklist_step_done`.
+  - Aceite: ferramenta escolhida (PostHog, GA4 ou similar), sem dados pessoais de aluno nos eventos e funil visível num painel.
+- **FUN-02 · Landing no `/`, Pixel e UTMs** — o `/` ainda redireciona para `/entrar`.
+  - Aceite: `/` serve a landing. UTMs gravadas na organização no cadastro. Pixel Meta na landing e no cadastro, com banner de cookies.
+- **ATV-01 · Esconder Eventos e Comunicações do menu** — evita sinal de produto incompleto.
+  - Aceite: itens fora da navegação. Eventos continua acessível para organizações com o módulo ativo.
+- **ALU-00 · Validar portal do aluno em produção** — roteiro no celular real: login, troca de senha, ficha, sessão, retomada, histórico.
+  - Aceite: roteiro executado em Android e iPhone e bugs registrados como cards.
+- **OPS-01 · Suíte e build verdes no `main`** — o último registro é de 17/10.
+  - Aceite: `php artisan test` e `npm run build` passando, resultado registrado. Se possível, CI rodando os dois a cada PR.
 
-- P0 - Validar agenda recem-integrada em fluxo real.
-  - Testar criacao simples, edicao, recorrencia semanal/quinzenal/mensal e limite de repeticao.
-  - Conferir vinculo de alunos e capacidade.
-  - Garantir que edicao de uma ocorrencia nao altera indevidamente a serie.
+## Próximo — Onda 2: monetização e ativação (23/11 → 18/12)
 
-- P0 - Rodar suite completa apos atualizacao do main.
-  - `php artisan test`
-  - `npm run build`
+Objetivo: cobrar pelo produto e encurtar o caminho até o primeiro aluno treinando.
 
-- P1 - Ajustar experiencia local no Windows.
-  - O script `composer dev` usa `php artisan pail`, que depende de `pcntl` e falha no Windows.
-  - Criar script alternativo sem Pail ou documentar comando local recomendado.
+- **MON-01 · Spike de gateway** — comparar Asaas, Mercado Pago, Pagar.me e Stripe.
+  - Aceite: tabela com taxas (PIX, cartão, boleto), assinatura recorrente, cupom/trial nativo, webhooks, split (para a futura cobrança do aluno) e esforço de integração. Recomendação escolhida pelo Wendel.
+- **MON-02 · Preço provisório** — lançar com um preço provisório agora e ajustar com dados (decisão de 07/11). Proposta para aprovação do Wendel:
+  - **Personal** R$ 59/mês, até 30 alunos ativos, 1 profissional.
+  - **Studio** R$ 149/mês, até 150 alunos ativos, até 5 profissionais.
+  - **Pro** R$ 299/mês, alunos ilimitados, múltiplas unidades.
+  - Anual com 2 meses grátis. Add-ons (Eventos, Cobrança automática do aluno) com preço a definir.
+  - Aceite: valores aprovados e publicados na landing. Revisão marcada para fev/2027 com base em conversão de trial, cancelamentos e 5–10 conversas com clientes.
+- **MON-03 · Assinatura do SaaS no cadastro** — escolha de plano e pagamento ao criar o ambiente.
+  - Aceite: organização com status `trial | ativa | inadimplente | cancelada`. Webhooks idempotentes. E-mail de confirmação.
+- **MON-04 · Cupons de gratuidade** — cupom concede N dias grátis (ou % de desconto por N meses) a ambientes selecionados.
+  - Aceite: cupom com código, validade, limite de usos e plano aplicável. Uso registrado por organização. Aviso 7 e 2 dias antes do fim.
+- **MON-05 · Limites e bloqueio suave** — ao exceder alunos ativos ou com pagamento vencido.
+  - Aceite: o aviso aparece primeiro e depois o modo somente leitura. Nunca apaga dados, e o portal do aluno continua funcionando por um período de tolerância.
+- **MON-06 · Backoffice interno (super-admin)** — ver organizações, plano, status, uso e cupons. Conceder trial e acessar suporte.
+  - Aceite: área restrita ao time WNFit, com auditoria das ações.
+- **ALU-01 · Convite do aluno por link mágico** — o professor envia o link pelo WhatsApp e o aluno entra sem usuário e senha provisória. Login por telefone + código como alternativa.
+  - Aceite: link de uso único com expiração. Login por senha mantido para quem já usa.
+- **ATV-02 · Dados de exemplo e estados vazios úteis** — conta nova não deve ver gráficos zerados.
+  - Aceite: opção "explorar com dados de exemplo" (removível com 1 clique). Cada tela vazia mostra o próximo passo.
+- **ATV-03 · Onboarding por tipo de negócio** — ampliar o perfil do checklist (`onboarding/profile.js`) para personal, studio, box, corrida, luta e esportes de areia.
+  - Aceite: cadastro pergunta o tipo e o checklist se adapta. O tipo fica gravado para análise de segmento.
+- **DS-01 · Tokens únicos** — um `tokens.css` semântico. Remover o bloco legado (`#9be100`/`#5aa400`), a flag `visualRefresh` e os namespaces paralelos (`--lp-*`, `--lime` da ajuda).
+  - Aceite: nenhuma cor HEX fora de `tokens.css` (Stylelint). Landing, app, portal e ajuda consomem os mesmos tokens.
+- **DS-02 · Escalas fechadas** — fonte 12/14/16/20/24/32 (piso de 12px), raio 8/12/16/pill, espaçamento em múltiplos de 4.
+  - Aceite: nenhum `font-size` abaixo de 12px, e raios e fontes fora da escala removidos.
+- **DS-03 · Componentes Vue base** — `WnButton`, `WnInput`, `WnSelect`, `WnCard`, `WnStatusBadge`, `WnTabs`, `WnTable`, `WnDialog`, `WnEmptyState`, `WnPageHeader`, `WnFilterBar`. Catálogo em `/dev/ui` (só local).
+  - Aceite: Painel, Alunos, Ficha do aluno, Treinos e Financeiro usam só componentes base.
+- **DS-04 · Mobile da gestão** — filtros em painel inferior, KPIs compactos e "Mais" na barra inferior.
+  - Aceite: em 375px, a lista de alunos e treinos aparece na primeira tela.
+- **DS-05 · Ficha do aluno com abas e resumo** — trocar a grade 3×2 por abas e unificar o resumo (status, plano, vencimento, última sessão). Remover a conta duplicada da sidebar (decisão de 26/10).
+  - Aceite: validado em desktop e 375px.
+- **DIST-01 · Marca do negócio na reserva e no portal** — logo, nome e cor do cliente, "Horário de Brasília" e selo "Feito com WNFit".
+  - Aceite: logo configurável em Configurações. O selo leva para a landing com UTM.
 
-## Next Up
+## Depois — Onda 3: retenção e expansão (jan → mar/2027)
 
-- P1 - Epic: Comunicacao e cobranca com aluno.
-  - Objetivo: reduzir inadimplencia, esquecimento de vencimentos e trabalho manual de contato.
-  - Primeiro foco: mensagens automaticas de cobranca via Twilio WhatsApp.
-  - Entregar uma central simples com alunos, status financeiro, vencimento, ultima mensagem e acao de contato manual.
-  - Manter arquitetura preparada para trocar/adicionar provedor sem reescrever o financeiro.
+- **ALU-02 · Recordes e progressão de carga por exercício** no portal do aluno.
+- **ALU-03 · Sequência semanal** com dados reais e meta de frequência da ficha.
+- **ALU-04 · Lembrete de treino** — link de WhatsApp gerado pelo professor, sem automação.
+- **ATV-04 · Check-in e presença em aulas** — alimenta o card "Check-ins hoje", que hoje fica sempre zerado.
+- **ATV-05 · Lista de espera** quando a aula estiver cheia.
+- **ATV-06 · Papéis granulares** — admin, professor, recepção e financeiro, com permissões oficiais documentadas.
+- **ATV-07 · Relatórios** — inadimplência, retenção de alunos, frequência e receita prevista × recebida.
+- **MON-07 · Add-on: cobrança automática do aluno** (PIX recorrente e cartão pelo gateway da MON-01), em vez da baixa manual.
+- **MON-08 · Add-on: Eventos** — revisão de entrega de valor (quem usa, para quê, quanto pagaria) antes de reativar. Base técnica pronta (inscrição, check-in, álbum, brinde, pesquisa, cobrança avulsa).
+- **DIST-02 · Programa de indicação** — um mês grátis para quem indica e para o indicado (usa os cupons de MON-04).
+- **DIST-03 · Estudos de caso reais na landing** — com autorização dos clientes.
+- **DS-06 · Auditoria de acessibilidade** (axe + teclado) nas 10 telas principais.
 
-- P1 - Central de cobrancas.
-  - Tela de cobrancas com filtros por status, vencimento e aluno.
-  - Acoes rapidas: gerar cobranca, enviar mensagem, marcar como enviada manualmente, marcar como paga.
-  - Destaques para vencidas, vencendo hoje e proximos 7 dias.
+## Radar — multissegmento
 
-- P1 - Integracao Twilio WhatsApp.
-  - Proximo passo: validar credenciais reais, sender WhatsApp e template aprovado em ambiente de homologacao.
-  - Proximo passo: adicionar assinatura/validacao dos webhooks Twilio.
+Não entra em onda até haver clientes do segmento pedindo. Serve para guiar decisões de arquitetura agora.
 
-- P1 - Templates de mensagem.
-  - Proximo passo: separar modelos por tipo: vencimento proximo, cobranca vencida, pagamento confirmado e lembrete de aula.
-  - Separar templates aprovados no WhatsApp de mensagens livres dentro da janela de atendimento.
-
-- P1 - Automacoes de cobranca.
-  - Enviar aviso antes do vencimento.
-  - Enviar lembrete no dia do vencimento.
-  - Enviar cobranca apos atraso.
-  - Evitar duplicidade de envio para a mesma cobranca/evento.
-
-- P1 - Comunicacoes manuais.
-  - Permitir envio manual a partir da central de cobrancas e do detalhe do aluno.
-  - Reaproveitar templates e registrar historico.
-  - Manter fallback para copiar mensagem caso o provedor esteja indisponivel.
-
-- P2 - Relatorios operacionais.
-  - Criar rota, tela e endpoints para indicadores de alunos, agenda, treinos e financeiro.
-  - Priorizar indicadores que apoiem cobranca e comunicacao: inadimplencia, vencimentos e contatos feitos.
-
-- P2 - Check-ins e presenca.
-  - Tela para registrar presenca em aulas/agendamentos.
-  - Indicadores de frequencia no detalhe do aluno.
-
-- P2 - Planos e receitas.
-  - CRUD de planos.
-  - Visao consolidada de receitas previstas e recebidas.
-
-## Backlog
-
-- P2 - Melhorias de agenda.
-  - Visual semanal/mensal mais rico.
-  - Deteccao de conflito de horario por professor/sala.
-  - Lista de espera quando capacidade estiver cheia.
-
-- P2 - Evolucao de aluno.
-  - Medidas, objetivos, observacoes clinicas e historico de progresso.
-
-- P2 - Biblioteca de treinos.
-  - Templates reutilizaveis.
-  - Duplicar treino existente.
-  - Arquivar/restaurar treinos.
-
-- P3 - Permissoes mais granulares.
-  - Perfis por papel: admin, professor, recepcao e financeiro.
-
-- P3 - Notificacoes.
-  - Eventos internos para vencimento, ausencia e proximas aulas.
+- **SEG-01 · Terminologia configurável** — aluno/atleta/cliente, treino/WOD/planilha, professor/coach.
+- **SEG-02 · CrossFit / funcional** — WOD do dia por turma, ranking/placar, registro de PR.
+- **SEG-03 · Assessoria de corrida** — planilhas por pace/zona, integração Strava/Garmin, provas e eventos (sinergia com MON-08).
+- **SEG-04 · Lutas** — graduação e faixas, exames, presença mínima para graduar.
+- **SEG-05 · Esportes de areia / escolas** — turmas por nível, reposição de aula, pacotes de aulas avulsas.
+- **SEG-06 · Academias maiores** — múltiplas unidades avançadas, controle de acesso (catraca/biometria), comissão de professores.
 
 ## Icebox
 
-- Integracoes externas de pagamento.
-- Disparo automatico por WhatsApp/email.
-- App nativo do aluno; o portal web de treinos já está em validação.
-- Multiunidade avancado.
+- App nativo (o portal PWA atende por enquanto).
+- Disparo automático de WhatsApp/e-mail via Twilio ou API oficial. A base existe e está inativa. Pode virar add-on.
+- Assistente de IA para montar treinos.
+- Gamificação além de recordes e sequência.
+- `composer dev` no Windows (Pail depende de `pcntl`). Documentar um comando alternativo quando incomodar.
 
-## Proximo Plano Sugerido
+---
 
-1. Fechar QA da agenda e testes do main.
-2. Corrigir script local para Windows.
-3. Implementar base de mensagens: tabelas, templates, historico e interface `MessagingService`.
-4. Implementar driver Twilio WhatsApp e webhooks de status.
-5. Implementar Central de cobrancas com envio automatico e envio manual.
-6. Criar automacoes de vencimento/atraso com protecao contra duplicidade.
+## Feito — o que o produto já tem (base em 07/11/2026)
+
+| Área | Entregue |
+| --- | --- |
+| Conta e onboarding | Cadastro do ambiente (organização, unidade, plano operacional), login, checklist de primeiros passos (02/11) |
+| Alunos | Lista, filtros, cadastro, ficha com histórico, foto, modalidade presencial/online, transferência de unidade |
+| Avaliação física | Registro e histórico de avaliações |
+| Treinos | Catálogo com 275 exercícios ilustrados, seleção visual, biblioteca, montador, duplicar/arquivar, publicação por snapshot, validade e renovação |
+| Portal do aluno | Login próprio, troca de senha, ficha vigente, execução por séries, descanso, retomada, histórico, PWA |
+| Financeiro | Resultados mensais, cobranças, recorrência, baixa com forma de pagamento, mensagem assistida via WhatsApp |
+| Agenda | Horários, recorrência, capacidade, link público de reserva com revalidação |
+| Eventos | Inscrição, acesso, check-in, álbum moderado, brinde, pesquisa, cobrança avulsa (usado em 18/10, hoje oculto) |
+| Notificações | Sino, toasts, tempo real, alertas de treino por WhatsApp para o gestor |
+| Configurações | Equipe, planos, unidades, horários, mensagens |
+| Suporte | Central de ajuda ilustrada |
+| Infra | Deploy Railway |
+
+Registro de entregas a partir daqui:
+
+| Data | Card | Branch / PR | Observação |
+| --- | --- | --- | --- |
+| | | | |
 
 ## Definition of Ready
 
-- Objetivo da feature claro.
-- Tela ou fluxo principal definido.
-- Endpoints necessarios mapeados.
-- Dados existentes reaproveitados quando possivel.
-- Criterios de aceite escritos antes da implementacao.
+- Card com resultado esperado e critérios de aceite escritos.
+- Tela ou fluxo principal definido. Para UI nova, usar componentes base (DS-03) quando já existirem.
+- Endpoints e dados mapeados, reaproveitando o que existe.
+- Impacto em isolamento entre organizações avaliado.
 
 ## Definition of Done
 
-- Fluxo principal funcionando no navegador.
-- Testes relevantes adicionados ou atualizados.
-- `php artisan test` passando.
-- `npm run build` passando.
-- Sem migrations pendentes.
-- Kanban atualizado com o resultado da entrega.
+- Fluxo principal funcionando no navegador, em desktop e 375px quando houver UI.
+- Testes relevantes adicionados, `php artisan test` e `npm run build` passando.
+- Sem migrations pendentes, cores fora de `tokens.css` ou textos sem acento.
+- Datas, moeda e telefone formatados por `format.js`.
+- Documentação em `docs/knowledge` atualizada e card movido para "Feito" com data.
