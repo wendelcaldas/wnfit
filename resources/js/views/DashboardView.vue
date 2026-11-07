@@ -18,38 +18,28 @@
         </section>
 
         <section class="dashboard-calendar-row mt-6 grid gap-4">
-            <article class="panel-card min-w-0">
+            <article class="panel-card min-w-0" aria-labelledby="attendance-heading">
                 <div class="flex items-center justify-between gap-4">
                     <div>
-                        <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Frequência dos alunos</h2>
-                        <p class="mt-2 text-sm text-[var(--wn-muted)]">Visão de atividade e frequência recente dos alunos.</p>
+                        <h2 id="attendance-heading" class="text-xl font-semibold text-[var(--wn-ink)]">Frequência dos alunos</h2>
+                        <p class="mt-2 text-sm text-[var(--wn-muted)]">Alunos que concluíram pelo menos um treino por dia.</p>
                     </div>
-                    <button class="btn-secondary">7 dias</button>
+                    <span class="shrink-0 rounded-full bg-[var(--wn-surface-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--wn-muted)]">7 dias</span>
                 </div>
 
-                <div class="mt-8">
-                    <div class="dashboard-line-chart">
-                        <div class="absolute inset-x-0 top-0 flex flex-col gap-[2.35rem]">
-                            <div v-for="line in 5" :key="line" class="border-t border-[var(--wn-line)]"></div>
+                <ol v-if="chart.length" class="attendance-chart" role="list">
+                    <li v-for="(point, index) in chart" :key="point.day" class="attendance-day" :aria-current="index === chart.length - 1 ? 'date' : undefined">
+                        <div class="attendance-plot">
+                            <div class="attendance-bar" :style="{ height: `${point.value / chartMax * 100}%` }">
+                                <span class="attendance-value">{{ point.value }}<span class="sr-only"> {{ point.value === 1 ? 'aluno' : 'alunos' }}</span></span>
+                            </div>
                         </div>
-
-                        <svg viewBox="0 0 600 220" preserveAspectRatio="none" class="absolute inset-0 h-full w-full">
-                            <defs>
-                                <linearGradient id="checkinArea" x1="0" x2="0" y1="0" y2="1">
-                                    <stop offset="0%" stop-color="#8fd400" stop-opacity="0.35" />
-                                    <stop offset="100%" stop-color="#8fd400" stop-opacity="0" />
-                                </linearGradient>
-                            </defs>
-                            <polygon :points="chartAreaPoints" fill="url(#checkinArea)" />
-                            <polyline :points="chartLinePoints" fill="none" stroke="#5aa400" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-                            <circle v-for="point in chartSvgPoints" :key="point.label" :cx="point.x" :cy="point.y" r="5" fill="#5aa400" />
-                        </svg>
-
-                        <div class="absolute inset-x-0 bottom-0 grid" :style="{ gridTemplateColumns: `repeat(${chart.length}, minmax(0, 1fr))` }">
-                            <span v-for="point in chart" :key="point.day" class="text-center text-xs font-medium text-[var(--wn-muted)]">{{ point.day }}</span>
-                        </div>
-                    </div>
-                </div>
+                        <span class="attendance-date" :title="point.day">
+                            <template v-if="index === chart.length - 1">Hoje<span class="sr-only">, {{ point.day }}</span></template>
+                            <template v-else>{{ point.day }}</template>
+                        </span>
+                    </li>
+                </ol>
             </article>
 
             <DashboardCalendar />
@@ -160,23 +150,7 @@ const chart = ref([]);
 const clients = ref([]);
 
 
-const chartSvgPoints = computed(() => {
-    if (!chart.value.length) {
-        return [];
-    }
-
-    const max = Math.max(...chart.value.map((point) => point.value), 1);
-    const step = chart.value.length > 1 ? 600 / (chart.value.length - 1) : 600;
-
-    return chart.value.map((point, index) => ({
-        label: point.day,
-        x: index * step,
-        y: 190 - (point.value / max) * 145,
-    }));
-});
-
-const chartLinePoints = computed(() => chartSvgPoints.value.map((point) => `${point.x},${point.y}`).join(' '));
-const chartAreaPoints = computed(() => (chartLinePoints.value ? `0,220 ${chartLinePoints.value} 600,220` : ''));
+const chartMax = computed(() => Math.max(1, ...chart.value.map((point) => point.value)));
 
 onMounted(async () => {
     const { data } = await window.axios.get('/api/dashboard');
@@ -202,6 +176,56 @@ onMounted(async () => {
 @media (min-width: 768px) { .dashboard-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 359px) { .dashboard-metrics .dashboard-metric { gap: .4rem; padding: .8rem .65rem; } .metric-copy { gap: .3rem; } .metric-icon { width: 1rem; height: 1rem; } .metric-value { font-size: 1.2rem; } }
 .dashboard-calendar-row { grid-template-columns: minmax(0, 1fr); }
+.attendance-chart {
+    --attendance-plot-height: 10rem;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    margin-top: 2.75rem;
+}
+.attendance-chart::before {
+    position: absolute;
+    inset: 0 0 auto;
+    height: var(--attendance-plot-height);
+    border-bottom: 1px solid var(--wn-line);
+    background: linear-gradient(var(--wn-line) 1px, transparent 1px) top / 100% 25%;
+    content: '';
+}
+.attendance-day { position: relative; min-width: 0; text-align: center; }
+.attendance-plot {
+    display: flex;
+    height: var(--attendance-plot-height);
+    align-items: flex-end;
+    justify-content: center;
+}
+.attendance-bar {
+    position: relative;
+    width: min(58%, 2.75rem);
+    border-radius: .375rem .375rem 0 0;
+    background: var(--wn-primary);
+}
+.attendance-value {
+    position: absolute;
+    bottom: calc(100% + .375rem);
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--wn-ink);
+    font-size: .75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.attendance-date {
+    display: block;
+    margin-top: .55rem;
+    color: var(--wn-muted);
+    font-size: .6875rem;
+    white-space: nowrap;
+}
+.attendance-day[aria-current='date'] .attendance-bar { background: var(--wn-primary-strong); }
+.attendance-day[aria-current='date'] :is(.attendance-value, .attendance-date) {
+    color: var(--wn-primary-strong);
+    font-weight: 700;
+}
 @media (min-width: 768px) {
     .dashboard-calendar-row { grid-template-columns: minmax(0, 1fr) minmax(15rem, 19rem); align-items: stretch; }
 }
