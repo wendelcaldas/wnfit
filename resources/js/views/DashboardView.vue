@@ -27,19 +27,37 @@
                     <span class="shrink-0 rounded-full bg-[var(--wn-surface-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--wn-muted)]">7 dias</span>
                 </div>
 
-                <ol v-if="chart.length" class="attendance-chart" role="list">
-                    <li v-for="(point, index) in chart" :key="point.day" class="attendance-day" :aria-current="index === chart.length - 1 ? 'date' : undefined">
-                        <div class="attendance-plot">
-                            <div class="attendance-bar" :style="{ height: `${point.value / chartMax * 100}%` }">
-                                <span class="attendance-value">{{ point.value }}<span class="sr-only"> {{ point.value === 1 ? 'aluno' : 'alunos' }}</span></span>
-                            </div>
+                <div v-if="chart.length" class="attendance-chart">
+                    <div class="attendance-guides" aria-hidden="true">
+                        <div v-for="(tick, index) in chartTicks" :key="tick" class="attendance-guide" :style="{ bottom: `${index * 25}%` }">
+                            <span>{{ tick }}</span>
                         </div>
-                        <span class="attendance-date" :title="point.day">
-                            <template v-if="index === chart.length - 1">Hoje<span class="sr-only">, {{ point.day }}</span></template>
-                            <template v-else>{{ point.day }}</template>
-                        </span>
-                    </li>
-                </ol>
+                        <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="attendance-trend">
+                            <defs>
+                                <linearGradient id="attendance-fill" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="var(--wn-primary)" stop-opacity=".25" />
+                                    <stop offset="100%" stop-color="var(--wn-primary)" stop-opacity="0" />
+                                </linearGradient>
+                            </defs>
+                            <polygon :points="chartArea" fill="url(#attendance-fill)" />
+                            <polyline :points="chartLine" fill="none" stroke="var(--wn-primary-strong)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+                        </svg>
+                    </div>
+
+                    <ol class="attendance-days" role="list">
+                        <li v-for="(point, index) in chart" :key="point.day" class="attendance-day" :aria-current="index === chart.length - 1 ? 'date' : undefined">
+                            <div class="attendance-plot">
+                                <div class="attendance-point" :style="{ bottom: `${point.value / chartMax * 100}%` }">
+                                    <span class="attendance-value">{{ point.value }}<span class="sr-only"> {{ point.value === 1 ? 'aluno' : 'alunos' }}</span></span>
+                                </div>
+                            </div>
+                            <span class="attendance-date" :title="point.day">
+                                <template v-if="index === chart.length - 1">Hoje<span class="sr-only">, {{ point.day }}</span></template>
+                                <template v-else>{{ point.day }}</template>
+                            </span>
+                        </li>
+                    </ol>
+                </div>
             </article>
 
             <DashboardCalendar />
@@ -150,7 +168,15 @@ const chart = ref([]);
 const clients = ref([]);
 
 
-const chartMax = computed(() => Math.max(1, ...chart.value.map((point) => point.value)));
+const chartStep = computed(() => Math.max(1, Math.ceil(Math.max(0, ...chart.value.map((point) => point.value)) / 4)));
+const chartMax = computed(() => chartStep.value * 4);
+const chartTicks = computed(() => [0, 1, 2, 3, 4].map((index) => index * chartStep.value));
+const chartPoints = computed(() => chart.value.map((point, index) => ({
+    x: (index + 0.5) * 100 / chart.value.length,
+    y: 100 - point.value / chartMax.value * 100,
+})));
+const chartLine = computed(() => chartPoints.value.map(({ x, y }) => `${x},${y}`).join(' '));
+const chartArea = computed(() => `${chartPoints.value[0]?.x ?? 0},100 ${chartLine.value} ${chartPoints.value.at(-1)?.x ?? 0},100`);
 
 onMounted(async () => {
     const { data } = await window.axios.get('/api/dashboard');
@@ -179,30 +205,41 @@ onMounted(async () => {
 .attendance-chart {
     --attendance-plot-height: 10rem;
     position: relative;
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
     margin-top: 2.75rem;
+    margin-left: 1.75rem;
 }
-.attendance-chart::before {
+.attendance-guides {
     position: absolute;
     inset: 0 0 auto;
     height: var(--attendance-plot-height);
-    border-bottom: 1px solid var(--wn-line);
-    background: linear-gradient(var(--wn-line) 1px, transparent 1px) top / 100% 25%;
-    content: '';
+    pointer-events: none;
 }
-.attendance-day { position: relative; min-width: 0; text-align: center; }
-.attendance-plot {
-    display: flex;
-    height: var(--attendance-plot-height);
-    align-items: flex-end;
-    justify-content: center;
+.attendance-guide {
+    position: absolute;
+    inset-inline: 0;
+    border-top: 1px solid var(--wn-line);
 }
-.attendance-bar {
-    position: relative;
-    width: min(58%, 2.75rem);
-    border-radius: .375rem .375rem 0 0;
-    background: var(--wn-primary);
+.attendance-guide span {
+    position: absolute;
+    right: calc(100% + .375rem);
+    transform: translateY(-50%);
+    color: var(--wn-muted);
+    font-size: .625rem;
+    font-variant-numeric: tabular-nums;
+}
+.attendance-trend { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.attendance-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.attendance-day { min-width: 0; text-align: center; }
+.attendance-plot { position: relative; height: var(--attendance-plot-height); }
+.attendance-point {
+    position: absolute;
+    left: 50%;
+    width: .5rem;
+    height: .5rem;
+    transform: translate(-50%, 50%);
+    border: 1.5px solid var(--wn-primary-strong);
+    border-radius: 50%;
+    background: white;
 }
 .attendance-value {
     position: absolute;
@@ -219,9 +256,9 @@ onMounted(async () => {
     margin-top: .55rem;
     color: var(--wn-muted);
     font-size: .6875rem;
-    white-space: nowrap;
+    line-height: 1.2;
 }
-.attendance-day[aria-current='date'] .attendance-bar { background: var(--wn-primary-strong); }
+.attendance-day[aria-current='date'] .attendance-point { background: var(--wn-primary-strong); }
 .attendance-day[aria-current='date'] :is(.attendance-value, .attendance-date) {
     color: var(--wn-primary-strong);
     font-weight: 700;
