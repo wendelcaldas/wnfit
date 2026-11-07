@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Aluno;
 use App\Models\Agendamento;
 use App\Models\Checkin;
+use App\Models\StudentWorkoutSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -74,7 +75,7 @@ class DashboardController extends Controller
                 ['label' => 'Aulas hoje', 'value' => (string) $todayClasses, 'caption' => $this->nextClassCaption($organizationId, $today), 'badge' => 'Agenda', 'type' => 'classes'],
                 ['label' => 'Reservas hoje', 'value' => (string) $todayReservations, 'caption' => 'Inscrições confirmadas nas aulas de hoje', 'badge' => 'Agenda', 'type' => 'reservations'],
             ],
-            'chart' => $this->checkinsByDay($organizationId, $today),
+            'chart' => $this->studentsWithCompletedWorkoutsByDay($organizationId, $today),
             'classes' => $this->upcomingClasses($organizationId, $today),
             'clients' => $this->recentClients($organizationId),
             'organization' => [
@@ -83,15 +84,18 @@ class DashboardController extends Controller
         ]);
     }
 
-    private function checkinsByDay(int $organizationId, Carbon $today): array
+    private function studentsWithCompletedWorkoutsByDay(int $organizationId, Carbon $today): array
     {
         $start = $today->copy()->subDays(6)->startOfDay();
-        $end = $today->copy()->endOfDay();
+        $end = $today->copy()->addDay()->startOfDay();
 
-        $rows = Checkin::query()
-            ->selectRaw('date(realizado_em) as day, count(*) as total')
-            ->where('organizacao_id', $organizationId)
-            ->whereBetween('realizado_em', [$start, $end])
+        $rows = StudentWorkoutSession::query()
+            ->join('alunos', 'alunos.id', '=', 'student_workout_sessions.aluno_id')
+            ->selectRaw('date(finished_at) as day, count(distinct student_workout_sessions.aluno_id) as total')
+            ->where('alunos.organizacao_id', $organizationId)
+            ->where('student_workout_sessions.status', 'completed')
+            ->where('finished_at', '>=', $start)
+            ->where('finished_at', '<', $end)
             ->groupBy('day')
             ->pluck('total', 'day');
 
