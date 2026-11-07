@@ -46,8 +46,8 @@
                                     <stop offset="100%" stop-color="var(--wn-primary)" stop-opacity="0" />
                                 </linearGradient>
                             </defs>
-                            <polygon :points="chartArea" fill="url(#attendance-fill)" />
-                            <polyline :points="chartLine" fill="none" stroke="var(--wn-primary-strong)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+                            <path :d="chartAreaPath" fill="url(#attendance-fill)" />
+                            <path :d="chartLinePath" fill="none" stroke="var(--wn-primary-strong)" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke" />
                         </svg>
                     </div>
 
@@ -193,8 +193,33 @@ const chartPoints = computed(() => chart.value.map((point, index) => ({
     x: (index + 0.5) * 100 / chart.value.length,
     y: 100 - point.value / chartMax.value * 100,
 })));
-const chartLine = computed(() => chartPoints.value.map(({ x, y }) => `${x},${y}`).join(' '));
-const chartArea = computed(() => `${chartPoints.value[0]?.x ?? 0},100 ${chartLine.value} ${chartPoints.value.at(-1)?.x ?? 0},100`);
+const chartLinePath = computed(() => {
+    const [first, ...rest] = chartPoints.value;
+    if (!first) return '';
+
+    const points = chartPoints.value;
+    const changes = rest.map((point, index) => point.y - points[index].y);
+    // Share a tangent at each point and flatten it where the direction changes.
+    const tangents = points.map((_, index) => {
+        const before = changes[index - 1] ?? changes[index] ?? 0;
+        const after = changes[index] ?? before;
+        return before * after > 0 ? 2 * before * after / (before + after) : 0;
+    });
+    const segments = rest.map((point, index) => {
+        const previous = points[index];
+        const third = (point.x - previous.x) / 3;
+        const startControl = `${previous.x + third},${previous.y + tangents[index] / 3}`;
+        const endControl = `${point.x - third},${point.y - tangents[index + 1] / 3}`;
+        return `C ${startControl} ${endControl} ${point.x},${point.y}`;
+    });
+
+    return [`M ${first.x},${first.y}`, ...segments].join(' ');
+});
+const chartAreaPath = computed(() => {
+    const first = chartPoints.value[0];
+    const last = chartPoints.value.at(-1);
+    return first ? `${chartLinePath.value} L ${last.x},100 ${first.x},100 Z` : '';
+});
 
 watch(chartDays, async (days, _previous, onCleanup) => {
     const controller = new AbortController();
