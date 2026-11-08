@@ -31,6 +31,7 @@ export const router = createRouter({
         { path: '/eventos', component: ComingSoonView, meta: { requiresAuth: true, moduleTitle: 'Eventos' } },
         { path: '/configuracoes', redirect: '/configuracoes/usuarios' },
         { path: '/agendar/:token', component: () => import('../views/PublicBookingView.vue'), meta: { public: true } },
+        { path: '/agenda-publica/:slug', component: () => import('../views/PublicScheduleView.vue'), meta: { public: true } },
         { path: '/configuracoes/horarios', component: () => import('../views/HoursSettingsView.vue'), meta: { requiresAuth: true } },
         { path: '/configuracoes/unidades', component: () => import('../views/UnitsSettingsView.vue'), meta: { requiresAuth: true } },
         { path: '/configuracoes/planos', component: () => import('../views/PlansSettingsView.vue'), meta: { requiresAuth: true } },

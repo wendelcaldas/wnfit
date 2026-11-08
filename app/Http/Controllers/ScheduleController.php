@@ -16,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class ScheduleController extends Controller
 {
+    private const EVENT_RELATIONS = ['instrutor:id,name', 'alunos:id,nome', 'publicBooking', 'publicReservations'];
+
     public function index(Request $request): JsonResponse
     {
         [$organization, $role] = $this->agendaContext($request);
@@ -29,7 +31,7 @@ class ScheduleController extends Controller
         $end = Carbon::createFromFormat('Y-m-d', $data['end'])->endOfDay();
 
         $events = $this->eventsQuery($organization, $role, $request->user()->id)
-            ->with(['instrutor:id,name', 'alunos:id,nome', 'publicBooking'])
+            ->with(self::EVENT_RELATIONS)
             ->when($data['instructor_id'] ?? null, fn ($query, $instructorId) => $query->where('instrutor_id', $instructorId))
             ->where('inicio_em', '<=', $end)
             ->where('fim_em', '>=', $start)
@@ -41,9 +43,9 @@ class ScheduleController extends Controller
             'events' => $events->map(fn (Agendamento $event) => $this->payload($event))->values(),
             'summary' => [
                 'events' => $events->where('status', '!=', 'cancelado')->count(),
-                'participants' => $events->sum(fn (Agendamento $event) => $event->alunos->where('pivot.status', 'confirmado')->count() + ($event->publicBooking ? 1 : 0)),
+                'participants' => $events->sum($this->occupiedSpots(...)),
                 'availableSlots' => $events->where('status', '!=', 'cancelado')->sum(function (Agendamento $event) {
-                    return $event->capacidade === null ? 0 : max($event->capacidade - $event->alunos->where('pivot.status', 'confirmado')->count() - ($event->publicBooking ? 1 : 0), 0);
+                    return $event->capacidade === null ? 0 : max($event->capacidade - $this->occupiedSpots($event), 0);
                 }),
             ],
         ]);
@@ -65,6 +67,8 @@ class ScheduleController extends Controller
 
         return response()->json([
             'instructors' => $instructors,
+            'publicScheduleUrl' => '/agenda-publica/'.rawurlencode($organization->slug),
+            'locations' => $organization->unidades()->where('ativa', true)->where('nome', '!=', 'Unidade principal')->orderBy('nome')->pluck('nome'),
             'students' => Aluno::query()
                 ->where('organizacao_id', $organization->id)
                 ->whereIn('status', ['ativo', 'avaliacao'])
@@ -81,7 +85,11 @@ class ScheduleController extends Controller
     {
         [$organization, $role] = $this->agendaContext($request);
         $data = $this->validatedData($request);
+        $this->assertSameDay($data);
         $this->assertRelationsBelongToOrganization($organization, $data, $role, $request->user()->id);
+        if (isset($data['capacity']) && count($data['participant_ids']) > $data['capacity']) {
+            throw ValidationException::withMessages(['capacity' => 'A capacidade não pode ser menor que o número de participantes confirmados.']);
+        }
         $occurrences = $this->recurringOccurrences($data);
         $events = DB::transaction(function () use ($organization, $data, $occurrences) {
             Organizacao::whereKey($organization->id)->lockForUpdate()->firstOrFail();
@@ -107,7 +115,7 @@ class ScheduleController extends Controller
             });
         });
 
-        $event = $events->first()->load(['instrutor:id,name', 'alunos:id,nome', 'publicBooking']);
+        $event = $events->first()->load(self::EVENT_RELATIONS);
 
         return response()->json([
             'event' => $this->payload($event),
@@ -124,18 +132,28 @@ class ScheduleController extends Controller
         DB::transaction(function () use ($organization, $schedule, $data) {
             Organizacao::whereKey($organization->id)->lockForUpdate()->firstOrFail();
             $schedule->refresh();
-            $unchanged = $schedule->status !== 'cancelado'
-                && $schedule->inicio_em->equalTo(Carbon::parse($data['starts_at'])->timezone(config('app.timezone')))
+            $sameTiming = $schedule->inicio_em->equalTo(Carbon::parse($data['starts_at'])->timezone(config('app.timezone')))
                 && $schedule->fim_em->equalTo(Carbon::parse($data['ends_at'])->timezone(config('app.timezone')));
-            if ($data['status'] !== 'cancelado' && ! $unchanged) {
+            if (! $sameTiming || ($data['publish_spots'] ?? false)) {
+                $this->assertSameDay($data);
+            }
+            $hasPublicBooking = $schedule->publicBooking()->exists();
+            if (($data['publish_spots'] ?? false) && $hasPublicBooking) {
+                throw ValidationException::withMessages(['publish_spots' => 'Reservas de atendimento não aparecem na agenda pública de vagas.']);
+            }
+            if ($data['status'] !== 'cancelado' && (! $sameTiming || $schedule->status === 'cancelado')) {
                 app(ScheduleAvailabilityService::class)->assertOpen($organization->id, Carbon::parse($data['starts_at']), Carbon::parse($data['ends_at']));
             }
             $this->ensureNoInstructorConflict($organization, $data, $schedule->id);
             $schedule->update($this->eventFields($data));
             $this->syncParticipants($schedule, $data['participant_ids'] ?? []);
+            $occupied = $schedule->alunos()->wherePivot('status', 'confirmado')->count() + $schedule->publicReservations()->count() + (int) $hasPublicBooking;
+            if ($schedule->capacidade !== null && $occupied > $schedule->capacidade) {
+                throw ValidationException::withMessages(['capacity' => 'A capacidade não pode ser menor que o número de participantes confirmados.']);
+            }
         });
 
-        return response()->json(['event' => $this->payload($schedule->fresh(['instrutor:id,name', 'alunos:id,nome', 'publicBooking']))]);
+        return response()->json(['event' => $this->payload($schedule->fresh(self::EVENT_RELATIONS))]);
     }
 
     private function validatedData(Request $request): array
@@ -151,6 +169,7 @@ class ScheduleController extends Controller
             'location' => ['nullable', 'string', 'max:120'],
             'address' => ['nullable', 'string', 'max:255'],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:1000'],
+            'publish_spots' => ['sometimes', 'boolean'],
             'notes' => ['nullable', 'string', 'max:3000'],
             'participant_ids' => ['present', 'array', 'max:1000'],
             'participant_ids.*' => ['integer', 'distinct'],
@@ -159,11 +178,24 @@ class ScheduleController extends Controller
         ]);
 
         $data['repeat_frequency'] = $data['repeat_frequency'] ?? 'none';
+        if (($data['publish_spots'] ?? false) && empty($data['capacity'])) {
+            throw ValidationException::withMessages(['capacity' => 'Informe o número de vagas para publicar este compromisso.']);
+        }
         if ($data['repeat_frequency'] !== 'none' && empty($data['repeat_until'])) {
             throw ValidationException::withMessages(['repeat_until' => 'Informe ate quando o agendamento deve se repetir.']);
         }
 
         return $data;
+    }
+
+    private function assertSameDay(array $data): void
+    {
+        $timezone = config('app.timezone');
+        $start = Carbon::parse($data['starts_at'])->timezone($timezone);
+        $end = Carbon::parse($data['ends_at'])->timezone($timezone);
+        if (! $start->isSameDay($end)) {
+            throw ValidationException::withMessages(['ends_at' => 'O início e o fim precisam estar no mesmo dia.']);
+        }
     }
 
     private function assertRelationsBelongToOrganization(Organizacao $organization, array &$data, string $role, int $userId): void
@@ -184,10 +216,6 @@ class ScheduleController extends Controller
         $validStudents = Aluno::query()->where('organizacao_id', $organization->id)->whereIn('id', $participantIds)->count();
         if ($validStudents !== count($participantIds)) {
             throw ValidationException::withMessages(['participant_ids' => 'Um ou mais alunos nao pertencem a esta organizacao.']);
-        }
-
-        if (($data['capacity'] ?? null) !== null && count($participantIds) > $data['capacity']) {
-            throw ValidationException::withMessages(['capacity' => 'A capacidade nao pode ser menor que o numero de alunos incluidos.']);
         }
     }
 
@@ -213,7 +241,7 @@ class ScheduleController extends Controller
 
     private function syncParticipants(Agendamento $event, array $participantIds): void
     {
-        $event->alunos()->sync(collect($participantIds)->mapWithKeys(fn ($id) => [$id => ['status' => 'confirmado']])->all());
+        $event->alunos()->sync($participantIds);
     }
 
     private function eventFields(array $data): array
@@ -223,6 +251,7 @@ class ScheduleController extends Controller
             'inicio_em' => Carbon::parse($data['starts_at'])->timezone(config('app.timezone')), 'fim_em' => Carbon::parse($data['ends_at'])->timezone(config('app.timezone')), 'instrutor_id' => $data['instructor_id'] ?? null,
             'modalidade' => $data['modality'], 'local' => $data['location'] ?? null, 'endereco' => $data['address'] ?? null,
             'capacidade' => $data['capacity'] ?? null, 'observacoes' => $data['notes'] ?? null,
+            ...array_key_exists('publish_spots', $data) ? ['publicar_vagas' => $data['publish_spots']] : [],
         ];
     }
 
@@ -290,9 +319,17 @@ class ScheduleController extends Controller
             'recurrenceUntil' => $event->recorrencia_ate?->toDateString(),
             'instructorId' => $event->instrutor_id, 'instructorName' => $event->instrutor?->name,
             'modality' => $event->modalidade, 'location' => $event->local, 'address' => $event->endereco,
-            'capacity' => $event->capacidade, 'notes' => $event->observacoes, 'participants' => $participants,
+            'capacity' => $event->capacidade, 'publishSpots' => (bool) $event->publicar_vagas, 'notes' => $event->observacoes, 'participants' => $participants,
             'publicBooking' => $event->publicBooking ? $event->publicBooking->only(['name', 'phone', 'email', 'reference']) : null,
-            'participantCount' => $participants->where('status', 'confirmado')->count() + ($event->publicBooking ? 1 : 0),
+            'publicReservations' => $event->publicReservations->map->only(['id', 'name', 'phone', 'reference'])->values(),
+            'participantCount' => $this->occupiedSpots($event),
         ];
+    }
+
+    private function occupiedSpots(Agendamento $event): int
+    {
+        return $event->alunos->where('pivot.status', 'confirmado')->count()
+            + $event->publicReservations->count()
+            + (int) ($event->publicBooking !== null);
     }
 }

@@ -13,8 +13,8 @@
             </RouterLink>
         </template>
 
-        <section class="student-metrics" aria-label="Indicadores dos alunos">
-            <article v-for="item in summary" :key="item.label" class="stat-card student-metric" :title="item.type === 'active' ? 'Com cadastro ativo' : item.caption">
+        <section class="summary-metrics" aria-label="Indicadores dos alunos">
+            <article v-for="item in summary" :key="item.label" class="stat-card summary-metric" :title="item.type === 'active' ? 'Com cadastro ativo' : item.caption">
                 <component :is="item.icon" class="metric-icon" :class="item.iconClass" aria-hidden="true" />
                 <div class="metric-copy">
                     <p class="metric-label">{{ item.label }}</p>
@@ -178,15 +178,6 @@ onMounted(loadStudents);
 </script>
 
 <style scoped>
-.student-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
-.student-metrics .student-metric { display: flex; align-items: center; gap: .75rem; min-width: 0; min-height: 4.5rem; padding: 1rem; border-radius: 1rem; }
-.metric-icon { flex-shrink: 0; width: 1.15rem; height: 1.15rem; color: var(--wn-primary-strong); }
-.metric-copy { display: flex; flex: 1; align-items: center; justify-content: space-between; gap: .5rem; min-width: 0; }
-.metric-label { color: var(--wn-muted); font-size: .75rem; font-weight: 500; }
-.metric-value { color: var(--wn-ink); font-size: 1.4rem; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
-@media (min-width: 768px) { .student-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-@media (max-width: 359px) { .student-metrics .student-metric { gap: .4rem; padding: .8rem .65rem; } .metric-copy { gap: .3rem; } .metric-icon { width: 1rem; height: 1rem; } .metric-value { font-size: 1.2rem; } }
-
 .student-filter { display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
 .admin-student-filters > .input-shell,
 .admin-student-filters .form-control,
