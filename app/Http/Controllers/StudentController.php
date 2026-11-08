@@ -34,7 +34,7 @@ class StudentController extends Controller
     public function index(Request $request): JsonResponse
     {
         $request->validate(['modalidade' => ['nullable', Rule::in(['todos', 'nao_informado', ...array_keys(Aluno::MODALIDADES)])]]);
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         $this->billing->refreshOverdueCharges($organization->id);
 
         $query = Aluno::query()->where('perfil_tipo', $request->input('tipo') === 'participante' ? 'participante' : 'aluno')
@@ -107,7 +107,7 @@ class StudentController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         if (is_string($request->input('estado'))) {
             $request->merge(['estado' => strtoupper($request->input('estado'))]);
         }
@@ -162,7 +162,7 @@ class StudentController extends Controller
 
     public function show(Request $request, Aluno $student): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         abort_unless($student->organizacao_id === $organization->id, 404);
 
         $this->billing->refreshOverdueCharges($organization->id);
@@ -174,7 +174,7 @@ class StudentController extends Controller
 
     public function update(Request $request, Aluno $student): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         abort_unless($student->organizacao_id === $organization->id, 404);
 
         if (is_string($request->input('estado'))) {
@@ -199,7 +199,7 @@ class StudentController extends Controller
 
     public function uploadPhoto(Request $request, Aluno $student): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         abort_unless($student->organizacao_id === $organization->id, 404);
         $request->validate(['photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=6000,max_height=6000']]);
         $previous = $student->foto_path;
@@ -220,7 +220,7 @@ class StudentController extends Controller
 
     public function photo(Request $request, Aluno $student)
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         abort_unless($student->organizacao_id === $organization->id, 404);
         abort_unless($student->foto_path && Storage::disk('local')->exists($student->foto_path), 404);
 
@@ -229,7 +229,7 @@ class StudentController extends Controller
 
     public function options(Request $request): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
 
         return response()->json([
             'plans' => Plano::query()
@@ -250,7 +250,7 @@ class StudentController extends Controller
 
     public function workouts(Request $request, Aluno $student): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         abort_unless($student->organizacao_id === $organization->id, 404);
 
         $publishing = app(WorkoutPublishingService::class);
@@ -273,7 +273,7 @@ class StudentController extends Controller
 
     public function assignWorkout(Request $request, Aluno $student, Treino $workout): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         abort_unless($student->organizacao_id === $organization->id && $workout->organizacao_id === $organization->id, 404);
 
         $data = $request->validate(['endsOn' => ['nullable', 'date', 'after_or_equal:today']]);
@@ -285,7 +285,7 @@ class StudentController extends Controller
 
     public function renewWorkout(Request $request, Aluno $student, StudentWorkoutPlan $plan): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         abort_unless($student->organizacao_id === $organization->id && $plan->aluno_id === $student->id, 404);
         $data = $request->validate(['endsOn' => ['nullable', 'date', 'after_or_equal:today']]);
         $publishing = app(WorkoutPublishingService::class);
@@ -296,7 +296,7 @@ class StudentController extends Controller
 
     public function generateCharge(Request $request, Aluno $student): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         abort_unless($student->organizacao_id === $organization->id, 404);
 
         $subscription = $student->assinatura()->with('plano')->firstOrFail();
@@ -307,7 +307,7 @@ class StudentController extends Controller
 
     public function sendCharge(Request $request, Cobranca $charge): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         abort_unless($charge->organizacao_id === $organization->id, 404);
 
         $data = $request->validate(['manual' => ['sometimes', 'boolean'], 'telefone' => ['sometimes', 'required', 'string', 'max:30', new BrazilianPhone]]);
@@ -326,7 +326,7 @@ class StudentController extends Controller
         if ($charge->event_registration_id) {
             $request->validate(['method' => 'required|in:PIX,Crédito,Débito,Dinheiro,Transferência,Boleto']);
         }
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         abort_unless($charge->organizacao_id === $organization->id, 404);
 
         $data = $request->validate(['method' => ['sometimes', 'in:PIX,Dinheiro,Cartão,Crédito,Débito,Transferência,Boleto']]);
@@ -359,10 +359,10 @@ class StudentController extends Controller
             'objetivo' => ['nullable', 'string', 'max:80'],
             'treinador' => ['nullable', 'string', 'max:80'],
             'unidade' => ['nullable', 'string', 'max:255'],
-            'unit_id' => ['nullable', 'integer', Rule::exists('unidades', 'id')->where('organizacao_id', request()->user()->organizacoes()->firstOrFail()->id)->where('ativa', true)],
+            'unit_id' => ['nullable', 'integer', Rule::exists('unidades', 'id')->where('organizacao_id', request()->user()->activeOrganization()->id)->where('ativa', true)],
             'como_conheceu' => ['nullable', 'string', 'max:255'],
             'observacoes' => ['nullable', 'string', 'max:5000'],
-            'plan_id' => ['nullable', 'integer', Rule::exists('planos', 'id')->where('organizacao_id', request()->user()->organizacoes()->firstOrFail()->id)->where('ativo', true)],
+            'plan_id' => ['nullable', 'integer', Rule::exists('planos', 'id')->where('organizacao_id', request()->user()->activeOrganization()->id)->where('ativo', true)],
             'plano' => ['required_without:plan_id', 'nullable', 'string', 'max:80'],
             'status' => ['required', 'string', 'max:30'],
             'data_inicio' => ['required', 'date'],
@@ -376,7 +376,7 @@ class StudentController extends Controller
     private function profileValidationRules(): array
     {
         return [
-            'unit_id' => ['sometimes', 'nullable', 'integer', Rule::exists('unidades', 'id')->where('organizacao_id', request()->user()->organizacoes()->firstOrFail()->id)->where('ativa', true)],
+            'unit_id' => ['sometimes', 'nullable', 'integer', Rule::exists('unidades', 'id')->where('organizacao_id', request()->user()->activeOrganization()->id)->where('ativa', true)],
             'modalidade' => ['sometimes', 'nullable', Rule::in(array_keys(Aluno::MODALIDADES))],
             'nome' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'nullable', 'email', 'max:255'],

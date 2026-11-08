@@ -20,7 +20,7 @@ class FinanceController extends Controller
             'source' => ['nullable', 'in:todos,direto,totalpass,wellhub'],
             'movements' => ['nullable', 'boolean'],
         ]);
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         $start = Carbon::createFromFormat('!Y-m', $data['month'] ?? now()->format('Y-m'));
         $end = $start->copy()->endOfMonth();
         $billing->refreshOverdueCharges($organization->id, $end);

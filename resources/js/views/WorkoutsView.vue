@@ -39,7 +39,9 @@ import { Archive, ArrowUpRight, CalendarDays, CircleAlert, CircleCheck, Clock3, 
 import { RouterLink, useRouter } from 'vue-router';
 import AppShell from '../components/AppShell.vue';
 import { notify } from '../composables/useNotifications';
+import { useAuthStore } from '../stores/auth';
 const router = useRouter();
+const auth = useAuthStore();
 const loading = ref(true), loadError = ref(false), error = ref(''), busy = ref(false);
 const workouts = ref([]), objectives = ref([]);
 const summary = reactive({ total: 0, active: 0, drafts: 0, archived: 0 });
@@ -73,7 +75,23 @@ function scheduleStudentSearch() { clearTimeout(studentDebounce); assignmentStud
 async function openAssignment(workout) { previousFocus = document.activeElement; error.value = ''; studentSearch.value = ''; assignmentStudent.value = ''; assignmentStudents.value = []; assignmentWorkout.value = workout; await nextTick(); assignmentClose.value?.focus(); searchStudents(); }
 async function closeAssignment() { if (busy.value) return; clearTimeout(studentDebounce); studentRequestId++; studentsLoading.value = false; assignmentWorkout.value = null; await nextTick(); previousFocus?.focus(); }
 function trapFocus(event) { const elements = [...assignmentDialog.value.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled)')]; const first = elements[0], last = elements.at(-1); if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); } }
-async function assign() { if (busy.value || !assignmentStudent.value) return; busy.value = true; error.value = ''; try { await window.axios.post(`/api/students/${assignmentStudent.value}/workouts/${assignmentWorkout.value.id}`); notify('Ficha publicada para o aluno.'); await router.push(`/alunos/${assignmentStudent.value}?tab=workouts`); } catch (e) { error.value = e.response?.data?.message ?? 'Não foi possível publicar a ficha.'; } finally { busy.value = false; } }
+async function assign() {
+    if (busy.value || !assignmentStudent.value) return;
+    busy.value = true;
+    error.value = '';
+    try {
+        const studentId = assignmentStudent.value;
+        await window.axios.post(`/api/students/${studentId}/workouts/${assignmentWorkout.value.id}`);
+        notify('Ficha publicada para o aluno.');
+        busy.value = false;
+        await closeAssignment();
+        if (auth.organization?.modules?.students) await router.push(`/alunos/${studentId}?tab=workouts`);
+    } catch (e) {
+        error.value = e.response?.data?.message ?? 'Não foi possível publicar a ficha.';
+    } finally {
+        busy.value = false;
+    }
+}
 onMounted(loadWorkouts);
 onBeforeUnmount(() => { clearTimeout(debounce); clearTimeout(studentDebounce); requestId++; studentRequestId++; });
 </script>

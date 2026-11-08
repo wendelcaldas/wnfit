@@ -6,6 +6,7 @@
         </button>
         <div v-if="open" id="header-account-options" class="header-account-menu">
             <RouterLink ref="settings" to="/configuracoes/usuarios" class="header-account-item" @click="close()"><Settings class="h-4 w-4" aria-hidden="true" />Configurações</RouterLink>
+            <RouterLink v-if="auth.user?.isWnfitInternal" to="/modulos" class="header-account-item lg:hidden" @click="close()"><Puzzle class="h-4 w-4" aria-hidden="true" />Módulos</RouterLink>
             <button type="button" class="header-account-item w-full text-rose-600" @click="logout"><LogOut class="h-4 w-4" aria-hidden="true" />Sair</button>
         </div>
     </div>
@@ -14,7 +15,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import { LogOut, Settings } from 'lucide-vue-next';
+import { LogOut, Puzzle, Settings } from 'lucide-vue-next';
 import { useAuthStore } from '../stores/auth';
 
 const auth = useAuthStore();

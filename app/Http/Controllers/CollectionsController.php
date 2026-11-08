@@ -15,7 +15,7 @@ class CollectionsController extends Controller
 {
     private function organization(Request $request): int
     {
-        return $request->user()->organizacoes()->firstOrFail()->id;
+        return $request->user()->activeOrganization()->id;
     }
 
     private function authorizeStudent(Request $request, Aluno $student): void

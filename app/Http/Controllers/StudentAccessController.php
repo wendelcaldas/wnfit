@@ -12,7 +12,7 @@ class StudentAccessController extends Controller
 {
     private function authorizeStudent(Request $request, Aluno $student): void
     {
-        abort_unless($student->organizacao_id === $request->user()->organizacoes()->firstOrFail()->id, 404);
+        abort_unless($student->organizacao_id === $request->user()->activeOrganization()->id, 404);
     }
 
     public function suggest(Request $request, StudentAccessService $service)

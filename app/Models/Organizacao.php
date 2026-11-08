@@ -12,11 +12,19 @@ class Organizacao extends Model
 {
     use HasFactory;
 
+    public const MODULE_DEFAULTS = [
+        'students' => true,
+        'workouts' => true,
+        'finance' => true,
+        'schedule' => true,
+        'messaging' => false,
+    ];
+
     protected $table = 'organizacoes';
 
     protected function casts(): array
     {
-        return ['onboarding_profile' => 'array'];
+        return ['onboarding_profile' => 'array', 'modules' => 'array'];
     }
 
     /**
@@ -72,5 +80,23 @@ class Organizacao extends Model
     public function mensagemConfiguracao(): HasOne
     {
         return $this->hasOne(MensagemConfiguracao::class);
+    }
+
+    public function hasMessagingModule(): bool
+    {
+        return $this->hasModule('messaging');
+    }
+
+    public function moduleAccess(): array
+    {
+        $defaults = self::MODULE_DEFAULTS;
+        $defaults['messaging'] = in_array($this->slug, config('services.messaging.module_organization_slugs', []), true);
+
+        return array_replace($defaults, $this->modules ?? []);
+    }
+
+    public function hasModule(string $module): bool
+    {
+        return $this->moduleAccess()[$module] ?? false;
     }
 }

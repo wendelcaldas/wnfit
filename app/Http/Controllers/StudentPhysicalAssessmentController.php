@@ -12,7 +12,7 @@ class StudentPhysicalAssessmentController extends Controller
 {
     private function authorizeStudent(Request $request, Aluno $student): void
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         abort_unless($student->organizacao_id === $organization->id, 404);
     }
 

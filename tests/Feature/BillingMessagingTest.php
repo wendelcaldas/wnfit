@@ -26,6 +26,13 @@ class BillingMessagingTest extends TestCase
 
         config([
             'services.messaging.mode' => 'automatic',
+            'services.messaging.module_organization_slugs' => [
+                'studio-config',
+                'studio-events',
+                'studio-other-events',
+                'studio-twilio-templates',
+                'studio-twilio-missing-credentials',
+            ],
             'services.twilio.whatsapp.driver' => 'fake',
             'services.twilio.whatsapp.from' => '+5571000000000',
             'services.twilio.whatsapp.templates.charge_reminder' => null,
@@ -507,6 +514,72 @@ class BillingMessagingTest extends TestCase
             'charge_message_body' => 'Oi {aluno}, seu plano {plano} vence em {vencimento}. Valor: {valor}.',
             'welcome_message_body' => 'Boas-vindas, {aluno}! Seu plano {plano} no {studio} esta ativo.',
         ]);
+    }
+
+    public function test_messaging_module_requires_access_for_the_active_organization(): void
+    {
+        [$owner, $organization] = $this->organizationWithUser('studio-without-messaging');
+        $url = '/api/organization/messaging';
+
+        $this->actingAs($owner)->getJson('/api/me')->assertOk()
+            ->assertJsonPath('organization.canAccessMessaging', false);
+        $this->getJson($url)->assertForbidden();
+        $this->patchJson($url, [])->assertForbidden();
+        $this->patchJson($url.'/events', [])->assertForbidden();
+        $this->getJson($url.'/twilio-templates')->assertForbidden();
+        $this->assertDatabaseCount('mensagem_configuracoes', 0);
+
+        config(['services.messaging.module_organization_slugs' => [$organization->slug]]);
+        $this->getJson('/api/me')->assertOk()->assertJsonPath('organization.canAccessMessaging', true);
+        $this->getJson($url)->assertOk();
+
+        $organization->usuarios()->updateExistingPivot($owner->id, ['status' => 'inativo']);
+        $this->getJson($url)->assertForbidden();
+    }
+
+    public function test_message_event_preferences_are_independent_and_scoped_to_the_organization(): void
+    {
+        [$owner, $organization] = $this->organizationWithUser('studio-events');
+        [$otherOwner] = $this->organizationWithUser('studio-other-events');
+        $professor = User::factory()->create();
+        $organization->usuarios()->attach($professor->id, ['papel' => 'professor', 'status' => 'ativo']);
+        $student = Aluno::create([
+            'organizacao_id' => $organization->id,
+            'nome' => 'Mariana',
+            'telefone' => '71999887766',
+            'status' => 'ativo',
+        ]);
+
+        $this->actingAs($owner)->getJson('/api/organization/messaging')->assertOk()
+            ->assertJsonPath('settings.events.boas_vindas', true)
+            ->assertJsonPath('settings.events.agendamento_confirmado', false);
+
+        $preferences = [
+            'events' => [
+                ...MensagemConfiguracao::EVENT_DEFAULTS,
+                'treino_atualizado' => true,
+                'agendamento_confirmado' => true,
+                'cobranca_atrasada' => true,
+            ],
+            'overdueDelayDays' => 4,
+        ];
+        $url = '/api/organization/messaging/events';
+        $this->actingAs($professor)->patchJson($url, $preferences)->assertForbidden();
+        $this->actingAs($owner)->patchJson($url, [...$preferences, 'overdueDelayDays' => 0])
+            ->assertUnprocessable()->assertJsonValidationErrors('overdueDelayDays');
+        $this->patchJson($url, $preferences)->assertOk()->assertExactJson($preferences);
+        $this->getJson('/api/organization/messaging')->assertOk()
+            ->assertJsonPath('settings.events', $preferences['events'])
+            ->assertJsonPath('settings.overdueDelayDays', 4)
+            ->assertJsonPath('settings.active', true);
+
+        $this->assertNull(app(MessagingService::class)->sendWelcomeMessage($student));
+        $this->assertDatabaseCount('mensagens', 0);
+
+        $this->actingAs($otherOwner)->getJson('/api/organization/messaging')->assertOk()
+            ->assertJsonPath('settings.events.boas_vindas', true)
+            ->assertJsonPath('settings.events.treino_atualizado', false)
+            ->assertJsonPath('settings.overdueDelayDays', 1);
     }
 
     public function test_owner_can_fetch_twilio_content_templates_with_approval_status(): void

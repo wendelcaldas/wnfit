@@ -64,6 +64,7 @@ class PublicScheduleController extends Controller
 
         return DB::transaction(function () use ($organization, $data, $phone, $notifications) {
             $organization = Organizacao::whereKey($organization->id)->where('ativa', true)->lockForUpdate()->firstOrFail();
+            abort_unless($organization->hasModule('schedule'), 404);
             $event = $organization->agendamentos()->find($data['eventId']);
             abort_unless($event && $event->status === 'agendado', 409, 'Este compromisso não está mais disponível.');
 
@@ -93,7 +94,10 @@ class PublicScheduleController extends Controller
 
     private function organization(string $slug): Organizacao
     {
-        return Organizacao::where('slug', $slug)->where('ativa', true)->firstOrFail();
+        $organization = Organizacao::where('slug', $slug)->where('ativa', true)->firstOrFail();
+        abort_unless($organization->hasModule('schedule'), 404);
+
+        return $organization;
     }
 
     private function dateRules(): array

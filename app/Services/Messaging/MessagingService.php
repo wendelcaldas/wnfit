@@ -78,9 +78,13 @@ class MessagingService
             ?? $this->manualWhatsAppUrl($message->destinatario, $message->conteudo);
     }
 
-    public function sendWelcomeMessage(Aluno $student): Mensagem
+    public function sendWelcomeMessage(Aluno $student): ?Mensagem
     {
         $student->loadMissing(['organizacao', 'assinatura.plano']);
+        $settings = $this->settingsForOrganization($student->organizacao);
+        if (! $settings->eventPreferences()['boas_vindas']) {
+            return null;
+        }
 
         if (config('services.messaging.welcome_driver') === 'baileys') {
             if (! in_array((string) $student->organizacao_id, array_map('trim', config('services.messaging.baileys.organization_ids', [])), true)) {
@@ -94,19 +98,20 @@ class MessagingService
                     return $existing;
                 }
                 $settings = $this->settingsForOrganization($student->organizacao);
+                if (! $settings->eventPreferences()['boas_vindas']) {
+                    return null;
+                }
+
                 $message = Mensagem::create([
                     'organizacao_id' => $student->organizacao_id,
                     'aluno_id' => $student->id,
                     'canal' => 'whatsapp', 'provedor' => 'baileys', 'tipo' => 'boas_vindas',
-                    'status' => $settings->ativo ? 'pendente' : 'falhou',
+                    'status' => 'pendente',
                     'destinatario' => $this->normalizeBrazilianPhone($student->telefone),
                     'conteudo' => $this->renderTemplate($settings->welcome_message_body, $this->welcomeTemplateVariables($student)),
-                    'erro' => $settings->ativo ? null : 'Envio desativado para esta organizacao.',
                 ]);
-                if ($settings->ativo) {
-                    // Always asynchronous, even when the default queue uses sync.
-                    SendWelcomeWhatsApp::dispatch($message->id)->onConnection('database')->onQueue('whatsapp')->afterCommit();
-                }
+                // Always asynchronous, even when the default queue uses sync.
+                SendWelcomeWhatsApp::dispatch($message->id)->onConnection('database')->onQueue('whatsapp')->afterCommit();
 
                 return $message;
             });
@@ -116,7 +121,6 @@ class MessagingService
             return $this->prepareManualWelcomeMessage($student, 'Envio manual configurado para esta organizacao.');
         }
 
-        $settings = $this->settingsForOrganization($student->organizacao);
         $templateVariables = $this->welcomeTemplateVariables($student);
 
         return $this->sendWhatsAppMessage(
@@ -303,11 +307,12 @@ class MessagingService
         ]);
 
         $requiresSender = config('services.twilio.whatsapp.driver') !== 'fake';
+        $enabled = $type === 'boas_vindas' ? $settings->eventPreferences()['boas_vindas'] : $settings->ativo;
 
-        if (! $settings->ativo || ($requiresSender && ! $from)) {
+        if (! $enabled || ($requiresSender && ! $from)) {
             $message->update([
                 'status' => 'falhou',
-                'erro' => ! $settings->ativo
+                'erro' => ! $enabled
                     ? 'Envio de mensagens desativado para esta organizacao.'
                     : 'Numero WhatsApp remetente nao configurado.',
             ]);

@@ -1,9 +1,9 @@
 import {
-    BarChart3,
     CalendarRange,
     Dumbbell,
     LayoutGrid,
     MessageSquareText,
+    Puzzle,
     Settings,
     Users,
     Wallet,
@@ -11,11 +11,11 @@ import {
 
 export const appNavigation = [
     { label: 'Painel', to: '/painel', icon: LayoutGrid },
-    { label: 'Alunos', to: '/alunos', icon: Users },
-    { label: 'Financeiro', to: '/financeiro', icon: Wallet },
-    { label: 'Treinos', to: '/treinos', icon: Dumbbell },
-    { label: 'Agenda', to: '/agenda', icon: CalendarRange },
-    { label: 'Eventos', to: '/eventos', icon: CalendarRange, comingSoon: true },
-    { label: 'Comunicações', to: '/configuracoes/mensagens', icon: MessageSquareText, comingSoon: true },
+    { label: 'Alunos', to: '/alunos', icon: Users, module: 'students' },
+    { label: 'Financeiro', to: '/financeiro', icon: Wallet, module: 'finance' },
+    { label: 'Treinos', to: '/treinos', icon: Dumbbell, module: 'workouts' },
+    { label: 'Agenda', to: '/agenda', icon: CalendarRange, module: 'schedule' },
+    { label: 'Mensagens', to: '/mensagens', icon: MessageSquareText, module: 'messaging' },
     { label: 'Configurações', to: '/configuracoes', icon: Settings, activePaths: ['/configuracoes/usuarios', '/configuracoes/planos', '/configuracoes/unidades', '/configuracoes/horarios'] },
+    { label: 'Módulos', to: '/modulos', icon: Puzzle, internal: true },
 ];

@@ -33,6 +33,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'is_wnfit_internal',
     ];
 
     /**
@@ -45,6 +46,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_wnfit_internal' => 'boolean',
         ];
     }
 
@@ -57,5 +59,10 @@ class User extends Authenticatable
             ->using(OrganizacaoUsuario::class)
             ->withPivot(['papel', 'status', 'telefone'])
             ->withTimestamps();
+    }
+
+    public function activeOrganization(): ?Organizacao
+    {
+        return $this->organizacoes()->where('organizacoes.ativa', true)->wherePivot('status', 'ativo')->first();
     }
 }

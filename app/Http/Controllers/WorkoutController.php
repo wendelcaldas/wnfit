@@ -15,7 +15,7 @@ class WorkoutController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         $baseQuery = Treino::query()->where('organizacao_id', $organization->id);
         $query = (clone $baseQuery)->with('criador:id,name');
 
@@ -62,7 +62,7 @@ class WorkoutController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         $data = $request->validate($this->rules($request));
 
         $workout = DB::transaction(function () use ($data, $organization, $request) {
@@ -112,7 +112,7 @@ class WorkoutController extends Controller
 
     private function rules(Request $request): array
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
 
         return [
             'revision' => ['sometimes', 'string'],
@@ -165,7 +165,7 @@ class WorkoutController extends Controller
 
     private function ensureOrganization(Request $request, Treino $workout): void
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         abort_unless($workout->organizacao_id === $organization->id, 404);
     }
 
@@ -213,7 +213,7 @@ class WorkoutController extends Controller
 
     public function personalize(Request $request, Aluno $student, StudentWorkoutPlan $plan): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         abort_unless($student->organizacao_id === $organization->id && $plan->aluno_id === $student->id, 404);
         $snapshot = $plan->snapshot;
         $copy = DB::transaction(function () use ($snapshot, $request, $organization, $student) {

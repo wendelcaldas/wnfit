@@ -22,12 +22,14 @@
                 <section class="panel-card">
                     <h2 class="text-xl font-semibold text-[var(--wn-ink)]">Resumo do aluno</h2>
                     <div class="mt-5 grid gap-4 md:grid-cols-2">
-                        <MiniKpi label="Dias com treino" :value="String(student.recentActivity.filter(day => day.completedSessions > 0).length)" caption="Nos últimos 7 dias" />
+                        <MiniKpi v-if="canUseWorkouts" label="Dias com treino" :value="String(student.recentActivity.filter(day => day.completedSessions > 0).length)" caption="Nos últimos 7 dias" />
                         <MiniKpi label="Perfil completo" :value="student.profileCompletion + '%'" caption="Dados cadastrados" />
                     </div>
-                    <p v-if="workoutsError" class="mt-4 text-sm" role="alert">{{ workoutsError }}</p>
-                    <p v-else class="mt-4 text-sm text-[var(--wn-muted)]">{{ workoutsLoading ? 'Carregando treino...' : currentWorkout ? 'Treino atual: ' + currentWorkout.name : 'Nenhuma ficha de treino ativa.' }}</p>
-                    <button class="btn-secondary mt-4" @click="selectTab('workouts')">Ver treinos</button>
+                    <template v-if="canUseWorkouts">
+                        <p v-if="workoutsError" class="mt-4 text-sm" role="alert">{{ workoutsError }}</p>
+                        <p v-else class="mt-4 text-sm text-[var(--wn-muted)]">{{ workoutsLoading ? 'Carregando treino...' : currentWorkout ? 'Treino atual: ' + currentWorkout.name : 'Nenhuma ficha de treino ativa.' }}</p>
+                        <button class="btn-secondary mt-4" @click="selectTab('workouts')">Ver treinos</button>
+                    </template>
 
                 </section>
 
@@ -40,7 +42,7 @@
             </div>
 
             <aside class="space-y-5">
-                <PlanCard :student="student" />
+                <PlanCard v-if="canUseFinance" :student="student" />
 
             </aside>
         </section>
@@ -296,7 +298,7 @@
 </template>
 
 <script setup>
-import { defineComponent, h, onMounted, reactive, ref, withDirectives } from 'vue';
+import { computed, defineComponent, h, onMounted, reactive, ref, withDirectives } from 'vue';
 import { inputMask } from '../forms/inputMasks';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { ArrowLeft, CheckCircle2, Copy, Dumbbell, ExternalLink, Library, Mail, MapPin, MessageCircle, MoreHorizontal, Pencil, Phone, Plus, ReceiptText, Send, X } from 'lucide-vue-next';
@@ -311,7 +313,11 @@ import SubscriptionRecurrence from '../components/SubscriptionRecurrence.vue';
 import StudentAccessPanel from '../components/StudentAccessPanel.vue';
 import StudentTrainingHistory from '../components/StudentTrainingHistory.vue';
 import { useStudentCredentialsStore } from '../stores/studentCredentials';
+import { useAuthStore } from '../stores/auth';
 const accessCredentials = useStudentCredentialsStore();
+const auth = useAuthStore();
+const canUseWorkouts = computed(() => Boolean(auth.organization?.modules?.workouts));
+const canUseFinance = computed(() => Boolean(auth.organization?.modules?.finance));
 
 const MiniKpi = defineComponent({
     props: { label: String, value: [String, Number], caption: String },
@@ -390,7 +396,7 @@ async function personalizeWorkout(plan) {
     finally { assigningWorkout.value = false; }
 }
 const student = ref(null);
-const activeTab = ref(['overview', 'profile', 'workouts', 'financial', 'communications', 'access'].includes(route.query.tab) ? route.query.tab : route.query.tab === 'health' ? 'profile' : 'overview');
+const activeTab = ref('overview');
 const profileSection = ref(route.query.tab === 'health' ? 'health' : 'personal');
 const studentError = ref('');
 const workoutsError = ref('');
@@ -408,14 +414,17 @@ const workoutsLoading = ref(false);
 const workoutPickerOpen = ref(false);
 const assigningWorkout = ref(false);
 const messageActionId = ref(null);
-const tabs = [
+const tabs = computed(() => [
     { key: 'overview', label: 'Resumo' },
     { key: 'workouts', label: 'Treinos' },
     { key: 'profile', label: 'Ficha' },
     { key: 'financial', label: 'Financeiro' },
     { key: 'communications', label: 'Mensagens' },
     { key: 'access', label: 'Acesso' },
-];
+].filter((tab) => (tab.key !== 'workouts' || canUseWorkouts.value) && (tab.key !== 'financial' || canUseFinance.value)));
+
+const requestedTab = route.query.tab === 'health' ? 'profile' : route.query.tab;
+if (tabs.value.some((tab) => tab.key === requestedTab)) activeTab.value = requestedTab;
 
 const money = (value) => Number(value ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const labelStatus = (status) => ({ pago: 'Pago', pendente: 'Pendente', atrasado: 'Atrasado', cancelado: 'Cancelado' }[status] ?? status);
@@ -548,5 +557,7 @@ const onChargeUpdated = async (message) => {
     await loadStudent();
 };
 
-onMounted(async () => { await Promise.all([loadStudent(), loadWorkouts()]); });
+onMounted(async () => {
+    await Promise.all([loadStudent(), canUseWorkouts.value ? loadWorkouts() : null]);
+});
 </script>
