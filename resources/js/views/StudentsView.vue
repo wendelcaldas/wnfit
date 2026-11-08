@@ -34,7 +34,7 @@
                 <label class="student-filter"><span class="text-xs font-semibold text-[var(--wn-muted)]">Modalidade</span><select v-model="filters.modalidade" class="form-control" @change="loadStudents"><option value="todos">Todas</option><option v-for="option in studentModalities" :key="option.value" :value="option.value">{{ option.label }}</option><option value="nao_informado">Não informado</option></select></label>
 
                 <label class="student-filter">
-                    <span class="text-xs font-semibold text-[var(--wn-muted)]">Status</span>
+                    <span class="text-xs font-semibold text-[var(--wn-muted)]">Status do aluno</span>
                     <select v-model="filters.status" class="form-control" @change="loadStudents">
                         <option value="todos">Todos</option>
                         <option value="ativo">Ativo</option>
@@ -72,8 +72,8 @@
                             <th class="px-5 py-4"><input type="checkbox" class="h-4 w-4 rounded border-[var(--wn-line)]" /></th>
                             <th class="px-5 py-4">Aluno</th>
                             <th class="px-5 py-4">Plano</th>
-                            <th class="px-5 py-4">Professor</th>
-                            <th class="px-5 py-4">Status</th>
+                            <th scope="col" class="px-5 py-4">Status</th>
+                            <th scope="col" class="px-5 py-4">Financeiro</th>
                             <th class="px-5 py-4">Vencimento</th>
                             <th class="px-5 py-4">Último treino</th>
                             <th class="px-5 py-4 text-right">Ações</th>
@@ -94,8 +94,8 @@
                                 </RouterLink>
                             </td>
                             <td class="px-5 py-4 text-sm text-[var(--wn-ink)]">{{ student.plan }}<small class="block text-xs text-[var(--wn-muted)]">{{ student.modalityLabel }}</small></td>
-                            <td class="px-5 py-4 text-sm text-[var(--wn-ink)]">{{ student.teacher }}</td>
-                            <td class="px-5 py-4"><span :class="student.statusClass">{{ student.status }}</span></td>
+                            <td class="px-5 py-4"><span class="student-status-text" :class="student.statusClass">{{ student.status }}</span></td>
+                            <td class="px-5 py-4"><span class="student-status-text" :class="student.financialStatusClass">{{ student.financialStatus }}</span></td>
                             <td class="px-5 py-4 text-sm text-[var(--wn-muted)]">{{ student.dueDate }}</td>
                             <td class="px-5 py-4 text-sm text-[var(--wn-muted)]">{{ student.lastWorkout }}</td>
                             <td class="px-5 py-4">
@@ -111,14 +111,12 @@
             </div>
 
             <article v-for="student in students" :key="`mobile-${student.id}`" class="admin-mobile-card">
-                <div class="flex items-center justify-between gap-3">
-                    <RouterLink :to="`/alunos/${student.id}`" class="min-w-0 font-semibold">{{ student.name }}</RouterLink>
-                    <span :class="student.statusClass">{{ student.status }}</span>
-                </div>
+                <RouterLink :to="`/alunos/${student.id}`" class="font-semibold">{{ student.name }}</RouterLink>
                 <dl class="admin-mobile-details">
+                    <div><dt>Status</dt><dd><span class="student-status-text" :class="student.statusClass">{{ student.status }}</span></dd></div>
+                    <div><dt>Financeiro</dt><dd><span class="student-status-text" :class="student.financialStatusClass">{{ student.financialStatus }}</span></dd></div>
                     <div><dt>Plano</dt><dd>{{ student.plan }}</dd></div>
                     <div><dt>Modalidade</dt><dd>{{ student.modalityLabel }}</dd></div>
-                    <div><dt>Professor</dt><dd>{{ student.teacher }}</dd></div>
                     <div><dt>Vencimento</dt><dd>{{ student.dueDate }}</dd></div>
                     <div><dt>Último treino</dt><dd>{{ student.lastWorkout }}</dd></div>
                 </dl>
@@ -178,6 +176,8 @@ onMounted(loadStudents);
 </script>
 
 <style scoped>
+.student-status-text { display: inline; padding: 0; border-radius: 0; background: transparent; }
+.student-status-text.badge-warning { color: #b45309; }
 .student-filter { display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
 .admin-student-filters > .input-shell,
 .admin-student-filters .form-control,
