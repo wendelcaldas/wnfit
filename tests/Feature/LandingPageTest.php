@@ -10,12 +10,16 @@ class LandingPageTest extends TestCase
     {
         $this->get('/site')
             ->assertOk()
-            ->assertSee('Gestão que aproxima. Treino que move.')
-            ->assertSee('Criar minha conta')
+            ->assertSee('Seus alunos, treinos e mensalidades em')
+            ->assertSee('Criar conta grátis')
             ->assertSee('href="/cadastro"', false)
+            ->assertSee('href="/entrar"', false)
             ->assertSee('href="/aluno/entrar"', false)
+            ->assertSee('images/landing/painel.webp', false)
+            ->assertSee('O que o WNFit faz hoje. E o que ainda não faz.')
             ->assertSee('property="og:title"', false)
             ->assertSee('href="'.route('site').'"', false)
+            ->assertDontSee('dados ilustrativos')
             ->assertDontSee('id="app"', false);
     }
 
