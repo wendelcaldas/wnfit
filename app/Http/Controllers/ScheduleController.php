@@ -33,6 +33,7 @@ class ScheduleController extends Controller
         $events = $this->eventsQuery($organization, $role, $request->user()->id)
             ->with(self::EVENT_RELATIONS)
             ->when($data['instructor_id'] ?? null, fn ($query, $instructorId) => $query->where('instrutor_id', $instructorId))
+            ->where('status', '!=', 'cancelado')
             ->where('inicio_em', '<=', $end)
             ->where('fim_em', '>=', $start)
             ->orderBy('inicio_em')
@@ -42,9 +43,9 @@ class ScheduleController extends Controller
             'operatingHours' => app(ScheduleAvailabilityService::class)->hoursPayload(app(ScheduleAvailabilityService::class)->settings($organization->id)),
             'events' => $events->map(fn (Agendamento $event) => $this->payload($event))->values(),
             'summary' => [
-                'events' => $events->where('status', '!=', 'cancelado')->count(),
+                'events' => $events->count(),
                 'participants' => $events->sum($this->occupiedSpots(...)),
-                'availableSlots' => $events->where('status', '!=', 'cancelado')->sum(function (Agendamento $event) {
+                'availableSlots' => $events->sum(function (Agendamento $event) {
                     return $event->capacidade === null ? 0 : max($event->capacidade - $this->occupiedSpots($event), 0);
                 }),
             ],
@@ -154,6 +155,28 @@ class ScheduleController extends Controller
         });
 
         return response()->json(['event' => $this->payload($schedule->fresh(self::EVENT_RELATIONS))]);
+    }
+
+    public function cancel(Request $request, Agendamento $schedule): JsonResponse
+    {
+        [$organization, $role] = $this->agendaContext($request);
+        $userId = $request->user()->id;
+        $this->ensureEventAccess($schedule, $organization, $role, $userId);
+
+        $event = DB::transaction(function () use ($organization, $role, $userId, $schedule) {
+            Organizacao::whereKey($organization->id)->lockForUpdate()->firstOrFail();
+            $schedule->refresh();
+            $this->ensureEventAccess($schedule, $organization, $role, $userId);
+            abort_if($schedule->status === 'concluido', 409, 'Este agendamento já foi concluído.');
+
+            if ($schedule->status !== 'cancelado') {
+                $schedule->update(['status' => 'cancelado']);
+            }
+
+            return $schedule->load(self::EVENT_RELATIONS);
+        }, 3);
+
+        return response()->json(['event' => $this->payload($event)]);
     }
 
     private function validatedData(Request $request): array

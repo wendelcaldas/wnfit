@@ -118,6 +118,18 @@ class ScheduleTest extends TestCase
             ...$this->payload(null, [$student->id]),
             'starts_at' => '2026-11-07T09:00', 'ends_at' => '2026-11-07T10:00', 'capacity' => 1,
         ])->assertUnprocessable()->assertJsonValidationErrors('capacity');
+
+        $cancelPath = '/api/schedule/'.$event->id.'/cancel';
+        $this->patchJson($cancelPath)->assertOk()
+            ->assertJsonPath('event.status', 'cancelado')
+            ->assertJsonPath('event.publicReservations.0.reference', $reference)
+            ->assertJsonPath('event.participantCount', 2);
+        $this->patchJson($cancelPath)->assertOk()->assertJsonPath('event.status', 'cancelado');
+        $this->getJson('/api/schedule?start=2026-11-07&end=2026-11-07')->assertOk()
+            ->assertJsonCount(0, 'events')
+            ->assertJsonPath('summary.events', 0)
+            ->assertJsonPath('summary.participants', 0);
+        $this->postJson($path, $payload)->assertConflict();
     }
 
     public function test_new_appointments_need_same_day_and_published_appointments_need_capacity(): void
@@ -193,6 +205,9 @@ class ScheduleTest extends TestCase
         $this->assertNotNull($seriesId);
         $this->assertDatabaseCount('agendamentos', 4);
         $this->assertDatabaseHas('agendamentos', ['serie_id' => $seriesId, 'recorrencia_ate' => '2026-08-24 00:00:00']);
+
+        $this->patchJson('/api/schedule/'.$response->json('event.id').'/cancel')->assertOk();
+        $this->assertSame(3, Agendamento::where('serie_id', $seriesId)->where('status', 'agendado')->count());
     }
 
     public function test_professor_only_sees_and_creates_appointments_in_own_agenda(): void
@@ -201,7 +216,7 @@ class ScheduleTest extends TestCase
         $otherProfessor = User::factory()->create();
         $organization->usuarios()->attach($otherProfessor->id, ['papel' => 'professor', 'status' => 'ativo']);
 
-        Agendamento::query()->create([
+        $otherEvent = Agendamento::query()->create([
             'organizacao_id' => $organization->id, 'titulo' => 'Agenda de outra pessoa', 'tipo' => 'individual', 'status' => 'agendado',
             'inicio_em' => '2026-08-03 11:00:00', 'fim_em' => '2026-08-03 12:00:00', 'instrutor_id' => $otherProfessor->id, 'modalidade' => 'presencial',
         ]);
@@ -214,6 +229,8 @@ class ScheduleTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'events')
             ->assertJsonPath('events.0.instructorId', $professor->id);
+        $this->patchJson('/api/schedule/'.$otherEvent->id.'/cancel')->assertForbidden();
+        $this->patchJson('/api/schedule/'.$created->json('event.id').'/cancel')->assertOk();
     }
 
     public function test_dashboard_calendar_returns_complete_month_and_only_organization_active_events(): void
