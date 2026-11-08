@@ -438,7 +438,14 @@ class StudentController extends Controller
     {
         $overdue = $student->cobrancas->contains('status', 'atrasado');
         $expiring = $student->vencimento && $student->vencimento->between(today(), today()->addDays(7));
-        $status = $overdue ? 'Inadimplente' : ($expiring ? 'Vence em breve' : ucfirst($student->status));
+        $hasCurrentDueDate = $student->vencimento?->gte(today()) ?? false;
+        $hasValidCharges = $student->cobrancas->contains(fn (Cobranca $charge) => in_array($charge->status, ['pago', 'pendente'], true));
+        [$financialStatus, $financialStatusClass] = match (true) {
+            $overdue => ['Inadimplente', 'badge-danger'],
+            $expiring => ['Vence em breve', 'badge-warning'],
+            $hasCurrentDueDate || $hasValidCharges => ['Em dia', 'badge-success'],
+            default => ['Sem informação', 'badge-muted'],
+        };
 
         return [
             'id' => $student->id,
@@ -448,8 +455,14 @@ class StudentController extends Controller
             'phone' => $student->telefone ?: '-',
             'plan' => $student->plano,
             'teacher' => $student->treinador ?: '-',
-            'status' => $status,
-            'statusClass' => $overdue ? 'badge-danger' : ($expiring ? 'badge-warning' : 'badge-success'),
+            'status' => $student->status === 'avaliacao' ? 'Em avaliação' : ucfirst($student->status),
+            'statusClass' => match ($student->status) {
+                'ativo' => 'badge-success',
+                'avaliacao' => 'badge-warning',
+                default => 'badge-muted',
+            },
+            'financialStatus' => $financialStatus,
+            'financialStatusClass' => $financialStatusClass,
             'dueDate' => optional($student->vencimento)->format('d/m/Y') ?: '-',
             'lastWorkout' => $student->completed_workout_sessions_max_finished_at ? Carbon::parse($student->completed_workout_sessions_max_finished_at)->format('d/m/Y H:i') : 'Ainda não treinou',
             'modality' => $student->modalidade,

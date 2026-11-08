@@ -14,6 +14,45 @@ class StudentProfileTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_student_list_shows_enrollment_and_financial_status_independently(): void
+    {
+        [$user, $organization] = $this->organizationWithUser();
+        $active = Aluno::query()->create([
+            'organizacao_id' => $organization->id,
+            'nome' => 'Aluno ativo',
+            'status' => 'ativo',
+        ]);
+        $active->cobrancas()->create([
+            'organizacao_id' => $organization->id,
+            'competencia' => today()->subDay()->format('Y-m'),
+            'vencimento' => today()->subDay(),
+            'valor' => 100,
+            'status' => 'pendente',
+        ]);
+        Aluno::query()->create([
+            'organizacao_id' => $organization->id,
+            'nome' => 'Aluno pausado',
+            'status' => 'pausado',
+            'vencimento' => today()->addDays(3),
+        ]);
+        Aluno::query()->create([
+            'organizacao_id' => $organization->id,
+            'nome' => 'Aluno em avaliação',
+            'status' => 'avaliacao',
+        ]);
+
+        $this->actingAs($user)->getJson('/api/students?status=ativo')->assertOk()
+            ->assertJsonCount(1, 'students')
+            ->assertJsonPath('students.0.status', 'Ativo')
+            ->assertJsonPath('students.0.financialStatus', 'Inadimplente');
+        $this->getJson('/api/students?status=pausado')->assertOk()
+            ->assertJsonPath('students.0.status', 'Pausado')
+            ->assertJsonPath('students.0.financialStatus', 'Vence em breve');
+        $this->getJson('/api/students?status=avaliacao')->assertOk()
+            ->assertJsonPath('students.0.status', 'Em avaliação')
+            ->assertJsonPath('students.0.financialStatus', 'Sem informação');
+    }
+
     public function test_profile_and_health_can_be_completed_after_registration(): void
     {
         [$user, $organization] = $this->organizationWithUser();
