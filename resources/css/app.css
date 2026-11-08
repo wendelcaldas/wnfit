@@ -972,7 +972,6 @@ textarea.form-control {
 .agenda-event-coletiva { background: #f0fdf4; color: #15803d; }
 .agenda-event-tematica { background: #faf5ff; color: #7e22ce; }
 .agenda-event-personalizada { background: #fff7ed; color: #c2410c; }
-.agenda-event-cancelled { border-style: dashed; filter: grayscale(0.7); text-decoration: line-through; }
 .agenda-empty-state { display: grid; min-height: 15rem; place-content: center; gap: 0.75rem; color: var(--wn-muted); text-align: center; }
 .agenda-empty-state svg { margin: auto; color: var(--wn-primary-strong); }
 

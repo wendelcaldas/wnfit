@@ -119,6 +119,7 @@ Route::prefix('api')->group(function () {
         Route::get('/schedule/options', [ScheduleController::class, 'options']);
         Route::post('/schedule', [ScheduleController::class, 'store']);
         Route::put('/schedule/{schedule}', [ScheduleController::class, 'update']);
+        Route::patch('/schedule/{schedule}/cancel', [ScheduleController::class, 'cancel']);
         Route::get('/workouts', [WorkoutController::class, 'index']);
         Route::get('/exercises', [ExerciseController::class, 'index']);
         Route::post('/exercises', [ExerciseController::class, 'store']);

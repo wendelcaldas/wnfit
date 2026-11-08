@@ -84,7 +84,7 @@
                             :key="event.id"
                             type="button"
                             class="agenda-event-card"
-                            :class="[`agenda-event-${event.type}`, { 'agenda-event-cancelled': event.status === 'cancelado' }]"
+                            :class="`agenda-event-${event.type}`"
                             :style="eventStyle(event)"
                             @click.stop="openDetails(event)"
                         >
@@ -117,7 +117,7 @@
                         :key="event.id"
                         type="button"
                         class="agenda-week-event"
-                        :class="[`agenda-event-${event.type}`, { 'opacity-50': event.status === 'cancelado' }]"
+                        :class="`agenda-event-${event.type}`"
                         @click="openDetails(event)"
                     >
                         <span>{{ timeOf(event.startsAt) }} – {{ timeOf(event.endsAt) }}</span
@@ -173,7 +173,7 @@
                         <div><dt class="font-semibold">Modalidade</dt><dd>{{ modalityLabels[selectedEvent.modality] }}</dd></div>
                         <div v-if="selectedEvent.location"><dt class="font-semibold">Local / sala</dt><dd>{{ selectedEvent.location }}</dd></div>
                         <div v-if="selectedEvent.address"><dt class="font-semibold">Endereço</dt><dd>{{ selectedEvent.address }}</dd></div>
-                        <div v-if="selectedEvent.publishSpots"><dt class="font-semibold">Agenda pública</dt><dd>Aceita reservas enquanto houver vagas</dd></div>
+                        <div v-if="selectedEvent.publishSpots && selectedEvent.status === 'agendado'"><dt class="font-semibold">Agenda pública</dt><dd>Aceita reservas enquanto houver vagas</dd></div>
                     </dl>
                     <div v-if="selectedEvent.participants.length">
                         <h3 class="font-semibold">Participantes</h3>
@@ -197,8 +197,12 @@
                         <p class="mt-1 text-xs text-[var(--wn-muted)]">Referência: {{ editingPublicBooking.reference }}</p>
                     </div>
                     <div v-if="selectedEvent.notes"><h3 class="font-semibold">Observações internas</h3><p class="whitespace-pre-wrap">{{ selectedEvent.notes }}</p></div>
-                    <footer class="flex justify-end gap-3 border-t border-[var(--wn-line)] pt-4">
-                        <button class="btn-primary" type="button" @click="openEdit(selectedEvent)">Editar agendamento</button>
+                    <ActionFeedback :message="formError" type="error" />
+                    <footer class="flex flex-wrap justify-end gap-3 border-t border-[var(--wn-line)] pt-4">
+                        <button v-if="selectedEvent.status === 'agendado'" class="btn-secondary" type="button" :disabled="saving" @click="openCancelConfirmation">
+                            Cancelar agendamento
+                        </button>
+                        <button class="btn-primary" type="button" :disabled="saving" @click="openEdit(selectedEvent)">Editar agendamento</button>
                     </footer>
                 </div>
                 <form v-else class="agenda-form" @submit.prevent="save">
@@ -321,6 +325,42 @@
                 </form>
             </section>
         </dialog>
+
+        <dialog
+            ref="cancelDialog"
+            class="agenda-modal max-w-md"
+            role="alertdialog"
+            aria-labelledby="cancel-appointment-title"
+            aria-describedby="cancel-appointment-description"
+            @cancel.prevent="closeCancelConfirmation"
+            @click.self="closeCancelConfirmation"
+        >
+            <section class="p-5 sm:p-6">
+                <div class="flex items-start gap-3">
+                    <span class="grid size-10 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-800">
+                        <AlertCircle class="size-5" aria-hidden="true" />
+                    </span>
+                    <div>
+                        <p class="text-sm font-semibold text-amber-800">Atenção</p>
+                        <h2 id="cancel-appointment-title" class="text-lg font-bold">Cancelar agendamento?</h2>
+                    </div>
+                </div>
+                <div v-if="selectedEvent" id="cancel-appointment-description" class="mt-4 space-y-2 text-sm leading-6">
+                    <p>
+                        {{ selectedEvent.seriesId ? 'Você vai cancelar apenas esta ocorrência de' : 'Você vai cancelar' }}
+                        <strong>“{{ selectedEvent.title }}”</strong>.
+                    </p>
+                    <p>O compromisso será removido da agenda e não aceitará novas reservas.</p>
+                </div>
+                <ActionFeedback :message="cancelError" type="error" />
+                <footer class="mt-5 flex flex-col-reverse gap-3 border-t border-[var(--wn-line)] pt-4 sm:flex-row sm:justify-end">
+                    <button class="btn-secondary justify-center" type="button" :disabled="saving" autofocus @click="closeCancelConfirmation">Voltar</button>
+                    <button class="btn-primary justify-center !bg-rose-700 !text-white hover:!bg-rose-800" type="button" :disabled="saving" @click="cancelAppointment">
+                        {{ saving ? 'Cancelando…' : 'Confirmar cancelamento' }}
+                    </button>
+                </footer>
+            </section>
+        </dialog>
     </AppShell>
 </template>
 
@@ -366,6 +406,8 @@ const summaryCards = computed(() => [
 const loading = ref(true);
 const modalOpen = ref(false);
 const appointmentDialog = ref(null);
+const cancelDialog = ref(null);
+const cancelError = ref('');
 const viewingDetails = ref(false);
 const editingId = ref(null);
 const selectedEvent = ref(null);
@@ -522,6 +564,7 @@ function openCreate(hour = null, date = selectedDate.value) {
 }
 function openDetails(event) {
     selectedEvent.value = event;
+    formError.value = '';
     viewingDetails.value = true;
     showDialog();
 }
@@ -561,6 +604,35 @@ function closeModal() {
     if (saving.value) return;
     appointmentDialog.value.close();
     modalOpen.value = false;
+}
+function openCancelConfirmation() {
+    if (saving.value || selectedEvent.value?.status !== 'agendado') return;
+    cancelError.value = '';
+    cancelDialog.value.showModal();
+}
+
+function closeCancelConfirmation() {
+    if (!saving.value) cancelDialog.value.close();
+}
+
+async function cancelAppointment() {
+    if (!cancelDialog.value.open || saving.value || selectedEvent.value?.status !== 'agendado') return;
+    const event = selectedEvent.value;
+    saving.value = true;
+    cancelError.value = '';
+    try {
+        await window.axios.patch(`/api/schedule/${event.id}/cancel`);
+        saving.value = false;
+        cancelDialog.value.close();
+        closeModal();
+        events.value = events.value.filter((item) => item.id !== event.id);
+        notify('Agendamento cancelado.');
+        await loadSchedule();
+    } catch (error) {
+        cancelError.value = error.response?.data?.message || 'Não foi possível cancelar o agendamento.';
+    } finally {
+        saving.value = false;
+    }
 }
 async function copyPublicSchedule() {
     try {
