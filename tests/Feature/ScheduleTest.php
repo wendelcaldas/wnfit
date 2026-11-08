@@ -7,11 +7,130 @@ use App\Models\Aluno;
 use App\Models\Organizacao;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class ScheduleTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_public_schedule_reads_do_not_spend_reservation_attempts(): void
+    {
+        $this->organizationWithUser('proprietario', 'turmas');
+        $schedule = '/api/public/schedule/turmas';
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->getJson($schedule)->assertOk();
+            $this->getJson($schedule.'/availability?date='.today()->toDateString())->assertOk();
+        }
+
+        for ($attempt = 0; $attempt < 10; $attempt++) {
+            $this->postJson($schedule.'/reservations', [])->assertUnprocessable();
+        }
+
+        $this->postJson($schedule.'/reservations', [])->assertTooManyRequests()->assertHeader('Retry-After');
+        $this->getJson($schedule)->assertOk();
+    }
+
+    public function test_public_schedule_lists_only_published_future_appointments_with_free_spots(): void
+    {
+        $this->travelTo(now()->setDate(2026, 11, 7)->setTime(8, 0));
+        [$owner, $organization] = $this->organizationWithUser('proprietario', 'turmas');
+        [, $other] = $this->organizationWithUser('proprietario', 'outras-turmas');
+        $confirmed = Aluno::create(['organizacao_id' => $organization->id, 'nome' => 'Nome privado', 'status' => 'ativo']);
+        $cancelled = Aluno::create(['organizacao_id' => $organization->id, 'nome' => 'Outra pessoa', 'status' => 'ativo']);
+        $create = fn (array $fields) => Agendamento::create($fields + [
+            'organizacao_id' => $organization->id, 'titulo' => 'Aula pública', 'status' => 'agendado',
+            'inicio_em' => '2026-11-07 09:00', 'fim_em' => '2026-11-07 10:00',
+            'publicar_vagas' => true, 'capacidade' => 2, 'observacoes' => 'Nota privada',
+        ]);
+        $event = $create([]);
+        $event->alunos()->attach($confirmed->id);
+        $event->alunos()->attach($cancelled->id, ['status' => 'cancelado']);
+        $create(['titulo' => 'Sem publicação', 'publicar_vagas' => false]);
+        $create(['titulo' => 'Cancelada', 'status' => 'cancelado']);
+        $create(['titulo' => 'Concluída', 'status' => 'concluido']);
+        $create(['titulo' => 'Sem capacidade', 'capacidade' => null]);
+        $create(['titulo' => 'Outro ambiente', 'organizacao_id' => $other->id]);
+        $create(['titulo' => 'Já começou', 'inicio_em' => '2026-11-07 07:00']);
+        $create(['titulo' => 'Lotada', 'capacidade' => 1])->alunos()->attach($confirmed->id);
+        $create(['titulo' => 'Outro dia', 'inicio_em' => '2026-11-08 09:00', 'fim_em' => '2026-11-08 10:00']);
+        $create(['titulo' => 'Mesmo dia', 'inicio_em' => '2026-11-08 10:00', 'fim_em' => '2026-11-08 11:00']);
+        $create(['titulo' => 'Dia lotado', 'inicio_em' => '2026-11-09 09:00', 'fim_em' => '2026-11-09 10:00', 'capacidade' => 1])->alunos()->attach($confirmed->id);
+        $create(['titulo' => 'Dia privado', 'inicio_em' => '2026-11-10 09:00', 'fim_em' => '2026-11-10 10:00', 'publicar_vagas' => false]);
+        $create(['titulo' => 'Fora do período', 'inicio_em' => '2027-01-07 09:00', 'fim_em' => '2027-01-07 10:00']);
+
+        $this->getJson('/api/public/schedule/turmas')->assertOk()->assertExactJson([
+            'organization' => 'turmas', 'today' => '2026-11-07', 'maxDate' => '2027-01-06',
+            'availableDates' => ['2026-11-07', '2026-11-08'],
+        ]);
+        $availability = '/api/public/schedule/turmas/availability?date=2026-11-07';
+        $this->getJson($availability)->assertOk()->assertExactJson([
+            'date' => '2026-11-07',
+            'events' => [['id' => $event->id, 'title' => 'Aula pública', 'date' => '2026-11-07', 'start' => '09:00', 'end' => '10:00', 'availableSpots' => 1, 'capacity' => 2]],
+        ]);
+        $this->getJson('/api/public/schedule/inexistente')->assertNotFound();
+        $this->actingAs($owner)->getJson('/api/schedule/options')->assertJsonPath('publicScheduleUrl', '/agenda-publica/turmas');
+
+        $this->putJson('/api/schedule/'.$event->id, [
+            ...$this->payload(null, [$confirmed->id, $cancelled->id]),
+            'title' => 'Aula atualizada', 'starts_at' => '2026-11-07T09:00', 'ends_at' => '2026-11-07T10:00', 'capacity' => 2,
+        ])->assertOk()->assertJsonPath('event.publishSpots', true);
+        $this->getJson($availability)->assertJsonPath('events.0.availableSpots', 1);
+    }
+
+    public function test_public_reservation_claims_an_existing_spot_once_and_keeps_contact_private(): void
+    {
+        $this->travelTo(now()->setDate(2026, 11, 7)->setTime(8, 0));
+        [$owner, $organization] = $this->organizationWithUser('proprietario', 'turmas');
+        [, $other] = $this->organizationWithUser('proprietario', 'outra-agenda');
+        $event = $organization->agendamentos()->create([
+            'titulo' => 'Aula pública', 'inicio_em' => '2026-11-07 09:00', 'fim_em' => '2026-11-07 10:00',
+            'capacidade' => 2, 'publicar_vagas' => true,
+        ]);
+        $student = Aluno::create(['organizacao_id' => $organization->id, 'nome' => 'Aluno interno', 'status' => 'ativo']);
+        $event->alunos()->attach($student->id);
+        $payload = [
+            'eventId' => $event->id, 'date' => '2026-11-07', 'start' => '09:00', 'end' => '10:00',
+            'name' => 'Visitante de teste', 'phone' => '(71) 99999-1234', 'requestId' => (string) Str::uuid(),
+        ];
+        $path = '/api/public/schedule/turmas/reservations';
+        $this->postJson('/api/public/schedule/'.$other->slug.'/reservations', $payload)->assertConflict();
+        $this->postJson($path, [...$payload, 'start' => '09:15'])->assertConflict();
+        $this->postJson($path, [...$payload, 'phone' => '123'])->assertUnprocessable()->assertJsonValidationErrors('phone');
+        $reference = $this->postJson($path, $payload)->assertCreated()->assertJsonMissingPath('reservation.phone')->json('reservation.reference');
+        $this->postJson($path, [...$payload, 'phone' => '+55 71 99999-1234'])->assertOk()->assertJsonPath('reservation.reference', $reference);
+        $this->postJson($path, [...$payload, 'requestId' => (string) Str::uuid()])->assertConflict();
+        $this->postJson($path, [...$payload, 'phone' => '(71) 99999-5678', 'requestId' => (string) Str::uuid()])->assertConflict();
+        $this->getJson('/api/public/schedule/turmas/availability?date=2026-11-07')->assertOk()->assertJsonCount(0, 'events');
+        $this->getJson('/api/public/schedule/turmas')->assertOk()->assertJsonPath('availableDates', []);
+        $this->assertDatabaseCount('agendamentos', 1);
+        $this->assertDatabaseCount('public_appointment_reservations', 1);
+        $this->assertDatabaseCount('staff_notifications', 1);
+        $this->assertDatabaseCount('alunos', 1);
+
+        $this->actingAs($owner)->getJson('/api/schedule?start=2026-11-07&end=2026-11-07')
+            ->assertJsonPath('events.0.participantCount', 2)
+            ->assertJsonPath('events.0.publicReservations.0.name', 'Visitante de teste')
+            ->assertJsonPath('summary.availableSlots', 0);
+        $this->getJson('/api/dashboard')->assertJsonPath('stats.3.value', '2');
+        $this->putJson('/api/schedule/'.$event->id, [
+            ...$this->payload(null, [$student->id]),
+            'starts_at' => '2026-11-07T09:00', 'ends_at' => '2026-11-07T10:00', 'capacity' => 1,
+        ])->assertUnprocessable()->assertJsonValidationErrors('capacity');
+    }
+
+    public function test_new_appointments_need_same_day_and_published_appointments_need_capacity(): void
+    {
+        [$owner] = $this->organizationWithUser('proprietario', 'validar-vagas');
+        $payload = $this->payload($owner->id);
+        $this->actingAs($owner)->postJson('/api/schedule', [...$payload, 'ends_at' => '2026-08-04T10:00'])
+            ->assertUnprocessable()->assertJsonValidationErrors('ends_at');
+        $this->postJson('/api/schedule', [...$payload, 'publish_spots' => true, 'capacity' => null])
+            ->assertUnprocessable()->assertJsonValidationErrors('capacity');
+        $this->postJson('/api/schedule', [...$payload, 'publish_spots' => true])
+            ->assertCreated()->assertJsonPath('event.publishSpots', true);
+    }
 
     public function test_owner_can_create_list_and_edit_an_appointment_with_participants(): void
     {

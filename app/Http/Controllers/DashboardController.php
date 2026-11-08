@@ -25,13 +25,14 @@ class DashboardController extends Controller
             ->where('fim_em', '>=', $start)
             ->with('instrutor:id,name')
             ->withCount(['alunos as reservas' => fn ($query) => $query->where('agendamento_aluno.status', 'confirmado')])
+            ->withCount('publicReservations')
             ->orderBy('inicio_em')->get()
             ->map(fn (Agendamento $event) => [
                 'id' => $event->id, 'title' => $event->titulo,
                 'date' => $event->inicio_em->toDateString(), 'endDate' => $event->fim_em->toDateString(),
                 'time' => $event->inicio_em->format('H:i'), 'endTime' => $event->fim_em->format('H:i'),
                 'location' => $event->local ?: 'Sem local', 'instructor' => $event->instrutor?->name ?: 'Equipe',
-                'participants' => $event->reservas, 'capacity' => $event->capacidade,
+                'participants' => $event->reservas + $event->public_reservations_count, 'capacity' => $event->capacidade,
                 'modality' => $event->modalidade,
             ]);
 
@@ -68,6 +69,12 @@ class DashboardController extends Controller
             ->where('agendamentos.status', '!=', 'cancelado')
             ->whereDate('agendamentos.inicio_em', $today)
             ->where('agendamento_aluno.status', 'confirmado')
+            ->count();
+        $todayReservations += DB::table('public_appointment_reservations')
+            ->join('agendamentos', 'agendamentos.id', '=', 'public_appointment_reservations.agendamento_id')
+            ->where('agendamentos.organizacao_id', $organizationId)
+            ->where('agendamentos.status', '!=', 'cancelado')
+            ->whereDate('agendamentos.inicio_em', $today)
             ->count();
 
         return response()->json([
@@ -118,17 +125,22 @@ class DashboardController extends Controller
             ->where('status', '!=', 'cancelado')
             ->whereDate('inicio_em', $today)
             ->withCount(['alunos as reservas' => fn ($query) => $query->where('agendamento_aluno.status', 'confirmado')])
+            ->withCount('publicReservations')
             ->with('instrutor:id,name')
             ->orderBy('inicio_em')
             ->limit(4)
             ->get()
-            ->map(fn (Agendamento $event) => [
-                'time' => $event->inicio_em->format('H:i'),
-                'name' => $event->titulo,
-                'room' => trim(($event->local ?: 'Sem local') . ' - ' . ($event->instrutor?->name ?: 'Equipe')),
-                'slots' => $event->capacidade ? "{$event->reservas}/{$event->capacidade}" : "{$event->reservas} aluno(s)",
-                'dot' => 'bg-slate-400',
-            ])
+            ->map(function (Agendamento $event) {
+                $occupied = $event->reservas + $event->public_reservations_count;
+
+                return [
+                    'time' => $event->inicio_em->format('H:i'),
+                    'name' => $event->titulo,
+                    'room' => trim(($event->local ?: 'Sem local') . ' - ' . ($event->instrutor?->name ?: 'Equipe')),
+                    'slots' => $event->capacidade ? "{$occupied}/{$event->capacidade}" : "{$occupied} participante(s)",
+                    'dot' => 'bg-slate-400',
+                ];
+            })
             ->all();
     }
 

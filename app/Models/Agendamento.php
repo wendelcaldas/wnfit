@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Agendamento extends Model
 {
     protected $fillable = [
         'organizacao_id', 'serie_id', 'titulo', 'tipo', 'recorrencia_frequencia', 'status', 'inicio_em', 'fim_em', 'recorrencia_ate',
-        'instrutor_id', 'modalidade', 'local', 'endereco', 'capacidade', 'observacoes',
+        'instrutor_id', 'modalidade', 'local', 'endereco', 'capacidade', 'observacoes', 'publicar_vagas',
     ];
 
     protected function casts(): array
@@ -21,6 +22,7 @@ class Agendamento extends Model
             'fim_em' => 'datetime',
             'recorrencia_ate' => 'date',
             'capacidade' => 'integer',
+            'publicar_vagas' => 'boolean',
         ];
     }
 
@@ -37,6 +39,11 @@ class Agendamento extends Model
     public function publicBooking(): HasOne
     {
         return $this->hasOne(PublicScheduleBooking::class);
+    }
+
+    public function publicReservations(): HasMany
+    {
+        return $this->hasMany(PublicAppointmentReservation::class);
     }
 
     public function alunos(): BelongsToMany

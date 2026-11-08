@@ -30,9 +30,12 @@ use Illuminate\Support\Facades\Route;
 require __DIR__.'/support.php';
 
 Route::prefix('api')->group(function () {
-    Route::get('/public/booking/{token}', [\App\Http\Controllers\PublicBookingController::class, 'show'])->middleware('throttle:60,1');
-    Route::get('/public/booking/{token}/availability', [\App\Http\Controllers\PublicBookingController::class, 'availability'])->middleware('throttle:60,1');
-    Route::post('/public/booking/{token}', [\App\Http\Controllers\PublicBookingController::class, 'store'])->middleware('throttle:10,1');
+    Route::get('/public/schedule/{slug}', [\App\Http\Controllers\PublicScheduleController::class, 'show'])->middleware('throttle:60,1,public-schedule-read:');
+    Route::get('/public/schedule/{slug}/availability', [\App\Http\Controllers\PublicScheduleController::class, 'availability'])->middleware('throttle:60,1,public-schedule-read:');
+    Route::post('/public/schedule/{slug}/reservations', [\App\Http\Controllers\PublicScheduleController::class, 'store'])->middleware('throttle:10,1,public-schedule-write:');
+    Route::get('/public/booking/{token}', [\App\Http\Controllers\PublicBookingController::class, 'show'])->middleware('throttle:60,1,public-booking-read:');
+    Route::get('/public/booking/{token}/availability', [\App\Http\Controllers\PublicBookingController::class, 'availability'])->middleware('throttle:60,1,public-booking-read:');
+    Route::post('/public/booking/{token}', [\App\Http\Controllers\PublicBookingController::class, 'store'])->middleware('throttle:10,1,public-booking-write:');
     Route::prefix('student')->group(function () {
         Route::get('/me', [StudentPortalAuthController::class, 'me']);
         Route::post('/login', [StudentPortalAuthController::class, 'login'])->middleware('throttle:10,1');

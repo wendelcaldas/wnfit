@@ -4,12 +4,13 @@ namespace App\Services;
 
 use App\Models\Agendamento;
 use App\Models\Organizacao;
+use App\Models\PublicAppointmentReservation;
 use App\Models\PublicScheduleBooking;
 use App\Models\StaffNotification;
 
 class PublicBookingNotificationService
 {
-    public function created(Agendamento $event, PublicScheduleBooking $booking, string $appointmentTitle): void
+    public function created(Agendamento $event, PublicScheduleBooking|PublicAppointmentReservation $booking, string $appointmentTitle): void
     {
         $organization = Organizacao::findOrFail($event->organizacao_id);
         $members = $organization->usuarios()->wherePivot('status', 'ativo')->get();
