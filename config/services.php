@@ -36,6 +36,7 @@ return [
     ],
 
     'messaging' => [
+        'module_organization_slugs' => array_filter(array_map('trim', explode(',', env('MESSAGING_MODULE_ORGANIZATION_SLUGS', '')))),
         'mode' => env('MESSAGING_MODE', 'manual'),
         'welcome_driver' => env('WHATSAPP_WELCOME_DRIVER', 'default'),
         'staff_whatsapp' => [

@@ -562,6 +562,7 @@ import {
 import AppShell from "../components/AppShell.vue";
 import WorkoutExerciseInfo from "../components/WorkoutExerciseInfo.vue";
 import illustrations from "../data/exerciseIllustrations.json";
+import { useAuthStore } from "../stores/auth";
 function exerciseImage(exercise) {
     const name = (exercise.name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
     const value = exercise.imageUrl || (!exercise.custom && illustrations[name]?.url);
@@ -610,6 +611,7 @@ const Field = defineComponent({
 });
 const route = useRoute();
 const router = useRouter();
+const auth = useAuthStore();
 const workoutId = ref(route.params.id);
 const activeDay = ref(0);
 const loading = ref(true);
@@ -813,7 +815,7 @@ async function save(status) {
         workoutId.value = data.workout.id;
         apply(data.workout);
         if (targetStudent.value && status === "ativo") {
-            await router.push(`/alunos/${targetStudent.value}?tab=workouts`);
+            await router.push(auth.organization?.modules?.students ? `/alunos/${targetStudent.value}?tab=workouts` : "/treinos");
             return;
         }
         await router.replace({

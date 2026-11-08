@@ -1,6 +1,30 @@
 <template>
     <div class="dashboard-shell min-h-screen bg-[var(--wn-canvas)]" :class="{ 'admin-redesign': visualRefresh }">
-        <aside class="dashboard-sidebar hidden lg:flex"><div class="flex h-full flex-col px-5 py-6"><div class="px-2"><AppLogo :dark="visualRefresh" subtitle="" /></div><nav class="mt-10 space-y-1.5"><template v-for="item in appNavigation" :key="item.label"><button v-if="item.comingSoon" type="button" disabled class="sidebar-item w-full !cursor-default !opacity-40" :aria-label="item.label + ': indisponível'" title="Disponível em uma próxima etapa"><component :is="item.icon" class="h-5 w-5" /><span class="flex-1 text-left">{{ item.label }}</span></button><RouterLink v-else :to="item.to" class="sidebar-item" :class="isActive(item) ? 'sidebar-item-active' : ''"><component :is="item.icon" class="h-5 w-5" /><span>{{ item.label }}</span></RouterLink></template></nav><div class="sidebar-account mt-auto space-y-4"><div class="flex items-center gap-3 rounded-[1.25rem] border border-[var(--wn-line)] bg-white px-4 py-4"><div class="grid h-11 w-11 place-items-center rounded-xl bg-[var(--wn-neutral-soft)] font-semibold text-[var(--wn-neutral-strong)]">{{ auth.initials }}</div><div class="min-w-0"><p class="truncate text-sm font-semibold text-[var(--wn-ink)]">{{ auth.user?.name }}</p><p class="truncate text-sm text-[var(--wn-muted)]">Administrador</p></div></div><button type="button" class="btn-secondary w-full justify-center" @click="handleLogout">Sair</button></div></div></aside>
+        <aside class="dashboard-sidebar hidden lg:flex">
+            <div class="flex h-full flex-col px-5 py-6">
+                <div class="px-2"><AppLogo :dark="visualRefresh" subtitle="" /></div>
+                <nav class="mt-10 space-y-1.5" aria-label="Menu principal">
+                    <template v-for="item in appNavigation" :key="item.label">
+                        <p v-if="item === firstVisibleModule" class="px-3 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-widest text-slate-400">Módulos do ambiente</p>
+                        <p v-if="item.internal" class="px-3 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-widest text-slate-400">Interno WNFit</p>
+                        <RouterLink :to="item.to" class="sidebar-item" :class="isActive(item) ? 'sidebar-item-active' : ''">
+                            <component :is="item.icon" class="h-5 w-5" />
+                            <span>{{ item.label }}</span>
+                        </RouterLink>
+                    </template>
+                </nav>
+                <div class="sidebar-account mt-auto space-y-4">
+                    <div class="flex items-center gap-3 rounded-[1.25rem] border border-[var(--wn-line)] bg-white px-4 py-4">
+                        <div class="grid h-11 w-11 place-items-center rounded-xl bg-[var(--wn-neutral-soft)] font-semibold text-[var(--wn-neutral-strong)]">{{ auth.initials }}</div>
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-[var(--wn-ink)]">{{ auth.user?.name }}</p>
+                            <p class="truncate text-sm text-[var(--wn-muted)]">Administrador</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-secondary w-full justify-center" @click="handleLogout">Sair</button>
+                </div>
+            </div>
+        </aside>
 
         <div class="dashboard-main min-h-screen lg:pl-[292px]">
             <header class="dashboard-topbar"><div class="dashboard-container px-4 py-3 sm:px-6 xl:px-8"><div class="flex items-start justify-between gap-4"><div class="min-w-0 flex-1"><p class="text-xs font-semibold text-[var(--wn-primary-strong)]">{{ eyebrow }}</p><h1 class="mt-0.5 truncate text-xl font-bold text-[var(--wn-ink)] sm:text-2xl">{{ title }}</h1><p v-if="description" class="mt-0.5 hidden max-w-2xl truncate text-sm text-[var(--wn-muted)] sm:block">{{ description }}</p></div>
@@ -20,13 +44,16 @@ import { RouterLink, useRoute, useRouter } from 'vue-router';
 import AppLogo from './AppLogo.vue';
 import NotificationBell from './NotificationBell.vue';
 import HeaderAccount from './HeaderAccount.vue';
-import { appNavigation } from '../data/appNavigation';
+import { appNavigation as navigationItems } from '../data/appNavigation';
 import { useAuthStore } from '../stores/auth';
 
 defineProps({ eyebrow: { type: String, default: 'Painel' }, title: { type: String, required: true }, description: { type: String, default: '' }, searchPlaceholder: { type: String, default: '' }, visualRefresh: { type: Boolean, default: true } });
 const route = useRoute(); const router = useRouter(); const auth = useAuthStore();
 const currentPath = computed(() => route.path);
-const mobileNavigation = computed(() => appNavigation.filter((item) => ['Painel', 'Alunos', 'Financeiro', 'Treinos', 'Agenda'].includes(item.label)));
+const appNavigation = computed(() => navigationItems.filter((item) =>
+    (!item.module || auth.organization?.modules?.[item.module]) && (!item.internal || auth.user?.isWnfitInternal)));
+const firstVisibleModule = computed(() => appNavigation.value.find((item) => item.module));
+const mobileNavigation = computed(() => appNavigation.value.filter((item) => ['Painel', 'Alunos', 'Financeiro', 'Treinos', 'Agenda'].includes(item.label)));
 const isActive = (item) => item.activePaths ? item.activePaths.includes(currentPath.value) : item.to !== '#' && currentPath.value.startsWith(item.to);
 const handleLogout = async () => { await auth.logout(); router.push('/entrar'); };
 </script>

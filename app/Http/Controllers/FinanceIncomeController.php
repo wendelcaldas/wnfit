@@ -17,7 +17,7 @@ class FinanceIncomeController extends Controller
             'source' => ['nullable', 'in:todos,direto,boleto,avulso,totalpass,wellhub'],
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
-        $org = $request->user()->organizacoes()->firstOrFail();
+        $org = $request->user()->activeOrganization();
         $start = Carbon::createFromFormat('!Y-m', $data['month']);
         $end = $start->copy()->endOfMonth();
         $source = $data['source'] ?? 'todos';
@@ -40,7 +40,7 @@ class FinanceIncomeController extends Controller
             'method' => ['required', 'in:PIX,Dinheiro,Transferência,Cartão,Boleto'],
             'requestId' => ['required', 'uuid'],
         ]);
-        $org = $request->user()->organizacoes()->firstOrFail();
+        $org = $request->user()->activeOrganization();
         $entry = Receita::firstOrCreate(['request_id' => $data['requestId']], [
             'organizacao_id' => $org->id, 'descricao' => $data['description'], 'valor' => $data['value'],
             'competencia' => $data['date'], 'origem' => 'avulso', 'metodo' => $data['method'],

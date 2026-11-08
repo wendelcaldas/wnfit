@@ -56,7 +56,7 @@ class AuthController extends Controller
             ]);
         }
 
-        if (! $this->activeOrganization($request->user())) {
+        if (! $request->user()->activeOrganization()) {
             Auth::logout();
 
             throw ValidationException::withMessages([
@@ -177,7 +177,7 @@ class AuthController extends Controller
 
     private function sessionPayload(User $user): array
     {
-        $organization = $this->activeOrganization($user);
+        $organization = $user->activeOrganization();
 
         return [
             'csrf' => csrf_token(),
@@ -185,6 +185,7 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'isWnfitInternal' => (bool) $user->is_wnfit_internal,
             ],
             'organization' => $organization ? [
                 'id' => $organization->id,
@@ -193,16 +194,10 @@ class AuthController extends Controller
                 'email' => $organization->email_contato,
                 'phone' => $organization->telefone_contato,
                 'onboarding_profile' => $organization->onboarding_profile,
+                'canAccessMessaging' => $organization->hasMessagingModule(),
+                'modules' => $organization->moduleAccess(),
             ] : null,
         ];
-    }
-
-    private function activeOrganization(User $user): ?Organizacao
-    {
-        return $user->organizacoes()
-            ->where('organizacoes.ativa', true)
-            ->wherePivot('status', 'ativo')
-            ->first();
     }
 
     private function uniqueOrganizationSlug(string $name): string

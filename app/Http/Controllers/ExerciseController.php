@@ -11,7 +11,7 @@ class ExerciseController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         $query = Exercicio::query()
             ->where('ativo', true)
             ->where(fn ($builder) => $builder->whereNull('organizacao_id')->orWhere('organizacao_id', $organization->id));
@@ -41,7 +41,7 @@ class ExerciseController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'], 'muscleGroup' => ['required', 'string', 'max:100'],
             'secondaryMuscle' => ['nullable', 'string', 'max:100'], 'equipment' => ['nullable', 'string', 'max:100'],

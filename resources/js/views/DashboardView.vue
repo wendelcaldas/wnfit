@@ -17,8 +17,8 @@
             </article>
         </section>
 
-        <section class="dashboard-calendar-row mt-6 grid gap-4">
-            <article class="panel-card min-w-0" aria-labelledby="attendance-heading">
+        <section v-if="auth.organization?.modules?.workouts || auth.organization?.modules?.schedule" class="mt-6 grid gap-4" :class="{ 'dashboard-calendar-row': auth.organization?.modules?.workouts && auth.organization?.modules?.schedule }">
+            <article v-if="auth.organization?.modules?.workouts" class="panel-card min-w-0" aria-labelledby="attendance-heading">
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <h2 id="attendance-heading" class="text-xl font-semibold text-[var(--wn-ink)]">Frequência dos alunos</h2>
@@ -67,10 +67,10 @@
                 </div>
             </article>
 
-            <DashboardCalendar />
+            <DashboardCalendar v-if="auth.organization?.modules?.schedule" />
         </section>
 
-        <section class="mt-6 grid min-w-0 gap-6">
+        <section v-if="auth.organization?.modules?.students" class="mt-6 grid min-w-0 gap-6">
             <article class="panel-card">
                 <div class="flex items-center justify-between gap-4">
                     <div>

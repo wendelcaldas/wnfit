@@ -16,7 +16,7 @@ class DashboardController extends Controller
     public function calendar(Request $request): JsonResponse
     {
         $data = $request->validate(['month' => ['nullable', 'date_format:Y-m']]);
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $request->user()->activeOrganization();
         $start = Carbon::createFromFormat('!Y-m', $data['month'] ?? now()->format('Y-m'));
         $events = Agendamento::query()
             ->where('organizacao_id', $organization->id)

@@ -32,10 +32,10 @@ export const router = createRouter({
         { path: '/configuracoes', redirect: '/configuracoes/usuarios' },
         { path: '/agendar/:token', component: () => import('../views/PublicBookingView.vue'), meta: { public: true } },
         { path: '/agenda-publica/:slug', component: () => import('../views/PublicScheduleView.vue'), meta: { public: true } },
-        { path: '/configuracoes/horarios', component: () => import('../views/HoursSettingsView.vue'), meta: { requiresAuth: true } },
+        { path: '/configuracoes/horarios', component: () => import('../views/HoursSettingsView.vue'), meta: { requiresAuth: true, module: 'schedule' } },
         { path: '/configuracoes/unidades', component: () => import('../views/UnitsSettingsView.vue'), meta: { requiresAuth: true } },
         { path: '/configuracoes/planos', component: () => import('../views/PlansSettingsView.vue'), meta: { requiresAuth: true } },
-        { path: '/financeiro', name: 'financeiro', component: FinanceView, meta: { requiresAuth: true } },
+        { path: '/financeiro', name: 'financeiro', component: FinanceView, meta: { requiresAuth: true, module: 'finance' } },
         {
             path: '/',
             redirect: '/entrar',
@@ -62,43 +62,43 @@ export const router = createRouter({
             path: '/alunos',
             name: 'alunos',
             component: StudentsView,
-            meta: { requiresAuth: true },
+            meta: { requiresAuth: true, module: 'students' },
         },
         {
             path: '/alunos/novo',
             name: 'alunos.novo',
             component: StudentFormView,
-            meta: { requiresAuth: true },
+            meta: { requiresAuth: true, module: 'students' },
         },
         {
             path: '/alunos/:id',
             name: 'alunos.detalhe',
             component: StudentDetailView,
-            meta: { requiresAuth: true },
+            meta: { requiresAuth: true, module: 'students' },
         },
         {
             path: '/treinos',
             name: 'treinos',
             component: WorkoutsView,
-            meta: { requiresAuth: true },
+            meta: { requiresAuth: true, module: 'workouts' },
         },
         {
             path: '/treinos/novo',
             name: 'treinos.novo',
             component: WorkoutBuilderView,
-            meta: { requiresAuth: true },
+            meta: { requiresAuth: true, module: 'workouts' },
         },
         {
             path: '/treinos/:id/editar',
             name: 'treinos.editar',
             component: WorkoutBuilderView,
-            meta: { requiresAuth: true },
+            meta: { requiresAuth: true, module: 'workouts' },
         },
         {
             path: '/agenda',
             name: 'agenda',
             component: ScheduleView,
-            meta: { requiresAuth: true },
+            meta: { requiresAuth: true, module: 'schedule' },
         },
         {
             path: '/configuracoes/usuarios',
@@ -107,11 +107,17 @@ export const router = createRouter({
             meta: { requiresAuth: true },
         },
         {
-            path: '/configuracoes/mensagens',
-            name: 'configuracoes.mensagens',
-            component: ComingSoonView,
-            meta: { requiresAuth: true, moduleTitle: 'Comunicações' },
+            path: '/mensagens',
+            name: 'mensagens',
+            component: () => import('../views/MessagingSettingsView.vue'),
+            meta: { requiresAuth: true, module: 'messaging' },
         },
+        {
+            path: '/modulos',
+            component: () => import('../views/InternalModulesView.vue'),
+            meta: { requiresAuth: true, internal: true },
+        },
+        { path: '/configuracoes/mensagens', redirect: { name: 'mensagens' } },
         {
             path: '/login',
             redirect: '/entrar',
@@ -148,6 +154,11 @@ router.beforeEach(async (to) => {
 
     if (to.meta.requiresAuth && !auth.isAuthenticated) {
         return '/entrar';
+    }
+
+    if ((to.meta.module && !auth.organization?.modules?.[to.meta.module])
+        || (to.meta.internal && !auth.user?.isWnfitInternal)) {
+        return '/painel';
     }
 
     if (to.meta.guest && auth.isAuthenticated) {

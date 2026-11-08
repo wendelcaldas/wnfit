@@ -63,7 +63,8 @@ class ScheduleAvailabilityService
         $s = $this->settings($link->organizacao_id);
         abort_unless($s->enforced, 404);
         $s->fill(['booking_link_id' => $link->id, 'title' => $link->title, 'duration_minutes' => $link->duration_minutes, 'instructor_id' => $link->instructor_id, 'location' => $link->location, 'public_token' => $link->public_token]);
-        abort_unless(Organizacao::whereKey($s->organizacao_id)->where('ativa', true)->exists() && $this->instructorActive($s), 404);
+        $organization = Organizacao::whereKey($s->organizacao_id)->where('ativa', true)->first();
+        abort_unless($organization?->hasModule('schedule') && $this->instructorActive($s), 404);
 
         return $s;
     }

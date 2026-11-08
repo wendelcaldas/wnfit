@@ -31,7 +31,8 @@ class SendWelcomeWhatsApp implements ShouldQueue
             return;
         }
         $allowed = array_map('trim', config('services.messaging.baileys.organization_ids', []));
-        $active = MensagemConfiguracao::where('organizacao_id', $message->organizacao_id)->value('ativo');
+        $settings = MensagemConfiguracao::where('organizacao_id', $message->organizacao_id)->first();
+        $active = $settings?->eventPreferences()['boas_vindas'] ?? false;
         $url = config('services.messaging.baileys.url');
         $token = config('services.messaging.baileys.token');
         if (config('services.messaging.welcome_driver') !== 'baileys' || ! in_array((string) $message->organizacao_id, $allowed, true) || ! $active || ! $url || ! $token) {

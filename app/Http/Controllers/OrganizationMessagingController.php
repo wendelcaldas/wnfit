@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MensagemConfiguracao;
+use App\Models\Organizacao;
 use App\Services\Messaging\MessagingService;
 use App\Services\Messaging\TwilioContentTemplateService;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +18,7 @@ class OrganizationMessagingController extends Controller
 
     public function show(Request $request): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
+        $organization = $this->messagingOrganization($request);
         $settings = $this->messaging->settingsForOrganization($organization);
 
         return response()->json([
@@ -40,8 +42,7 @@ class OrganizationMessagingController extends Controller
 
     public function update(Request $request): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
-        $this->ensureManager($request);
+        $organization = $this->messagingOrganization($request, managerOnly: true);
 
         $data = $request->validate([
             'whatsapp_from' => ['nullable', 'string', 'max:40'],
@@ -75,18 +76,43 @@ class OrganizationMessagingController extends Controller
 
     public function twilioTemplates(Request $request): JsonResponse
     {
-        $request->user()->organizacoes()->firstOrFail();
-        $this->ensureManager($request);
+        $this->messagingOrganization($request, managerOnly: true);
 
         return response()->json($this->twilioTemplates->templates());
     }
 
-    private function ensureManager(Request $request): void
+    public function updateEvents(Request $request): JsonResponse
     {
-        $organization = $request->user()->organizacoes()->firstOrFail();
-        $role = $organization->usuarios()->whereKey($request->user()->id)->first()?->pivot?->papel;
+        $organization = $this->messagingOrganization($request, managerOnly: true);
+        $keys = implode(',', array_keys(MensagemConfiguracao::EVENT_DEFAULTS));
+        $data = $request->validate([
+            'events' => ['required', 'array:'.$keys, 'required_array_keys:'.$keys],
+            'events.*' => ['required', 'boolean'],
+            'overdueDelayDays' => ['required', 'integer', 'between:1,30'],
+        ]);
 
-        abort_unless(in_array($role, ['proprietario', 'administrador'], true), 403);
+        $settings = $this->messaging->settingsForOrganization($organization);
+        $settings->update([
+            'event_preferences' => array_map('boolval', $data['events']),
+            'overdue_delay_days' => $data['overdueDelayDays'],
+        ]);
+
+        return response()->json([
+            'events' => $settings->eventPreferences(),
+            'overdueDelayDays' => $settings->overdue_delay_days,
+        ]);
+    }
+
+    private function messagingOrganization(Request $request, bool $managerOnly = false): Organizacao
+    {
+        $organization = $request->user()->activeOrganization();
+
+        abort_unless($organization?->hasMessagingModule(), 403);
+        if ($managerOnly) {
+            abort_unless(in_array($organization->pivot->papel, ['proprietario', 'administrador'], true), 403);
+        }
+
+        return $organization;
     }
 
     private function payload($settings): array
@@ -103,6 +129,8 @@ class OrganizationMessagingController extends Controller
             'welcomeTemplateSid' => $settings->welcome_template_sid,
             'welcomeMessageBody' => $settings->welcome_message_body,
             'active' => $settings->ativo,
+            'events' => $settings->eventPreferences(),
+            'overdueDelayDays' => $settings->overdue_delay_days,
         ];
     }
 
