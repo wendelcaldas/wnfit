@@ -9,9 +9,9 @@
                 </div>
                 <span class="sr-only">{{ item.caption }}</span>
             </article>
-            <button class="stat-card summary-metric agenda-link-metric" type="button" :disabled="!publicScheduleUrl" @click="copyPublicSchedule">
-                <Link2 class="metric-icon" aria-hidden="true" />
-                <span class="metric-label">Copiar link de vagas</span>
+            <button class="stat-card summary-metric agenda-copy-button" type="button" :disabled="!publicScheduleUrl" @click="copyPublicSchedule">
+                <Copy class="metric-icon" aria-hidden="true" />
+                <span>Copiar link de agendamento</span>
             </button>
         </section>
 
@@ -327,7 +327,7 @@
 <script setup>
 import { notify } from '../composables/useNotifications';
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
-import { AlertCircle, CalendarDays, ChevronLeft, ChevronRight, Clock3, Link2, Plus, Users, X } from 'lucide-vue-next';
+import { AlertCircle, CalendarDays, ChevronLeft, ChevronRight, Clock3, Copy, Plus, Users, X } from 'lucide-vue-next';
 import AppShell from '../components/AppShell.vue';
 import { useRoute } from 'vue-router';
 const route = useRoute();
@@ -653,11 +653,22 @@ onMounted(reload);
 </script>
 
 <style scoped>
-.agenda-link-metric { text-align: left; }
-.agenda-link-metric .metric-label { color: var(--wn-primary-strong); font-weight: 700; }
-.agenda-link-metric:not(:disabled):hover { background: var(--wn-primary-soft); border-color: var(--wn-primary-strong); }
-.agenda-link-metric:focus-visible { outline: 2px solid var(--wn-primary-strong); outline-offset: 2px; }
-.agenda-link-metric:disabled { opacity: 0.5; }
+.agenda-copy-button {
+    justify-content: center;
+    color: var(--wn-ink);
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+.agenda-copy-button .metric-icon { color: inherit; }
+.agenda-copy-button:not(:disabled) {
+    border-color: var(--wn-primary);
+    background: var(--wn-primary);
+    cursor: pointer;
+}
+.agenda-copy-button:not(:disabled):hover { filter: brightness(0.96); }
+.agenda-copy-button:focus-visible { outline: 2px solid var(--wn-primary-strong); outline-offset: 2px; }
+.agenda-copy-button:disabled { opacity: 0.5; cursor: not-allowed; }
 .agenda-modal {
     width: min(calc(100% - 2rem), 51rem);
     margin: auto;
