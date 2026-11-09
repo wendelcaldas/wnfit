@@ -18,6 +18,8 @@ class InternalModuleTest extends TestCase
         $internal = User::factory()->create();
         $internal->forceFill(['is_wnfit_internal' => true])->save();
         $organization = Organizacao::create(['nome_fantasia' => 'Outro ambiente', 'slug' => 'outro-ambiente', 'tipo' => 'studio', 'ativa' => true]);
+        $organization->modules = array_fill_keys(array_keys(Organizacao::BASIC_MODULES), false);
+        $organization->save();
         $organization->usuarios()->attach($owner->id, ['papel' => 'proprietario', 'status' => 'ativo']);
         $url = '/api/internal/modules';
         $payload = ['module' => 'messaging', 'enabled' => true];
@@ -37,13 +39,16 @@ class InternalModuleTest extends TestCase
 
         $this->actingAs($owner)->getJson('/api/organization/messaging')->assertOk();
         $this->actingAs($internal);
-        foreach (['students', 'workouts', 'finance', 'schedule', 'messaging'] as $module) {
-            $this->patchJson($url.'/'.$organization->id, ['module' => $module, 'enabled' => false])->assertOk();
+        foreach (array_keys(Organizacao::BASIC_MODULES) as $module) {
+            $this->patchJson($url.'/'.$organization->id, ['module' => $module, 'enabled' => false])
+                ->assertUnprocessable()->assertJsonValidationErrors('module');
         }
-        $this->actingAs($owner);
-        foreach (['/api/students', '/api/workouts', '/api/finance', '/api/schedule', '/api/organization/messaging'] as $endpoint) {
-            $this->getJson($endpoint)->assertForbidden();
-        }
-        $this->getJson('/api/public/schedule/outro-ambiente')->assertNotFound();
+        $this->patchJson($url.'/'.$organization->id, ['module' => 'messaging', 'enabled' => false])->assertOk();
+
+        $this->actingAs($owner)->getJson('/api/me')->assertOk()
+            ->assertJsonPath('organization.modules', Organizacao::BASIC_MODULES + ['messaging' => false]);
+        $this->getJson('/api/students')->assertOk();
+        $this->getJson('/api/public/schedule/outro-ambiente')->assertOk();
+        $this->getJson('/api/organization/messaging')->assertForbidden();
     }
 }

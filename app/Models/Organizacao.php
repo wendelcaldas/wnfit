@@ -12,11 +12,14 @@ class Organizacao extends Model
 {
     use HasFactory;
 
-    public const MODULE_DEFAULTS = [
+    public const BASIC_MODULES = [
         'students' => true,
         'workouts' => true,
         'finance' => true,
         'schedule' => true,
+    ];
+
+    public const ADDITIONAL_MODULE_DEFAULTS = [
         'messaging' => false,
     ];
 
@@ -89,10 +92,12 @@ class Organizacao extends Model
 
     public function moduleAccess(): array
     {
-        $defaults = self::MODULE_DEFAULTS;
+        $defaults = self::ADDITIONAL_MODULE_DEFAULTS;
         $defaults['messaging'] = in_array($this->slug, config('services.messaging.module_organization_slugs', []), true);
 
-        return array_replace($defaults, $this->modules ?? []);
+        $additional = array_intersect_key($this->modules ?? [], $defaults);
+
+        return self::BASIC_MODULES + array_replace($defaults, $additional);
     }
 
     public function hasModule(string $module): bool
