@@ -15,7 +15,7 @@ export const appNavigation = [
     { label: 'Financeiro', to: '/financeiro', icon: Wallet, module: 'finance' },
     { label: 'Treinos', to: '/treinos', icon: Dumbbell, module: 'workouts' },
     { label: 'Agenda', to: '/agenda', icon: CalendarRange, module: 'schedule' },
-    { label: 'Mensagens', to: '/mensagens', icon: MessageSquareText, module: 'messaging' },
+    { label: 'Mensagens', to: '/mensagens', icon: MessageSquareText, module: 'messaging', additional: true },
     { label: 'Configurações', to: '/configuracoes', icon: Settings, activePaths: ['/configuracoes/usuarios', '/configuracoes/planos', '/configuracoes/unidades', '/configuracoes/horarios'] },
     { label: 'Módulos', to: '/modulos', icon: Puzzle, internal: true },
 ];

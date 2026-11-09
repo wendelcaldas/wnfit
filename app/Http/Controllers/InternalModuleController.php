@@ -32,7 +32,7 @@ class InternalModuleController extends Controller
     {
         abort_unless($request->user()->is_wnfit_internal, 403);
         $data = $request->validate([
-            'module' => ['required', Rule::in(array_keys(Organizacao::MODULE_DEFAULTS))],
+            'module' => ['required', Rule::in(array_keys(Organizacao::ADDITIONAL_MODULE_DEFAULTS))],
             'enabled' => ['required', 'boolean'],
         ]);
 
