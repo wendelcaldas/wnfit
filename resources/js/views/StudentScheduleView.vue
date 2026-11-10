@@ -55,51 +55,60 @@
         </template>
         <dialog
             ref="availabilityDialog"
-            class="m-auto max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] max-w-md overflow-y-auto rounded-2xl border border-[var(--wn-line)] bg-white p-5 text-[var(--wn-ink)] backdrop:bg-black/50"
+            class="m-auto max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] max-w-md flex-col overflow-hidden rounded-2xl border border-[var(--wn-line)] bg-white text-[var(--wn-ink)] open:flex backdrop:bg-black/50"
             aria-labelledby="student-availability-title"
             aria-describedby="student-availability-date"
             @cancel="reserving !== null && $event.preventDefault()"
         >
-            <div class="flex items-start justify-between gap-3">
+            <header class="flex shrink-0 items-start justify-between gap-3 px-5 pt-5 pb-4">
                 <div>
                     <h2 id="student-availability-title" class="text-lg font-bold">Horários disponíveis</h2>
                     <p id="student-availability-date" class="mt-1 text-sm capitalize text-[var(--wn-muted)]">
                         {{ date ? formatDate(date) : '' }}
                     </p>
                 </div>
-                <button type="button" class="btn-secondary" autofocus :disabled="reserving !== null" @click="availabilityDialog.close()">
-                    Fechar
+                <button
+                    type="button"
+                    class="grid size-11 shrink-0 place-items-center rounded-lg hover:bg-[var(--wn-surface-soft)] disabled:opacity-50"
+                    aria-label="Fechar horários disponíveis"
+                    autofocus
+                    :disabled="reserving !== null"
+                    @click="availabilityDialog.close()"
+                >
+                    <X :size="22" aria-hidden="true" />
                 </button>
-            </div>
-            <p v-if="reservationError" class="student-error mt-3" role="alert">{{ reservationError }}</p>
-            <p v-if="!availableOnDate.length" class="mt-4 text-sm text-[var(--wn-muted)]">
-                Nenhuma vaga disponível para esta data.
-            </p>
-            <ul v-else class="mt-4 space-y-3">
-                <li v-for="event in availableOnDate" :key="event.id" class="student-card">
-                    <div class="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                            <p class="text-xs font-semibold text-[var(--wn-muted)]">{{ event.start }}–{{ event.end }}</p>
-                            <h3 class="mt-1 font-bold">{{ event.title }}</h3>
-                            <p v-if="event.location || modalities[event.modality]" class="mt-1 text-sm text-[var(--wn-muted)]">
-                                {{ event.location || modalities[event.modality] }}
-                            </p>
+            </header>
+            <div ref="availabilityBody" class="min-h-0 overflow-y-auto overscroll-contain px-5 pb-5">
+                <p v-if="reservationError" class="student-error mb-3" role="alert">{{ reservationError }}</p>
+                <p v-if="!availableOnDate.length" class="text-sm text-[var(--wn-muted)]">
+                    Nenhuma vaga disponível para esta data.
+                </p>
+                <ul v-else class="space-y-3">
+                    <li v-for="event in availableOnDate" :key="event.id" class="student-card">
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <p class="text-xs font-semibold text-[var(--wn-muted)]">{{ event.start }}–{{ event.end }}</p>
+                                <h3 class="mt-1 font-bold">{{ event.title }}</h3>
+                                <p v-if="event.location || modalities[event.modality]" class="mt-1 text-sm text-[var(--wn-muted)]">
+                                    {{ event.location || modalities[event.modality] }}
+                                </p>
+                            </div>
+                            <span class="text-xs font-semibold text-[var(--wn-muted)]">
+                                {{ event.availableSpots }} {{ event.availableSpots === 1 ? 'vaga' : 'vagas' }}
+                            </span>
                         </div>
-                        <span class="text-xs font-semibold text-[var(--wn-muted)]">
-                            {{ event.availableSpots }} {{ event.availableSpots === 1 ? 'vaga' : 'vagas' }}
-                        </span>
-                    </div>
-                    <button
-                        type="button"
-                        class="btn-primary mt-4 w-full justify-center"
-                        :aria-label="`Reservar vaga para ${event.title} às ${event.start}`"
-                        :disabled="reserving !== null"
-                        @click="reserve(event)"
-                    >
-                        {{ reserving === event.id ? 'Reservando…' : 'Reservar vaga' }}
-                    </button>
-                </li>
-            </ul>
+                        <button
+                            type="button"
+                            class="btn-primary mt-4 w-full justify-center"
+                            :aria-label="`Reservar vaga para ${event.title} às ${event.start}`"
+                            :disabled="reserving !== null"
+                            @click="reserve(event)"
+                        >
+                            {{ reserving === event.id ? 'Reservando…' : 'Reservar vaga' }}
+                        </button>
+                    </li>
+                </ul>
+            </div>
         </dialog>
         <dialog
             ref="cancelDialog"
@@ -126,6 +135,7 @@
 </template>
 
 <script setup>
+import { X } from 'lucide-vue-next';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import BookingCalendar from '../components/BookingCalendar.vue';
 import StudentShell from '../components/StudentShell.vue';
@@ -143,6 +153,7 @@ const reserving = ref(null);
 const reservationError = ref('');
 const success = ref('');
 const availabilityDialog = ref(null);
+const availabilityBody = ref(null);
 const commitmentsHeading = ref(null);
 const cancelDialog = ref(null);
 const cancelTarget = ref(null);
@@ -187,6 +198,7 @@ async function openAvailability(day) {
     reservationError.value = '';
     await nextTick();
     availabilityDialog.value.showModal();
+    availabilityBody.value.scrollTop = 0;
 }
 
 async function reserve(event) {

@@ -55,7 +55,7 @@
                 <p>{{ selected.data.appointmentTitle }}</p>
                 <p class="notification-completed-date">{{ date(selected.data.startsAt) }} – {{ time(selected.data.endsAt) }}</p>
                 <dl>
-                    <div><dt>Contato</dt><dd>{{ selected.data.phone }}</dd></div>
+                    <div v-if="selected.data.phone"><dt>Contato</dt><dd>{{ selected.data.phone }}</dd></div>
                     <div><dt>Professor</dt><dd>{{ selected.data.instructorName }}</dd></div>
                     <div v-if="selected.data.location"><dt>Local</dt><dd>{{ selected.data.location }}</dd></div>
                 </dl>
@@ -204,7 +204,7 @@ const kind = (notification) => isBooking(notification) ? 'Novo agendamento' : no
     : notification.type === 'workout_plan_ends_today'
       ? (isDueToday(notification) ? 'Ficha vence hoje' : 'Vencimento da ficha')
       : 'Treino concluído';
-const headline = (notification) => isBooking(notification) ? `${notification.data.guestName} agendou pelo link` : notification.type === 'workout_plan_expired'
+const headline = (notification) => isBooking(notification) ? `${notification.data.guestName} agendou pelo ${notification.data.source === 'student_portal' ? 'app do aluno' : 'link'}` : notification.type === 'workout_plan_expired'
     ? `A ficha de ${notification.data.studentName} venceu em ${planDate(notification.data.endsOn)}`
     : notification.type === 'workout_plan_ends_today'
       ? (isDueToday(notification) ? `A ficha de ${notification.data.studentName} vence hoje` : `A ficha de ${notification.data.studentName} tinha vigência até ${planDate(notification.data.endsOn)}`)

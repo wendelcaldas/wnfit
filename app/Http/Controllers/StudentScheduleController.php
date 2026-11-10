@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Agendamento;
 use App\Models\Organizacao;
 use App\Services\AppointmentSpots;
+use App\Services\PublicBookingNotificationService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -47,12 +48,12 @@ class StudentScheduleController extends Controller
         ]);
     }
 
-    public function store(Request $request, int $eventId): JsonResponse
+    public function store(Request $request, int $eventId, PublicBookingNotificationService $notifications): JsonResponse
     {
         $student = $request->user('student')->aluno;
         $data = $request->validate($this->spots->reservationRules());
 
-        return DB::transaction(function () use ($student, $eventId, $data) {
+        return DB::transaction(function () use ($student, $eventId, $data, $notifications) {
             $organization = Organizacao::whereKey($student->organizacao_id)->where('ativa', true)->lockForUpdate()->firstOrFail();
             abort_unless($organization->hasModule('schedule'), 404);
 
@@ -69,6 +70,7 @@ class StudentScheduleController extends Controller
             abort_unless($this->spots->published($upcoming)->whereKey($eventId)->exists(), 409, 'Este compromisso não está mais disponível.');
             $this->spots->assertFreeSpot($event);
             $event->alunos()->syncWithoutDetaching([$student->id => ['status' => 'confirmado']]);
+            $notifications->studentBooked($event, $student);
 
             return response()->json(['event' => $this->eventPayload($event, true)], 201);
         }, 3);
