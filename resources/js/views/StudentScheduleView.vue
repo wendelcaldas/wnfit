@@ -122,12 +122,23 @@
                 Você vai liberar sua vaga em {{ cancelTarget.title }}, dia {{ formatDate(cancelTarget.date) }} às {{ cancelTarget.start }}.
             </p>
             <p v-if="cancelError" class="student-error mt-3" role="alert">{{ cancelError }}</p>
-            <div class="mt-5 flex flex-wrap justify-end gap-2">
-                <button type="button" class="btn-secondary" autofocus :disabled="cancelling" @click="cancelDialog.close()">
-                    Manter agendamento
+            <div class="mt-5 flex flex-col items-center gap-1">
+                <button
+                    type="button"
+                    class="btn-secondary w-full justify-center !border-rose-200 !text-rose-700 hover:!bg-rose-50"
+                    :disabled="cancelling"
+                    @click="cancelAppointment"
+                >
+                    {{ cancelling ? 'Cancelando…' : 'Cancelar agendamento' }}
                 </button>
-                <button type="button" class="btn-primary" :disabled="cancelling" @click="cancelAppointment">
-                    {{ cancelling ? 'Cancelando…' : 'Confirmar cancelamento' }}
+                <button
+                    type="button"
+                    class="min-h-11 px-3 text-sm text-[var(--wn-muted)] underline underline-offset-2 disabled:opacity-50"
+                    autofocus
+                    :disabled="cancelling"
+                    @click="cancelDialog.close()"
+                >
+                    Manter agendamento
                 </button>
             </div>
         </dialog>
