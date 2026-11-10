@@ -133,6 +133,12 @@ class ScheduleController extends Controller
         DB::transaction(function () use ($organization, $schedule, $data) {
             Organizacao::whereKey($organization->id)->lockForUpdate()->firstOrFail();
             $schedule->refresh();
+            if (isset($data['expected_confirmed_participant_ids'])) {
+                $confirmed = $schedule->alunos()->wherePivot('status', 'confirmado')->orderBy('alunos.id')->pluck('alunos.id')->all();
+                $expected = array_map('intval', $data['expected_confirmed_participant_ids']);
+                sort($expected);
+                abort_unless($confirmed === $expected, 409, 'As vagas confirmadas mudaram. Feche e reabra o compromisso antes de editar.');
+            }
             $sameTiming = $schedule->inicio_em->equalTo(Carbon::parse($data['starts_at'])->timezone(config('app.timezone')))
                 && $schedule->fim_em->equalTo(Carbon::parse($data['ends_at'])->timezone(config('app.timezone')));
             if (! $sameTiming || ($data['publish_spots'] ?? false)) {
@@ -196,6 +202,8 @@ class ScheduleController extends Controller
             'notes' => ['nullable', 'string', 'max:3000'],
             'participant_ids' => ['present', 'array', 'max:1000'],
             'participant_ids.*' => ['integer', 'distinct'],
+            'expected_confirmed_participant_ids' => ['sometimes', 'array', 'max:1000'],
+            'expected_confirmed_participant_ids.*' => ['integer', 'distinct'],
             'repeat_frequency' => ['sometimes', Rule::in(['none', 'weekly', 'biweekly', 'monthly'])],
             'repeat_until' => ['nullable', 'date', 'after_or_equal:starts_at'],
         ]);

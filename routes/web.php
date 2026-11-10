@@ -23,6 +23,7 @@ use App\Http\Controllers\StudentEventController;
 use App\Http\Controllers\StudentPhysicalAssessmentController;
 use App\Http\Controllers\StudentPortalAuthController;
 use App\Http\Controllers\StudentPortalController;
+use App\Http\Controllers\StudentScheduleController;
 use App\Http\Controllers\TwilioWebhookController;
 use App\Http\Controllers\WorkoutController;
 use App\Http\Middleware\EnsureOrganizationModule;
@@ -44,6 +45,11 @@ Route::prefix('api')->group(function () {
         Route::post('/logout', [StudentPortalAuthController::class, 'logout']);
         Route::put('/password', [StudentPortalAuthController::class, 'password'])->middleware(['student:password', 'throttle:10,1']);
         Route::middleware('student')->group(function () {
+            Route::get('/schedule', [StudentScheduleController::class, 'index']);
+            Route::post('/schedule/{eventId}/reservations', [StudentScheduleController::class, 'store'])
+                ->whereNumber('eventId')->middleware('throttle:10,1,student-schedule-write:');
+            Route::delete('/schedule/{eventId}/reservations', [StudentScheduleController::class, 'destroy'])
+                ->whereNumber('eventId')->middleware('throttle:10,1,student-schedule-cancel:');
             Route::get('/events/{event}/photos', [EventPhotoController::class, 'index']);
             Route::post('/events/{event}/photos', [EventPhotoController::class, 'upload'])->middleware('throttle:20,1');
             Route::get('/events/{event}/photos/{photo}/file', [EventPhotoController::class, 'file']);
