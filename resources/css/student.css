@@ -433,7 +433,7 @@
 }
 .student-bottom-nav {
     padding-top: 10px;
-    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    padding-bottom: calc(max(10px, env(safe-area-inset-bottom)) + 6px);
     gap: 8px;
 }
 .student-bottom-nav a {

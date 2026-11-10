@@ -125,6 +125,13 @@ class StudentPortalTest extends TestCase
         ])->assertConflict();
         $this->getJson('/api/schedule?start=2026-11-07&end=2026-11-07')->assertOk()
             ->assertJsonPath('events.0.participantCount', 2)->assertJsonPath('events.0.participants.0.id', $student->id);
+        $this->getJson('/api/notifications')->assertOk()
+            ->assertJsonPath('unreadCount', 2)
+            ->assertJsonPath('notifications.0.type', 'public_booking_created')
+            ->assertJsonPath('notifications.0.data.source', 'student_portal')
+            ->assertJsonPath('notifications.0.data.guestName', $student->nome)
+            ->assertJsonPath('notifications.0.data.href', '/agenda?date=2026-11-07&event='.$event->id)
+            ->assertJsonMissingPath('notifications.1.data.source');
         $this->assertDatabaseCount('agendamento_aluno', 1);
     }
 
