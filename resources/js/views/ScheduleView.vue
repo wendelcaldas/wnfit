@@ -660,7 +660,11 @@ async function save() {
             status: form.status,
             starts_at: unchangedTiming ? original.startsAt : `${form.date}T${form.startTime}`,
             ends_at: unchangedTiming ? original.endsAt : `${form.date}T${form.endTime}`,
-            ...(editingId.value ? {} : {
+            ...(editingId.value ? {
+                expected_confirmed_participant_ids: original.participants
+                    .filter((participant) => participant.status === 'confirmado')
+                    .map((participant) => participant.id),
+            } : {
                 repeat_frequency: form.repeatFrequency,
                 repeat_until: form.repeatFrequency === 'none' ? null : form.repeatUntil,
             }),
@@ -687,6 +691,7 @@ async function save() {
         formError.value = messages
             ? Object.values(messages).flat().join(' ')
             : error.response?.data?.message || 'Não foi possível salvar o agendamento.';
+        if (error.response?.status === 409) await loadSchedule();
     } finally {
         saving.value = false;
     }

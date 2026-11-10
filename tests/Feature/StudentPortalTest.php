@@ -15,6 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class StudentPortalTest extends TestCase
@@ -50,6 +51,115 @@ class StudentPortalTest extends TestCase
         $this->postJson('/api/student/login', ['username' => $credentials['username'], 'password' => $credentials['temporaryPassword']])->assertOk();
 
         return $credentials;
+    }
+
+    public function test_student_schedule_lists_open_spots_and_own_confirmed_appointments_only(): void
+    {
+        $this->travelTo(now()->setDate(2026, 11, 7)->setTime(8, 0));
+        [, $organization, $student] = $this->setupStudent();
+        [, $other] = $this->setupStudent('other');
+        $fields = [
+            'titulo' => 'Aula coletiva', 'inicio_em' => '2026-11-07 09:00', 'fim_em' => '2026-11-07 10:00',
+            'publicar_vagas' => true, 'capacidade' => 1, 'observacoes' => 'Nota privada',
+        ];
+        $available = $organization->agendamentos()->create($fields);
+        $confirmed = $organization->agendamentos()->create(['publicar_vagas' => false] + $fields);
+        $confirmed->alunos()->attach($student);
+        $organization->agendamentos()->create(['publicar_vagas' => false] + $fields);
+        $organization->agendamentos()->create(['capacidade' => null] + $fields);
+        $organization->agendamentos()->create(['status' => 'cancelado'] + $fields);
+        $organization->agendamentos()->create(['inicio_em' => '2026-11-07 07:00'] + $fields);
+        $organization->agendamentos()->create(['inicio_em' => '2027-01-07 09:00', 'fim_em' => '2027-01-07 10:00'] + $fields);
+        $other->agendamentos()->create($fields);
+
+        $this->getJson('/api/student/schedule')->assertUnauthorized();
+        $this->loginStudent($student);
+        $this->getJson('/api/student/me')->assertJsonPath('student.canAccessSchedule', true);
+        $this->getJson('/api/student/schedule')->assertOk()
+            ->assertJsonCount(2, 'events')
+            ->assertJsonPath('events.0.id', $available->id)
+            ->assertJsonPath('events.0.availableSpots', 1)
+            ->assertJsonPath('events.1.id', $confirmed->id)
+            ->assertJsonPath('events.1.confirmed', true)
+            ->assertJsonMissingPath('events.1.participants')
+            ->assertDontSee('Nota privada');
+    }
+
+    public function test_student_reservation_shares_capacity_with_public_link_and_survives_stale_staff_edits(): void
+    {
+        $this->travelTo(now()->setDate(2026, 11, 7)->setTime(8, 0));
+        [$owner, $organization, $student] = $this->setupStudent();
+        [, $other] = $this->setupStudent('other');
+        $fields = [
+            'titulo' => 'Aula coletiva', 'inicio_em' => '2026-11-07 09:00', 'fim_em' => '2026-11-07 10:00',
+            'publicar_vagas' => true, 'capacidade' => 2,
+        ];
+        $event = $organization->agendamentos()->create($fields);
+        $private = $organization->agendamentos()->create(['publicar_vagas' => false] + $fields);
+        $foreign = $other->agendamentos()->create($fields);
+        $slot = ['date' => '2026-11-07', 'start' => '09:00', 'end' => '10:00'];
+        $publicUrl = '/api/public/schedule/studio';
+        $guest = $slot + ['eventId' => $event->id, 'name' => 'Visitante', 'phone' => '71999991234', 'requestId' => (string) Str::uuid()];
+        $this->postJson($publicUrl.'/reservations', $guest)->assertCreated();
+
+        $this->loginStudent($student);
+        $url = "/api/student/schedule/{$event->id}/reservations";
+        $this->getJson('/api/student/schedule')->assertJsonCount(1, 'events')->assertJsonPath('events.0.availableSpots', 1);
+        $this->postJson("/api/student/schedule/{$foreign->id}/reservations", $slot)->assertConflict();
+        $this->postJson("/api/student/schedule/{$private->id}/reservations", $slot)->assertConflict();
+        $this->postJson($url, [...$slot, 'start' => '09:15'])->assertConflict();
+        $this->postJson($url, $slot)->assertCreated()->assertJsonPath('event.confirmed', true);
+        $this->postJson($url, $slot)->assertOk()->assertJsonPath('event.confirmed', true);
+        $this->getJson($publicUrl.'/availability?date='.$slot['date'])->assertJsonCount(0, 'events');
+        $this->postJson($publicUrl.'/reservations', [...$guest, 'phone' => '71999995678', 'requestId' => (string) Str::uuid()])->assertConflict();
+
+        $this->postJson('/api/student/logout')->assertOk();
+        $this->loginStudent($organization->alunos()->create(['nome' => 'Outro aluno', 'status' => 'ativo']));
+        $this->postJson($url, $slot)->assertConflict();
+        $this->getJson('/api/student/schedule')->assertJsonCount(0, 'events');
+
+        $this->actingAs($owner)->putJson("/api/schedule/{$event->id}", [
+            'title' => 'Aula editada', 'type' => 'coletiva', 'status' => 'agendado',
+            'starts_at' => '2026-11-07T09:00', 'ends_at' => '2026-11-07T10:00',
+            'modality' => 'presencial', 'capacity' => 2, 'participant_ids' => [], 'expected_confirmed_participant_ids' => [],
+        ])->assertConflict();
+        $this->getJson('/api/schedule?start=2026-11-07&end=2026-11-07')->assertOk()
+            ->assertJsonPath('events.0.participantCount', 2)->assertJsonPath('events.0.participants.0.id', $student->id);
+        $this->assertDatabaseCount('agendamento_aluno', 1);
+    }
+
+    public function test_student_can_cancel_only_their_own_upcoming_commitment_and_reopen_the_spot(): void
+    {
+        $this->travelTo(now()->setDate(2026, 11, 7)->setTime(8, 0));
+        [, $organization, $student] = $this->setupStudent();
+        $other = $organization->alunos()->create(['nome' => 'Outro aluno', 'status' => 'ativo']);
+        $fields = [
+            'titulo' => 'Aula coletiva', 'inicio_em' => '2026-11-07 09:00', 'fim_em' => '2026-11-07 10:00',
+            'publicar_vagas' => true, 'capacidade' => 2,
+        ];
+        $event = $organization->agendamentos()->create($fields);
+        $event->alunos()->attach([$student->id, $other->id]);
+        $past = $organization->agendamentos()->create(['inicio_em' => '2026-11-07 07:00'] + $fields);
+        $past->alunos()->attach($student->id);
+        $othersOnly = $organization->agendamentos()->create($fields);
+        $othersOnly->alunos()->attach($other->id);
+
+        $url = "/api/student/schedule/{$event->id}/reservations";
+        $this->deleteJson($url)->assertUnauthorized();
+        $this->loginStudent($student);
+        $this->deleteJson("/api/student/schedule/{$past->id}/reservations")->assertConflict();
+        $this->deleteJson("/api/student/schedule/{$othersOnly->id}/reservations")->assertNotFound();
+        $this->deleteJson($url)->assertNoContent();
+        $this->deleteJson($url)->assertNoContent();
+
+        $this->assertDatabaseHas('agendamento_aluno', ['agendamento_id' => $event->id, 'aluno_id' => $student->id, 'status' => 'cancelado']);
+        $this->assertDatabaseHas('agendamento_aluno', ['agendamento_id' => $event->id, 'aluno_id' => $other->id, 'status' => 'confirmado']);
+        $this->getJson('/api/student/schedule')->assertOk()
+            ->assertJsonPath('events.0.confirmed', false)->assertJsonPath('events.0.availableSpots', 1);
+        $this->getJson('/api/public/schedule/studio/availability?date=2026-11-07')->assertOk()
+            ->assertJsonPath('events.0.id', $event->id)->assertJsonPath('events.0.availableSpots', 1);
+        $this->postJson($url, ['date' => '2026-11-07', 'start' => '09:00', 'end' => '10:00'])->assertCreated()
+            ->assertJsonPath('event.confirmed', true);
     }
 
     public function test_registration_creates_unique_access_atomically_and_only_returns_temporary_password_once(): void

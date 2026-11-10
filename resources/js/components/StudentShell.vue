@@ -61,14 +61,19 @@
                 }"
                 ><Dumbbell :size="22" />Treinos</RouterLink
             >
-            <span v-if="auth.student?.canAccessEvents" class="student-events-soon" aria-label="Eventos: indisponível" aria-disabled="true"><CalendarDays :size="22" /><span>Eventos</span></span>
+            <RouterLink
+                v-if="auth.student?.canAccessSchedule"
+                to="/aluno/agenda"
+                :class="{ selected: route.path === '/aluno/agenda' }"
+                ><CalendarCheck :size="22" />Agenda</RouterLink
+            >
         </nav>
     </div>
 </template>
 <script setup>
 import { computed, ref } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
-import { House, Dumbbell, CalendarDays } from "lucide-vue-next";
+import { House, Dumbbell, CalendarCheck } from "lucide-vue-next";
 import { useStudentAuthStore } from "../stores/studentAuth";
 defineProps({ hideNav: Boolean });
 const auth = useStudentAuthStore();
@@ -88,8 +93,3 @@ async function logout() {
     router.replace("/aluno/entrar");
 }
 </script>
-
-<style scoped>
-.student-events-soon { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 12px; color: var(--wn-muted); font-size: 11px; opacity: .4; }
-
-</style>
