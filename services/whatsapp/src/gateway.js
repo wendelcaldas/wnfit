@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { timingSafeEqual, createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 
-export function createGateway({ token, database, adapter, allowedRecipients = [] }) {
+export function createGateway({ token, database, adapter, allowedRecipients = [], signupRecipient = '' }) {
   if (!token || token.length < 32) throw new Error('BRIDGE_TOKEN must have at least 32 characters');
   const db = new DatabaseSync(database);
   db.exec(`PRAGMA journal_mode=WAL;
@@ -23,24 +23,27 @@ export function createGateway({ token, database, adapter, allowedRecipients = []
     }
     if (req.method === 'GET' && req.url === '/pairing') return reply(200, { connected: adapter.ready(), qr: adapter.pairing?.() || null });
     if (req.method === 'GET' && req.url === '/health') return reply(adapter.ready() ? 200 : 503, { connected: adapter.ready() });
-    if (req.method !== 'POST' || !['/welcome', '/staff-notifications', '/events'].includes(req.url)) return reply(404, { error: 'not_found' });
+    if (req.method !== 'POST' || !['/welcome', '/staff-notifications', '/events', '/platform-notifications'].includes(req.url)) return reply(404, { error: 'not_found' });
     try {
       let raw = '';
       for await (const chunk of req) {
         raw += chunk;
-        if (Buffer.byteLength(raw) > 8192) return reply(413, { error: 'too_large' });
+        if (Buffer.byteLength(raw) > (req.url === '/platform-notifications' ? 16384 : 8192)) return reply(413, { error: 'too_large' });
       }
       let data;
       try { data = JSON.parse(raw); } catch { return reply(400, { error: 'invalid_json' }); }
       const { key, to, body } = data || {};
-      const keyPattern = req.url === '/events'
+      const keyPattern = req.url === '/platform-notifications'
+        ? /^platform:(?:signup:\d+|signup-test:[A-Za-z0-9_-]{1,32})$/
+        : req.url === '/events'
         ? /^event:\d+:(?:workout:\d+|schedule:\d+:(?:student|booking|reservation):\d+|charge:\d+:(?:vencimento_proximo|vencimento_hoje|cobranca_atrasada):\d{4}-\d{2}-\d{2})$/
         : req.url === '/staff-notifications'
         ? /^staff:\d+:workout_completed:\d+(?::to:[a-f0-9]{16})?$/
         : /^(?:welcome:\d+:\d+|welcome-test:\d+:[A-Za-z0-9_-]+)$/;
       if (typeof key !== 'string' || !keyPattern.test(key) || key.length > 100 ||
           typeof to !== 'string' || !/^\+55[1-9]\d{9,10}$/.test(to) ||
-          typeof body !== 'string' || !body.trim() || body.length > 2000) return reply(422, { error: 'invalid_welcome' });
+          typeof body !== 'string' || !body.trim() || body.length > (req.url === '/platform-notifications' ? 4000 : 2000)) return reply(422, { error: 'invalid_welcome' });
+      if (req.url === '/platform-notifications' && (!signupRecipient || to !== signupRecipient)) return reply(403, { error: 'signup_recipient_not_allowed' });
       const fingerprint = digest(`${to}\n${body}`).toString('hex');
       if (allowedRecipients.length && !allowedRecipients.includes(to)) return reply(403, { error: 'recipient_not_allowed' });
       const previous = db.prepare('SELECT * FROM sends WHERE key = ?').get(key);

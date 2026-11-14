@@ -40,6 +40,10 @@ return [
         'welcome_driver' => env('WHATSAPP_WELCOME_DRIVER', 'default'),
         'events_enabled' => env('WHATSAPP_EVENTS_ENABLED', false),
         'test_recipient' => env('WHATSAPP_TEST_RECIPIENT'),
+        'signup_alerts' => [
+            'enabled' => env('WHATSAPP_SIGNUP_ALERTS_ENABLED', false),
+            'recipient' => env('WHATSAPP_SIGNUP_RECIPIENT'),
+        ],
         'staff_whatsapp' => [
             'targets' => json_decode(env('WHATSAPP_STAFF_TARGETS', '{}'), true) ?: [],
             'since' => env('WHATSAPP_STAFF_SINCE'),

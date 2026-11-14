@@ -21,8 +21,8 @@ test('configured events have restricted keys and preserve deduplication', async 
   assert.equal((await send(message, token, '/events')).status, 422);
   assert.equal((await send({ ...message, key: 'event:1:arbitrary:2' }, token, '/events')).status, 422);
 });
-async function fixture(t, adapter, database = ':memory:', allowedRecipients = []) {
-  const server = createGateway({ token, database, adapter, allowedRecipients });
+async function fixture(t, adapter, database = ':memory:', allowedRecipients = [], signupRecipient = '') {
+  const server = createGateway({ token, database, adapter, allowedRecipients, signupRecipient });
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
   t.after(() => new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }));
@@ -39,6 +39,28 @@ test('pilot recipient restriction applies to every sending endpoint', async t =>
     assert.equal((await send({ ...message, to: allowed, key }, token, path)).status, 200);
   }
   assert.equal(calls, 3);
+});
+
+test('platform signup alerts are restricted to the operator and deduplicate independently', async t => {
+  let calls = 0;
+  const recipient = '+5571996651964';
+  const send = await fixture(t, { ready: () => true, send: async () => 'signup-' + (++calls) }, ':memory:', [], recipient);
+  const signup = { key: 'platform:signup:10', to: recipient, body: 'WNFit · Novo cadastro' };
+  assert.equal((await send(signup, token, '/platform-notifications')).status, 200);
+  assert.equal((await send(signup, token, '/platform-notifications')).status, 200);
+  assert.equal((await send({ ...signup, to: message.to }, token, '/platform-notifications')).status, 403);
+  assert.equal((await send({ ...signup, body: 'Changed' }, token, '/platform-notifications')).status, 409);
+  assert.equal((await send({ ...signup, key: 'platform:signup-test:sample_1' }, token, '/platform-notifications')).status, 200);
+  assert.equal((await send(signup, token, '/events')).status, 422);
+  assert.equal((await send({ ...signup, key: 'platform:arbitrary:10' }, token, '/platform-notifications')).status, 422);
+  assert.equal(calls, 2);
+});
+
+test('platform signup endpoint stays closed without its configured recipient', async t => {
+  let calls = 0;
+  const send = await fixture(t, { ready: () => true, send: async () => { calls++; return 'id'; } });
+  assert.equal((await send({ ...message, key: 'platform:signup:1' }, token, '/platform-notifications')).status, 403);
+  assert.equal(calls, 0);
 });
 
 test('auth and validation prevent sending', async t => {

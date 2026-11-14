@@ -1,5 +1,48 @@
 # Mensagens WhatsApp — operação em produção
 
+## Avisos internos de novos cadastros
+
+Ao concluir `POST /api/register`, a transação registra um aviso interno por empresa
+em `platform_signup_notifications`. Depois do commit, o aviso entra na fila
+`whatsapp`, usando o mesmo número WNFit da ponte. O destinatário é fixado por
+configuração na aplicação, no worker e na ponte; não vem do formulário público.
+Esse canal é operacional da WNFit e independe do módulo Mensagens da empresa.
+
+```env
+WHATSAPP_SIGNUP_ALERTS_ENABLED=true
+WHATSAPP_SIGNUP_RECIPIENT=+5571996651964
+```
+
+Configurar os dois valores na aplicação e no worker, e `WHATSAPP_SIGNUP_RECIPIENT`
+também na ponte. Implantar o endpoint privado `/platform-notifications` e a migration
+antes de receber avisos. A ponte só aceita o destinatário configurado nesse endpoint,
+mesmo quando o envio normal de mensagens está liberado para todos os telefones.
+
+O texto inclui empresa, responsável, telefone, e-mail, tipo de negócio quando
+informado, faixa de alunos, atendimento, equipe, prioridades, data/hora na Bahia,
+identificação do ambiente e link para Módulos. Não inclui senha, tokens ou dados de
+alunos. A origem é descrita como cadastro público WNFit; não há atribuição automática
+a Instagram ou a campanhas sem informação de rastreamento.
+
+Só cadastros concluídos geram avisos. Consulta de disponibilidade de e-mail,
+formulário abandonado, cadastro inválido e criação de aluno não são novos leads
+nesse fluxo. Não há importação nem disparo para empresas já existentes.
+
+Uma reserva de fila evita enfileirar continuamente o mesmo aviso. O scheduler
+`platform-signups:dispatch` roda a cada minuto e recupera avisos não enfileirados
+ou reservas com mais de 30 minutos. Uma falha ao enfileirar é registrada sem
+interromper o cadastro. O worker tenta até cinco vezes com backoff; a ponte usa
+uma chave persistida `platform:signup:<empresa>` para evitar repetição. Resultado
+ambíguo fica `uncertain`, sem reenvio automático. `sent` é aceitação pela ponte;
+entrega/leitura podem ser verificadas pelo ID em `/messages/{id}`.
+
+Desabilitar `WHATSAPP_SIGNUP_ALERTS_ENABLED` na aplicação e worker interrompe novos
+avisos e cancela os pendentes quando processados. Alterar o número cancela os
+pendentes destinados ao contato anterior, sem redirecionar seus dados. Reiniciar
+os processos para aplicar a configuração. O endpoint aceita a chave diagnóstica
+`platform:signup-test:<rodada>` para um teste explicitamente identificado, sem
+criar uma empresa real.
+
 ## Liberação por empresa
 
 A tela interna **Módulos** é a fonte de autorização do módulo Mensagens. Apenas

@@ -2,6 +2,7 @@
 
 use App\Models\Organizacao;
 use App\Services\Messaging\AutomaticMessagingService;
+use App\Services\Messaging\PlatformSignupNotificationService;
 use App\Services\RecurringBillingService;
 use App\Services\WorkoutNotificationService;
 use Illuminate\Foundation\Inspiring;
@@ -22,6 +23,12 @@ Artisan::command('messages:sync-billing', function () {
     $this->info("{$count} mensagens financeiras enfileiradas.");
 });
 Schedule::command('messages:sync-billing')->dailyAt('08:00')->withoutOverlapping();
+
+Artisan::command('platform-signups:dispatch', function () {
+    $count = app(PlatformSignupNotificationService::class)->dispatchPending();
+    $this->info("{$count} avisos de cadastro enfileirados.");
+});
+Schedule::command('platform-signups:dispatch')->everyMinute()->withoutOverlapping();
 
 Artisan::command('workouts:notify-deadlines', function () {
     $count = 0;

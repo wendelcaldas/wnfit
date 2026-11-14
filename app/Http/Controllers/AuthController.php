@@ -7,6 +7,7 @@ use App\Models\Plano;
 use App\Models\User;
 use App\Rules\BrazilianPhone;
 use App\Services\OrganizationUnitService;
+use App\Services\Messaging\PlatformSignupNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -152,8 +153,17 @@ class AuthController extends Controller
                 'ativo' => true,
             ]);
 
+            app(PlatformSignupNotificationService::class)->record($organization, $user);
+
             return $user;
         });
+
+        try {
+            app(PlatformSignupNotificationService::class)->dispatchPending();
+        } catch (\Throwable $exception) {
+            // The persisted notification can be queued by the scheduler; signup remains available.
+            report($exception);
+        }
 
         Auth::login($user);
         Auth::guard('student')->logout();
