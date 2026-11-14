@@ -16,6 +16,7 @@ class Mensagem extends Model
     protected $table = 'mensagens';
 
     protected $fillable = [
+        'event_key',
         'organizacao_id',
         'aluno_id',
         'cobranca_id',

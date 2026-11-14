@@ -8,8 +8,21 @@ import { createGateway } from '../src/gateway.js';
 
 const token = 'test-token-'.repeat(4);
 const message = { key: 'welcome:1:2', to: '+5571999887766', body: 'Boas-vindas!' };
-async function fixture(t, adapter, database = ':memory:') {
-  const server = createGateway({ token, database, adapter });
+test('configured events have restricted keys and preserve deduplication', async t => {
+  let calls = 0;
+  const send = await fixture(t, { ready: () => true, send: async () => 'event-' + (++calls) });
+  for (const key of ['event:1:workout:2', 'event:1:schedule:3:student:4', 'event:1:schedule:3:booking:5', 'event:1:schedule:3:reservation:6', 'event:1:charge:7:vencimento_hoje:2026-11-13']) {
+    const data = { ...message, key };
+    assert.equal((await send(data, token, '/events')).status, 200);
+    assert.equal((await send(data, token, '/events')).status, 200);
+    assert.equal((await send({ ...data, body: 'Changed' }, token, '/events')).status, 409);
+  }
+  assert.equal(calls, 5);
+  assert.equal((await send(message, token, '/events')).status, 422);
+  assert.equal((await send({ ...message, key: 'event:1:arbitrary:2' }, token, '/events')).status, 422);
+});
+async function fixture(t, adapter, database = ':memory:', allowedRecipients = []) {
+  const server = createGateway({ token, database, adapter, allowedRecipients });
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
   t.after(() => new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }));
@@ -17,6 +30,17 @@ async function fixture(t, adapter, database = ':memory:') {
     method: 'POST', headers: { authorization: `Bearer ${auth}` }, body: JSON.stringify(data),
   });
 }
+test('pilot recipient restriction applies to every sending endpoint', async t => {
+  let calls = 0;
+  const allowed = '+5571996651964';
+  const send = await fixture(t, { ready: () => true, send: async () => { calls++; return 'id'; } }, ':memory:', [allowed]);
+  for (const [path, key] of [['/welcome', 'welcome:1:2'], ['/events', 'event:1:workout:2'], ['/staff-notifications', 'staff:1:workout_completed:2']]) {
+    assert.equal((await send({ ...message, key }, token, path)).status, 403);
+    assert.equal((await send({ ...message, to: allowed, key }, token, path)).status, 200);
+  }
+  assert.equal(calls, 3);
+});
+
 test('auth and validation prevent sending', async t => {
   let calls = 0;
   const send = await fixture(t, { ready: () => true, send: async () => { calls++; return 'id'; } });

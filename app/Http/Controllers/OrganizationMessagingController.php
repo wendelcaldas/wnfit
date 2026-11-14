@@ -129,6 +129,9 @@ class OrganizationMessagingController extends Controller
             'welcomeTemplateSid' => $settings->welcome_template_sid,
             'welcomeMessageBody' => $settings->welcome_message_body,
             'active' => $settings->ativo,
+            'eventsAutomatic' => (bool) config('services.messaging.events_enabled')
+                && filled(config('services.messaging.baileys.url')) && filled(config('services.messaging.baileys.token'))
+                && in_array((string) $settings->organizacao_id, array_map('trim', config('services.messaging.baileys.organization_ids', [])), true),
             'events' => $settings->eventPreferences(),
             'overdueDelayDays' => $settings->overdue_delay_days,
         ];

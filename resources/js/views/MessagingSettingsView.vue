@@ -13,7 +13,7 @@
         </template>
 
         <p class="mb-5 rounded-xl border border-[var(--wn-line)] bg-[var(--wn-surface-soft)] px-4 py-3 text-sm text-[var(--wn-muted)]">
-            As boas-vindas já seguem a configuração abaixo. Os eventos de Treino, Financeiro e Agenda guardam as preferências para quando os envios estiverem disponíveis.
+            {{ eventsAutomatic ? 'Os eventos ativados enviam mensagens automaticamente. Avisos financeiros são processados diariamente às 08h.' : 'As boas-vindas seguem a configuração abaixo. As preferências de Treino, Financeiro e Agenda serão usadas quando o envio automático for habilitado para este ambiente.' }}
         </p>
 
         <p v-if="loading" class="text-sm text-[var(--wn-muted)]" role="status">Carregando preferências…</p>
@@ -140,11 +140,12 @@ const groups = [
         { id: 'cobranca_atrasada', title: 'Cobrança em atraso', description: 'Quando uma cobrança estiver em atraso.', preview: 'Olá, Mariana! Sua mensalidade de R$ 150,00 está em aberto. Se você já pagou, pode desconsiderar este aviso.' },
     ] },
     { name: 'Agenda', icon: CalendarDays, events: [
-        { id: 'agendamento_confirmado', title: 'Agendamento confirmado', description: 'Ao reservar pelo link público ou quando o gestor incluir o aluno no agendamento.', preview: 'Olá, Mariana! Seu agendamento para Pilates está confirmado para 10/11/2026 às 08:00.' },
+        { id: 'agendamento_confirmado', title: 'Agendamento confirmado', description: 'Ao reservar pelo link público, pelo portal do aluno ou quando o gestor incluir o aluno no agendamento.', preview: 'Olá, Mariana! Seu agendamento para Pilates está confirmado para 10/11/2026 às 08:00.' },
     ] },
 ];
 
 const preferences = ref({});
+const eventsAutomatic = ref(false);
 const savedPreferences = ref({});
 const overdueDelayDays = ref(1);
 const savedOverdueDelayDays = ref(1);
@@ -170,6 +171,7 @@ async function loadPreferences() {
     try {
         const { data } = await window.axios.get('/api/organization/messaging');
         savedPreferences.value = data.settings.events;
+        eventsAutomatic.value = data.settings.eventsAutomatic;
         preferences.value = { ...savedPreferences.value };
         overdueDelayDays.value = savedOverdueDelayDays.value = data.settings.overdueDelayDays;
         welcomePreview.value = data.previews.welcome;
