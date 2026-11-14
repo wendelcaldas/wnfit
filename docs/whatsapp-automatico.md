@@ -1,4 +1,31 @@
-# Boas-vindas automáticas — piloto Baileys
+# Mensagens WhatsApp — operação em produção
+
+## Liberação por empresa
+
+A tela interna **Módulos** é a fonte de autorização do módulo Mensagens. Apenas
+contas marcadas como internas WNFit podem alterar essa liberação. O módulo começa
+desligado para todas as novas empresas. As antigas listas
+`WHATSAPP_WELCOME_ORGANIZATION_IDS` e `MESSAGING_MODULE_ORGANIZATION_SLUGS` não são
+mais utilizadas; nenhuma variável por empresa é necessária.
+
+Com a infraestrutura pronta, manter `WHATSAPP_EVENTS_ENABLED=true` e
+`WHATSAPP_WELCOME_DRIVER=baileys` na aplicação e no worker. Na ponte,
+`WHATSAPP_ALLOWED_RECIPIENTS` vazio permite os telefones normais dos destinatários.
+Isso não libera empresas: uma organização precisa estar ativa e ter Mensagens
+habilitado na tela interna; cada tipo de mensagem também respeita a preferência
+salva na própria empresa. Ao liberar uma empresa, conferir essas preferências:
+boas-vindas segue `ativo`, e os demais eventos começam desligados.
+
+Desligar o módulo bloqueia novas boas-vindas e eventos e impede a execução de
+jobs pendentes quando forem processados. Os avisos ao gestor também respeitam
+o módulo, além das configurações específicas desse canal. Um envio que já começou
+pode terminar. Nenhum cadastro, treino ou reserva antigo é reprocessado ao liberar
+o módulo. O financeiro considera as datas da execução diária, sem recuperar dias
+perdidos. Não habilitar módulos nem alterar preferências de empresas durante o deploy.
+
+Em 14/11/2026, a conferência antes desta liberação encontrou os nove ambientes
+com Mensagens desligado, sem mensagens Baileys pendentes. A preparação da
+infraestrutura não alterou esses módulos nem enviou outra rodada de testes.
 
 ## Homologação dos seis modelos
 
@@ -61,8 +88,8 @@ envio de cobranças de eventos. `billing:sync` continua sem enviar mensagens.
 
 Para habilitar, implantar a ponte com `/events`, executar a migration de
 `event_key`, atualizar aplicação e worker e configurar `WHATSAPP_EVENTS_ENABLED=true`
-nos dois. A organização deve estar ativa, ter o módulo Mensagens e constar em
-`WHATSAPP_WELCOME_ORGANIZATION_IDS`; cada evento respeita sua preferência.
+nos dois. A organização deve estar ativa e ter o módulo Mensagens habilitado
+na tela interna; cada evento respeita sua preferência.
 URL e token da ponte usam as variáveis existentes. O padrão é desabilitado.
 O envio de eventos é independente de `MESSAGING_MODE` e de `WHATSAPP_WELCOME_DRIVER`.
 Manter o scheduler e o worker `whatsapp` ativos. Desabilitar
@@ -81,7 +108,7 @@ não confirmação de entrega. Testes locais usam HTTP simulado e não enviam Wh
 O canal de avisos do gestor é independente das boas-vindas. Ao criar uma notificação
 `workout_completed` para um proprietário ativo,
 o sistema registra um envio em `staff_whatsapp_deliveries` e o enfileira em `whatsapp`.
-O piloto é habilitado por organização. Todos os proprietários ativos com telefone
+O piloto é habilitado por organização e exige o módulo Mensagens. Todos os proprietários ativos com telefone
 individual válido recebem a mensagem, nos números editáveis em Configurações →
 Usuários → Equipe cadastrada. Administradores e professores não recebem por este canal.
 Telefones iguais, mesmo com pontuação ou +55 diferentes, recebem uma única mensagem.
@@ -149,13 +176,17 @@ Configurar ambos com os mesmos valores:
 ```env
 MESSAGING_MODE=manual
 WHATSAPP_WELCOME_DRIVER=baileys
-WHATSAPP_WELCOME_ORGANIZATION_IDS=ID_DO_STUDIO_PILOTO
+WHATSAPP_EVENTS_ENABLED=true
 WHATSAPP_BRIDGE_URL=http://ENDERECO_PRIVADO_DO_SERVICO:3000
 WHATSAPP_BRIDGE_TOKEN=MESMO_SEGREDO_DO_BRIDGE_TOKEN
 QUEUE_CONNECTION=database
 ```
 
-Aceita IDs separados por virgula; lista vazia nao habilita nenhum studio. Todos os studios habilitados compartilham o numero WNFit. Os demais continuam com o fluxo manual. `ativo` em Comunicacoes deve estar habilitado. O texto existente e reutilizado; esta etapa nao altera o mecanismo de login nem envia senha ou link de redefinicao. O gestor continua entregando as credenciais pelo fluxo atual.
+Todos os studios com Mensagens liberado na tela interna compartilham o numero WNFit.
+Sem o módulo, cadastrar um aluno não prepara nem envia boas-vindas. `ativo` em
+Mensagens deve estar habilitado para boas-vindas. O texto existente e reutilizado;
+esta etapa nao altera o mecanismo de login nem envia senha ou link de redefinicao.
+O gestor continua entregando as credenciais pelo fluxo atual.
 
 Executar as migrations habituais. O projeto ja possui tabelas de jobs. Criar um worker separado, usando a imagem Laravel, sem healthcheck HTTP nem pre-deploy, com o comando abaixo configurado diretamente no servico. Nao herdar o healthcheck `/up` do servico web:
 
@@ -178,7 +209,13 @@ O dispatch usa explicitamente a conexao `database` e so ocorre apos commit. O wo
 
 ## 4. Desativar
 
-Definir `WHATSAPP_WELCOME_DRIVER=default` na aplicacao e no worker, manter `MESSAGING_MODE=manual`, atualizar cache e reiniciar processos. Jobs pendentes verificam essa configuracao e nao enviam; um envio ja em andamento pode terminar. Desativar `ativo` na organizacao tambem bloqueia jobs ainda nao iniciados. Nao ha endpoint generico de disparo ou reenvio em massa.
+Para uma empresa, desligar Mensagens na tela interna. Para interromper globalmente
+os seis modelos, definir `WHATSAPP_EVENTS_ENABLED=false` e
+`WHATSAPP_WELCOME_DRIVER=default` na aplicação e no worker, manter
+`MESSAGING_MODE=manual`, atualizar cache e reiniciar processos. Jobs pendentes
+revalidam a autorização antes de enviar; um envio já em andamento pode terminar.
+Desativar uma preferência interrompe somente seu evento. Não há endpoint genérico
+de disparo ou reenvio em massa.
 
 ## Testes
 

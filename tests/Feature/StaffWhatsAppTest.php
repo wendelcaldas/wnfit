@@ -24,6 +24,7 @@ class StaffWhatsAppTest extends TestCase
     {
         Queue::fake();
         $organization = Organizacao::create(['nome_fantasia' => 'Piloto', 'slug' => 'piloto', 'tipo' => 'studio', 'ativa' => true, 'telefone_contato' => '71996651964']);
+        $organization->forceFill(['modules' => ['messaging' => true]])->save();
         $manager = User::factory()->create();
         $organization->usuarios()->attach($manager, ['papel' => 'proprietario', 'status' => 'ativo', 'telefone' => '71996651964']);
         $student = Aluno::create(['organizacao_id' => $organization->id, 'nome' => 'Ana', 'status' => 'ativo']);
@@ -41,6 +42,20 @@ class StaffWhatsAppTest extends TestCase
         return ['organizacao_id' => $organization->id, 'user_id' => $manager->id,
             'student_workout_session_id' => $session->id, 'student_workout_plan_id' => $plan->id,
             'type' => 'workout_completed', 'data' => ['studentId' => $student->id, 'studentName' => 'Ana', 'workoutName' => 'Treino A']];
+    }
+
+    public function test_disabling_messaging_module_blocks_staff_notifications_and_pending_delivery(): void
+    {
+        $attributes = $this->fixture();
+        StaffNotification::create($attributes);
+        $delivery = StaffWhatsAppDelivery::firstOrFail();
+        Organizacao::findOrFail($attributes['organizacao_id'])->forceFill(['modules' => ['messaging' => false]])->save();
+        Http::fake();
+        $service = app(StaffWhatsAppService::class);
+        $this->assertSame([], $service->recipients($attributes['organizacao_id']));
+        (new SendStaffWhatsApp($delivery->id))->handle($service);
+        $this->assertSame('cancelled', $delivery->fresh()->status);
+        Http::assertNothingSent();
     }
 
     public function test_multiple_managers_and_repeated_processing_enqueue_one_delivery(): void

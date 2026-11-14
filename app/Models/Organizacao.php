@@ -93,7 +93,6 @@ class Organizacao extends Model
     public function moduleAccess(): array
     {
         $defaults = self::ADDITIONAL_MODULE_DEFAULTS;
-        $defaults['messaging'] = in_array($this->slug, config('services.messaging.module_organization_slugs', []), true);
 
         $additional = array_intersect_key($this->modules ?? [], $defaults);
 

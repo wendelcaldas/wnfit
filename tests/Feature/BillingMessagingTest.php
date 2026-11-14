@@ -26,13 +26,6 @@ class BillingMessagingTest extends TestCase
 
         config([
             'services.messaging.mode' => 'automatic',
-            'services.messaging.module_organization_slugs' => [
-                'studio-config',
-                'studio-events',
-                'studio-other-events',
-                'studio-twilio-templates',
-                'studio-twilio-missing-credentials',
-            ],
             'services.twilio.whatsapp.driver' => 'fake',
             'services.twilio.whatsapp.from' => '+5571000000000',
             'services.twilio.whatsapp.templates.charge_reminder' => null,
@@ -519,6 +512,7 @@ class BillingMessagingTest extends TestCase
     public function test_messaging_module_requires_access_for_the_active_organization(): void
     {
         [$owner, $organization] = $this->organizationWithUser('studio-without-messaging');
+        $organization->forceFill(['modules' => ['messaging' => false]])->save();
         $url = '/api/organization/messaging';
 
         $this->actingAs($owner)->getJson('/api/me')->assertOk()
@@ -529,7 +523,7 @@ class BillingMessagingTest extends TestCase
         $this->getJson($url.'/twilio-templates')->assertForbidden();
         $this->assertDatabaseCount('mensagem_configuracoes', 0);
 
-        config(['services.messaging.module_organization_slugs' => [$organization->slug]]);
+        $organization->forceFill(['modules' => ['messaging' => true]])->save();
         $this->getJson('/api/me')->assertOk()->assertJsonPath('organization.canAccessMessaging', true);
         $this->getJson($url)->assertOk();
 
@@ -709,6 +703,7 @@ class BillingMessagingTest extends TestCase
             'tipo' => 'studio',
             'ativa' => true,
         ]);
+        $organization->forceFill(['modules' => ['messaging' => true]])->save();
         $organization->usuarios()->attach($user->id, ['papel' => 'proprietario', 'status' => 'ativo']);
 
         return [$user, $organization];
@@ -733,7 +728,6 @@ class BillingMessagingTest extends TestCase
         config([
             'services.messaging.mode' => 'manual',
             'services.messaging.welcome_driver' => 'baileys',
-            'services.messaging.baileys.organization_ids' => [(string) $organization->id],
         ]);
         $response = $this->actingAs($user)->postJson('/api/students', [
             'modalidade' => 'presencial',
@@ -759,17 +753,18 @@ class BillingMessagingTest extends TestCase
         $this->assertDatabaseHas('mensagens', ['provedor' => 'baileys', 'status' => 'enviado', 'provider_message_id' => 'wa-id']);
     }
 
-    public function test_baileys_does_not_send_for_other_organizations(): void
+    public function test_baileys_does_not_send_when_module_is_disabled(): void
     {
         Queue::fake();
-        config(['services.messaging.welcome_driver' => 'baileys', 'services.messaging.baileys.organization_ids' => []]);
-        [$user] = $this->organizationWithUser('studio-outside-pilot');
+        config(['services.messaging.welcome_driver' => 'baileys']);
+        [$user, $organization] = $this->organizationWithUser('studio-outside-pilot');
+        $organization->forceFill(['modules' => ['messaging' => false]])->save();
         $this->actingAs($user)->postJson('/api/students', [
             'modalidade' => 'presencial',
             'nome' => 'Bianca Ramos', 'telefone' => '(71) 99988-7766',
             'plano' => 'Plano Mensal', 'status' => 'ativo',
             'data_inicio' => '2026-08-01', 'data_vencimento' => '2026-09-01',
-        ])->assertCreated()->assertJsonPath('student.communications.0.provider', 'whatsapp_link');
+        ])->assertCreated()->assertJsonPath('student.communications', []);
         Queue::assertNothingPushed();
     }
 
@@ -813,7 +808,6 @@ class BillingMessagingTest extends TestCase
         [$user, $organization] = $this->organizationWithUser('studio-job');
         config([
             'services.messaging.welcome_driver' => 'baileys',
-            'services.messaging.baileys.organization_ids' => [(string) $organization->id],
             'services.messaging.baileys.url' => 'http://bridge',
             'services.messaging.baileys.token' => 'secret',
         ]);

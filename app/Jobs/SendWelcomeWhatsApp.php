@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Mensagem;
 use App\Models\MensagemConfiguracao;
+use App\Services\Messaging\MessagingService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Http;
@@ -30,12 +31,22 @@ class SendWelcomeWhatsApp implements ShouldQueue
         if (! $message || $message->provedor !== 'baileys' || $message->tipo !== 'boas_vindas' || $message->status !== 'pendente') {
             return;
         }
-        $allowed = array_map('trim', config('services.messaging.baileys.organization_ids', []));
         $settings = MensagemConfiguracao::where('organizacao_id', $message->organizacao_id)->first();
         $active = $settings?->eventPreferences()['boas_vindas'] ?? false;
         $url = config('services.messaging.baileys.url');
         $token = config('services.messaging.baileys.token');
-        if (config('services.messaging.welcome_driver') !== 'baileys' || ! in_array((string) $message->organizacao_id, $allowed, true) || ! $active || ! $url || ! $token) {
+        $organization = $message->organizacao;
+        $student = $message->aluno;
+        $eligible = $organization?->ativa && $organization->hasMessagingModule()
+            && $student?->status === 'ativo' && $student->organizacao_id === $message->organizacao_id;
+        if ($eligible) {
+            try {
+                $eligible = app(MessagingService::class)->normalizeBrazilianPhone($student->telefone) === $message->destinatario;
+            } catch (\Illuminate\Validation\ValidationException) {
+                $eligible = false;
+            }
+        }
+        if (config('services.messaging.welcome_driver') !== 'baileys' || ! $eligible || ! $active || ! $url || ! $token) {
             $message->update(['status' => 'falhou', 'erro' => 'Envio desativado ou ponte WhatsApp nao configurada.']);
 
             return;

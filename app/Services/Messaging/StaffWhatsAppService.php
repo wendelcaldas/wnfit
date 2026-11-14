@@ -18,7 +18,7 @@ class StaffWhatsAppService
             return [];
         }
         $organization = Organizacao::whereKey($organizationId)->where('ativa', true)->first();
-        if (! $organization) {
+        if (! $organization || ! $organization->hasMessagingModule()) {
             return [];
         }
         $phones = [];
