@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Aluno;
 use App\Models\StudentWorkoutPlan;
 use App\Models\Treino;
+use App\Services\Messaging\AutomaticMessagingService;
 use Illuminate\Support\Facades\DB;
 
 class WorkoutPublishingService
@@ -62,12 +63,15 @@ class WorkoutPublishingService
                 $student->treinos()->syncWithoutDetaching([$workoutId => ['ativo' => true]]);
             }
 
-            return StudentWorkoutPlan::create([
+            $plan = StudentWorkoutPlan::create([
                 'aluno_id' => $student->id, 'treino_id' => $workoutId, 'published_by' => $publisher,
                 'status' => 'ativo',
                 'snapshot' => $snapshot, 'starts_on' => today(),
                 'ends_on' => $endsOn ?: today()->addWeeks($weeks)->toDateString(),
             ]);
+            app(AutomaticMessagingService::class)->workout($plan);
+
+            return $plan;
         });
     }
 

@@ -8,16 +8,23 @@ use App\Models\Organizacao;
 use App\Models\PublicAppointmentReservation;
 use App\Models\PublicScheduleBooking;
 use App\Models\StaffNotification;
+use App\Services\Messaging\AutomaticMessagingService;
 
 class PublicBookingNotificationService
 {
     public function created(Agendamento $event, PublicScheduleBooking|PublicAppointmentReservation $booking, string $appointmentTitle): void
     {
+        app(AutomaticMessagingService::class)->appointment(
+            $event, $booking->name, $booking->phone,
+            ($booking instanceof PublicScheduleBooking ? 'booking:' : 'reservation:').$booking->id,
+            [$booking instanceof PublicScheduleBooking ? 'booking_id' : 'reservation_id' => $booking->id],
+        );
         $this->notifyStaff($event, $appointmentTitle, ['guestName' => $booking->name, 'phone' => $booking->phone]);
     }
 
     public function studentBooked(Agendamento $event, Aluno $student): void
     {
+        app(AutomaticMessagingService::class)->studentAppointment($event, $student);
         $this->notifyStaff($event, $event->titulo, [
             'guestName' => $student->nome,
             'phone' => $student->telefone,

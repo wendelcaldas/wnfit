@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Agendamento;
 use App\Models\Aluno;
 use App\Models\Organizacao;
+use App\Services\Messaging\AutomaticMessagingService;
 use App\Services\ScheduleAvailabilityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -272,7 +273,10 @@ class ScheduleController extends Controller
 
     private function syncParticipants(Agendamento $event, array $participantIds): void
     {
-        $event->alunos()->sync($participantIds);
+        $changes = $event->alunos()->sync($participantIds);
+        foreach ($event->alunos()->whereIn('alunos.id', $changes['attached'])->get() as $student) {
+            app(AutomaticMessagingService::class)->studentAppointment($event, $student);
+        }
     }
 
     private function eventFields(array $data): array

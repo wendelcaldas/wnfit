@@ -38,7 +38,9 @@ const adapter = {
     return result?.key?.id;
   },
 };
-const server = createGateway({ token: process.env.BRIDGE_TOKEN, database: `${directory}/sends.sqlite`, adapter });
+const allowedRecipients = (process.env.WHATSAPP_ALLOWED_RECIPIENTS || '').split(',').map(value => value.trim()).filter(Boolean);
+if (allowedRecipients.some(value => !/^\+55[1-9]\d{9,10}$/.test(value))) throw new Error('WHATSAPP_ALLOWED_RECIPIENTS must contain E.164 Brazilian numbers');
+const server = createGateway({ token: process.env.BRIDGE_TOKEN, database: `${directory}/sends.sqlite`, adapter, allowedRecipients });
 server.listen(Number(process.env.PORT || 3000), process.env.HOST || '0.0.0.0');
 async function connect() {
   const { state, saveCreds } = await useMultiFileAuthState(`${directory}/auth`);

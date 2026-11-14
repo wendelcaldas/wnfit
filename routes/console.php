@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Organizacao;
+use App\Services\Messaging\AutomaticMessagingService;
 use App\Services\RecurringBillingService;
 use App\Services\WorkoutNotificationService;
 use Illuminate\Foundation\Inspiring;
@@ -15,6 +16,12 @@ Artisan::command('billing:sync', function () {
     $this->info("{$count} cobrancas geradas. Nenhuma mensagem enviada.");
 });
 Schedule::command('billing:sync')->daily()->withoutOverlapping();
+
+Artisan::command('messages:sync-billing', function () {
+    $count = app(AutomaticMessagingService::class)->syncBilling();
+    $this->info("{$count} mensagens financeiras enfileiradas.");
+});
+Schedule::command('messages:sync-billing')->dailyAt('08:00')->withoutOverlapping();
 
 Artisan::command('workouts:notify-deadlines', function () {
     $count = 0;

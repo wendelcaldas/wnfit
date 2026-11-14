@@ -1,5 +1,81 @@
 # Boas-vindas automáticas — piloto Baileys
 
+## Homologação dos seis modelos
+
+Antes de ativar eventos, manter `WHATSAPP_EVENTS_ENABLED=false` na aplicação e
+no worker. Configurar `WHATSAPP_TEST_RECIPIENT` com o número autorizado na
+aplicação. Na ponte atualizada, configurar `WHATSAPP_ALLOWED_RECIPIENTS` com esse
+mesmo número em E.164 (por exemplo `+5571996651964`). A restrição vale para todos
+os endpoints de envio, inclusive boas-vindas e avisos da equipe; outros números
+recebem HTTP 403. Lista vazia libera os destinatários normais, portanto só remover
+a restrição ao encerrar a homologação.
+
+```sh
+php artisan messages:test-templates
+php artisan messages:test-templates --send --run=homologacao_01
+# Opcional: usar o texto de boas-vindas salvo para um ambiente:
+php artisan messages:test-templates --organization=ID --send --run=homologacao_02
+```
+
+A prévia é o comportamento padrão. O envio usa dados fictícios e a identificação
+`[TESTE WNFit]`, sem criar alunos, reservas ou cobranças. Os cinco modelos de eventos
+compartilham o gerador de texto com as automações; boas-vindas usa o modelo padrão
+ou o texto da organização indicada. O comando não depende de habilitar eventos.
+Uma rodada usa chaves `welcome-test:0:<rodada>_<tipo>` persistidas pela ponte.
+Manter o identificador da rodada ao repetir uma tentativa: não trocar para
+contornar `incerto`. Texto/data diferentes na mesma chave são recusados, sem
+reenviar. O comando interrompe no primeiro erro e não faz retry automático.
+Os IDs retornados permitem conferir os recibos no endpoint privado `/messages/{id}`.
+
+Em 14/11/2026, a rodada `pilot_20261114_v1` enviou os seis modelos padrão apenas
+ao destinatário autorizado e os seis retornaram `delivered`. Foi usado o serviço
+auxiliar privado `wnfit-whatsapp-pairing`, sem endpoint público; após a rodada,
+seu código foi restaurado para não executar envios em futuros reinícios.
+O script exato está em `scripts/whatsapp-template-smoke.ts` (Bun); não executar
+novamente com um novo identificador sem solicitar outra rodada.
+
+### Ordem de implantação
+
+1. Configurar a restrição de destinatários na ponte e deixar eventos desabilitados
+   na aplicação e worker. Atualizar a ponte e preservar o volume `/data`.
+2. Atualizar a aplicação e executar as migrations pelo pre-deploy existente.
+3. Atualizar o worker, com a mesma configuração da aplicação, e conferir a ponte.
+4. Conferir a prévia e os recibos da rodada. A validação dos textos não substitui
+   um teste de ponta a ponta dos gatilhos e da fila antes da liberação para alunos.
+5. Para liberar o piloto real, escolher as organizações e eventos, remover a
+   restrição de destinatários e habilitar eventos na aplicação e no worker.
+   Manter o scheduler habilitado (`SCHEDULER_ENABLED=true`) na aplicação.
+
+## Eventos de mensagens
+
+Treino disponível, confirmação de agendamento e avisos financeiros usam a fila
+`whatsapp` e o endpoint privado `POST /events`. A publicação/renovação de uma ficha
+dispara treino disponível. A inclusão de aluno pelo gestor, reserva no portal do
+aluno e reservas pelos links públicos disparam confirmação. Salvar preferências
+não reprocessa fichas e reservas anteriores.
+
+Os avisos financeiros são selecionados diariamente às 08h no fuso da aplicação,
+por `php artisan messages:sync-billing`: dois dias antes, no vencimento e uma vez
+no prazo de atraso configurado. Não há busca retroativa de datas perdidas nem
+envio de cobranças de eventos. `billing:sync` continua sem enviar mensagens.
+
+Para habilitar, implantar a ponte com `/events`, executar a migration de
+`event_key`, atualizar aplicação e worker e configurar `WHATSAPP_EVENTS_ENABLED=true`
+nos dois. A organização deve estar ativa, ter o módulo Mensagens e constar em
+`WHATSAPP_WELCOME_ORGANIZATION_IDS`; cada evento respeita sua preferência.
+URL e token da ponte usam as variáveis existentes. O padrão é desabilitado.
+O envio de eventos é independente de `MESSAGING_MODE` e de `WHATSAPP_WELCOME_DRIVER`.
+Manter o scheduler e o worker `whatsapp` ativos. Desabilitar
+`WHATSAPP_EVENTS_ENABLED` na aplicação e worker interrompe novos envios e cancela
+os pendentes quando forem processados. Reiniciar processos após alterar configuração.
+
+Uma chave única persiste cada ocorrência no Laravel e na ponte. O worker revalida
+preferências, organização, telefone e origem antes de enviar: pagamento, remoção
+ou alteração de horário da reserva e substituição da ficha cancelam mensagens
+pendentes. Uma ocorrência cancelada não é recriada automaticamente. Falha ambígua
+fica `incerto`, sem reenvio automático; `enviado` indica aceitação pela ponte,
+não confirmação de entrega. Testes locais usam HTTP simulado e não enviam WhatsApp.
+
 ## Piloto de avisos ao gestor
 
 O canal de avisos do gestor é independente das boas-vindas. Ao criar uma notificação
