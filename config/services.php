@@ -36,7 +36,6 @@ return [
     ],
 
     'messaging' => [
-        'module_organization_slugs' => array_filter(array_map('trim', explode(',', env('MESSAGING_MODULE_ORGANIZATION_SLUGS', '')))),
         'mode' => env('MESSAGING_MODE', 'manual'),
         'welcome_driver' => env('WHATSAPP_WELCOME_DRIVER', 'default'),
         'events_enabled' => env('WHATSAPP_EVENTS_ENABLED', false),
@@ -49,8 +48,6 @@ return [
         'baileys' => [
             'url' => env('WHATSAPP_BRIDGE_URL'),
             'token' => env('WHATSAPP_BRIDGE_TOKEN'),
-            // Explicit opt-in: a single WNFit number must not send for every tenant.
-            'organization_ids' => array_filter(explode(',', env('WHATSAPP_WELCOME_ORGANIZATION_IDS', ''))),
         ],
     ],
 

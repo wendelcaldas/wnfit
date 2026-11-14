@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\SendEventWhatsApp;
+use App\Jobs\SendWelcomeWhatsApp;
 use App\Models\Agendamento;
 use App\Models\Aluno;
 use App\Models\Cobranca;
@@ -40,11 +41,10 @@ class AutomaticMessagingTest extends TestCase
         Queue::fake();
         Http::fake(['bridge/events' => fn () => Http::response(['id' => 'wa-event'], $this->bridgeStatus)]);
         $this->organization = Organizacao::create(['nome_fantasia' => 'Studio', 'slug' => 'automatic-tests', 'tipo' => 'studio', 'ativa' => true]);
+        $this->organization->forceFill(['modules' => ['messaging' => true]])->save();
         $this->student = Aluno::create(['organizacao_id' => $this->organization->id, 'nome' => 'Mariana', 'telefone' => '71999887766', 'status' => 'ativo']);
         config([
             'services.messaging.events_enabled' => true,
-            'services.messaging.module_organization_slugs' => ['automatic-tests'],
-            'services.messaging.baileys.organization_ids' => [(string) $this->organization->id],
             'services.messaging.baileys.url' => 'http://bridge',
             'services.messaging.baileys.token' => 'test-token',
         ]);
@@ -73,6 +73,44 @@ class AutomaticMessagingTest extends TestCase
     private function send(Mensagem $message): void
     {
         (new SendEventWhatsApp($message->id))->handle($this->messaging);
+    }
+
+    public function test_internal_module_toggle_alone_releases_messages_and_revocation_stops_pending_jobs(): void
+    {
+        config([
+            'services.messaging.welcome_driver' => 'baileys',
+            // Old allowlists must neither grant nor block module-based access.
+            'services.messaging.baileys.organization_ids' => [],
+            'services.messaging.module_organization_slugs' => [$this->organization->slug],
+        ]);
+        $this->organization->forceFill(['modules' => ['messaging' => false]])->save();
+        $this->charge();
+        $this->assertSame(0, $this->messaging->syncBilling());
+        $this->assertNull(app(MessagingService::class)->sendWelcomeMessage($this->student->fresh()));
+
+        $internal = User::factory()->create();
+        $internal->forceFill(['is_wnfit_internal' => true])->save();
+        $url = '/api/internal/modules/'.$this->organization->id;
+        $this->actingAs($internal)->patchJson($url, ['module' => 'messaging', 'enabled' => true])->assertOk();
+        $this->assertSame(1, $this->messaging->syncBilling());
+        $welcome = app(MessagingService::class)->sendWelcomeMessage($this->student->fresh());
+        $this->assertNotNull($welcome);
+        Queue::assertPushed(SendWelcomeWhatsApp::class, 1);
+        Queue::assertPushed(SendEventWhatsApp::class, 1);
+
+        $owner = User::factory()->create();
+        $this->organization->usuarios()->attach($owner->id, ['papel' => 'proprietario', 'status' => 'ativo']);
+        $this->actingAs($owner)->getJson('/api/organization/messaging')->assertOk()
+            ->assertJsonPath('settings.eventsAutomatic', true)->assertJsonPath('settings.welcomeAutomatic', true);
+        $this->patchJson($url, ['module' => 'messaging', 'enabled' => false])->assertForbidden();
+        $this->actingAs($internal)->patchJson($url, ['module' => 'messaging', 'enabled' => false])->assertOk();
+        (new SendWelcomeWhatsApp($welcome->id))->handle();
+        $eventMessage = Mensagem::where('tipo', 'vencimento_hoje')->firstOrFail();
+        $this->send($eventMessage);
+        $this->assertSame('falhou', $welcome->fresh()->status);
+        $this->assertSame('cancelado', $eventMessage->fresh()->status);
+        $this->assertSame(0, $this->messaging->syncBilling());
+        Http::assertNothingSent();
     }
 
     public function test_billing_dates_and_overdue_delay_queue_once_and_exclude_event_paid_and_other_dates(): void
@@ -115,13 +153,11 @@ class AutomaticMessagingTest extends TestCase
         Http::assertSent(fn ($request) => $request['key'] === $message->event_key);
     }
 
-    public function test_organization_module_allowlist_switch_and_event_preference_are_required(): void
+    public function test_global_switch_module_active_organization_and_preference_are_required(): void
     {
         $this->charge();
         foreach ([
             ['services.messaging.events_enabled' => false],
-            ['services.messaging.baileys.organization_ids' => []],
-            ['services.messaging.module_organization_slugs' => []],
         ] as $override) {
             $previous = [];
             foreach ($override as $key => $value) {
@@ -131,6 +167,11 @@ class AutomaticMessagingTest extends TestCase
             $this->assertSame(0, $this->messaging->syncBilling());
             config($previous);
         }
+        $this->organization->forceFill(['modules' => ['messaging' => false]])->save();
+        $this->assertSame(0, $this->messaging->syncBilling());
+        $this->organization->forceFill(['modules' => ['messaging' => true], 'ativa' => false])->save();
+        $this->assertSame(0, $this->messaging->syncBilling());
+        $this->organization->update(['ativa' => true]);
         app(MessagingService::class)->settingsForOrganization($this->organization)->update(['event_preferences' => ['vencimento_hoje' => false]]);
         $this->assertSame(0, $this->messaging->syncBilling());
         $this->assertDatabaseCount('mensagens', 0);

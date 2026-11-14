@@ -81,16 +81,15 @@ class MessagingService
     public function sendWelcomeMessage(Aluno $student): ?Mensagem
     {
         $student->loadMissing(['organizacao', 'assinatura.plano']);
+        if (! $student->organizacao?->ativa || ! $student->organizacao->hasMessagingModule() || $student->status !== 'ativo') {
+            return null;
+        }
         $settings = $this->settingsForOrganization($student->organizacao);
         if (! $settings->eventPreferences()['boas_vindas']) {
             return null;
         }
 
         if (config('services.messaging.welcome_driver') === 'baileys') {
-            if (! in_array((string) $student->organizacao_id, array_map('trim', config('services.messaging.baileys.organization_ids', [])), true)) {
-                return $this->prepareManualWelcomeMessage($student, 'Organizacao fora do piloto automatico.');
-            }
-
             return DB::transaction(function () use ($student) {
                 Aluno::whereKey($student->id)->lockForUpdate()->firstOrFail();
                 $existing = $student->mensagens()->where('tipo', 'boas_vindas')->first();

@@ -119,7 +119,8 @@ class OrganizationMessagingController extends Controller
     {
         return [
             'welcomeAutomatic' => config('services.messaging.welcome_driver') === 'baileys'
-                && in_array((string) $settings->organizacao_id, array_map('trim', config('services.messaging.baileys.organization_ids', [])), true),
+                && $settings->organizacao->ativa && $settings->organizacao->hasMessagingModule()
+                && filled(config('services.messaging.baileys.url')) && filled(config('services.messaging.baileys.token')),
             'provider' => $settings->provedor,
             'whatsappFrom' => $settings->whatsapp_from,
             'chargeTemplateKey' => $settings->charge_template_key,
@@ -131,7 +132,7 @@ class OrganizationMessagingController extends Controller
             'active' => $settings->ativo,
             'eventsAutomatic' => (bool) config('services.messaging.events_enabled')
                 && filled(config('services.messaging.baileys.url')) && filled(config('services.messaging.baileys.token'))
-                && in_array((string) $settings->organizacao_id, array_map('trim', config('services.messaging.baileys.organization_ids', [])), true),
+                && $settings->organizacao->ativa && $settings->organizacao->hasMessagingModule(),
             'events' => $settings->eventPreferences(),
             'overdueDelayDays' => $settings->overdue_delay_days,
         ];

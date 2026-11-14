@@ -20,7 +20,6 @@ class AutomaticMessagingService
     {
         return config('services.messaging.events_enabled', false)
             && $organization->ativa && $organization->hasMessagingModule()
-            && in_array((string) $organization->id, array_map('trim', config('services.messaging.baileys.organization_ids', [])), true)
             && ($this->messaging->settingsForOrganization($organization)->eventPreferences()[$type] ?? false);
     }
 
@@ -66,7 +65,8 @@ class AutomaticMessagingService
             ->whereBetween('vencimento', [today()->subDays(30), today()->addDays(2)])
             ->with(['organizacao', 'aluno'])->chunkById(100, function ($charges) use (&$count) {
                 foreach ($charges as $charge) {
-                    if (! $charge->aluno || $charge->pago_em || $charge->pagamento()->exists()) {
+                    if (! $charge->organizacao?->ativa || ! $charge->organizacao->hasMessagingModule()
+                        || ! $charge->aluno || $charge->pago_em || $charge->pagamento()->exists()) {
                         continue;
                     }
                     $delay = $this->messaging->settingsForOrganization($charge->organizacao)->overdue_delay_days;
