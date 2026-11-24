@@ -283,6 +283,15 @@ class StudentController extends Controller
         return response()->json(['workout' => $publishing->payload($plan)]);
     }
 
+    public function closeWorkout(Request $request, Aluno $student, StudentWorkoutPlan $plan): JsonResponse
+    {
+        $organization = $request->user()->activeOrganization();
+        abort_unless($student->organizacao_id === $organization->id && $plan->aluno_id === $student->id, 404);
+        $publishing = app(WorkoutPublishingService::class);
+
+        return response()->json(['workout' => $publishing->payload($publishing->close($student, $plan))]);
+    }
+
     public function renewWorkout(Request $request, Aluno $student, StudentWorkoutPlan $plan): JsonResponse
     {
         $organization = $request->user()->activeOrganization();

@@ -36,15 +36,15 @@ class StudentWorkoutPlan extends Model
 
     public function accessStatus(): string
     {
+        if ($this->status !== 'ativo') {
+            return 'closed';
+        }
         $end = $this->effectiveEndsOn();
         if (! $end || ! $this->starts_on) {
             return 'unavailable';
         }
         if ($end->lt(today())) {
             return 'expired';
-        }
-        if ($this->status !== 'ativo') {
-            return 'closed';
         }
 
         return $this->starts_on->gt(today()) ? 'scheduled' : 'available';

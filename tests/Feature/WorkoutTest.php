@@ -116,6 +116,28 @@ class WorkoutTest extends TestCase
         $this->assertDatabaseHas('aluno_treino', ['aluno_id' => $student->id, 'treino_id' => $second->id, 'ativo' => true]);
     }
 
+    public function test_teacher_can_close_a_workout_without_losing_history(): void
+    {
+        [$user, $organization] = $this->organizationWithUser('close-workout');
+        $organization->usuarios()->updateExistingPivot($user->id, ['papel' => 'professor']);
+        $student = Aluno::create(['organizacao_id' => $organization->id, 'nome' => 'Aluno']);
+        $workout = Treino::create(['organizacao_id' => $organization->id, 'nome' => 'Ficha', 'objetivo' => 'Forca', 'status' => 'ativo', 'duracao_semanas' => 8]);
+        $plan = app(\App\Services\WorkoutPublishingService::class)->publish($student, $workout, $user->id);
+        [$outsider] = $this->organizationWithUser('close-outsider');
+        $url = "/api/students/{$student->id}/workout-plans/{$plan->id}/close";
+        $this->actingAs($outsider)->postJson($url)->assertNotFound();
+        $otherStudent = Aluno::create(['organizacao_id' => $organization->id, 'nome' => 'Outro']);
+        $this->actingAs($user)->postJson("/api/students/{$otherStudent->id}/workout-plans/{$plan->id}/close")->assertNotFound();
+        $this->actingAs($user)->postJson($url)->assertOk()->assertJsonPath('workout.status', 'encerrado');
+        $this->assertNull(app(\App\Services\WorkoutPublishingService::class)->current($student->id));
+        $this->assertSame('closed', $plan->refresh()->accessStatus());
+        $this->assertDatabaseHas('aluno_treino', ['aluno_id' => $student->id, 'treino_id' => $workout->id, 'ativo' => false]);
+        $this->getJson("/api/students/{$student->id}/workouts")->assertOk()
+            ->assertJsonPath('current', null)->assertJsonCount(1, 'history');
+        $this->postJson($url)->assertUnprocessable();
+        $this->assertSame('ativo', $workout->refresh()->status);
+    }
+
     private function organizationWithUser(string $slug): array
     {
         $user = User::factory()->create();

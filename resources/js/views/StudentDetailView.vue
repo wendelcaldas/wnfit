@@ -98,7 +98,7 @@
             <p v-if="workoutsError" class="panel-card" role="alert">{{ workoutsError }} <button class="student-detail-link" @click="loadWorkouts">Tentar novamente</button></p>
             <div v-else-if="workoutsLoading" class="panel-card p-10 text-center text-sm text-[var(--wn-muted)]">Carregando treino...</div>
             <section v-else-if="currentWorkout" class="panel-card !p-0 overflow-hidden">
-                <div class="flex flex-col gap-5 border-b border-[var(--wn-line)] bg-[var(--wn-primary-soft)] p-6 md:flex-row md:items-start md:justify-between"><div><div class="flex items-center gap-3"><span class="badge-success">Treino atual</span><span class="text-sm font-medium capitalize text-[var(--wn-muted)]">{{ currentWorkout.level }}</span></div><h3 class="mt-3 text-2xl font-bold">{{ currentWorkout.name }}</h3><p class="mt-2 text-sm text-[var(--wn-muted)]">{{ currentWorkout.objective }}<span v-if="currentWorkout.description"> · {{ currentWorkout.description }}</span></p><p class="mt-3 text-xs text-[var(--wn-muted)]">Vigência: {{ currentWorkout.startsOn }} até {{ currentWorkout.endsOn || 'sem prazo' }}. Esta versão é preservada ao editar a biblioteca.</p></div><button class="btn-secondary shrink-0" :disabled="assigningWorkout" @click="personalizeWorkout"><Pencil class="h-4 w-4" />Personalizar nova versão</button></div>
+                <div class="flex flex-col gap-5 border-b border-[var(--wn-line)] bg-[var(--wn-primary-soft)] p-6 md:flex-row md:items-start md:justify-between"><div><div class="flex items-center gap-3"><span class="badge-success">Treino atual</span><span class="text-sm font-medium capitalize text-[var(--wn-muted)]">{{ currentWorkout.level }}</span></div><h3 class="mt-3 text-2xl font-bold">{{ currentWorkout.name }}</h3><p class="mt-2 text-sm text-[var(--wn-muted)]">{{ currentWorkout.objective }}<span v-if="currentWorkout.description"> · {{ currentWorkout.description }}</span></p><p class="mt-3 text-xs text-[var(--wn-muted)]">Vigência: {{ currentWorkout.startsOn }} até {{ currentWorkout.endsOn || 'sem prazo' }}. Esta versão é preservada ao editar a biblioteca.</p></div><div class="flex shrink-0 flex-wrap gap-3"><button class="btn-secondary" :disabled="assigningWorkout" @click="closeWorkout">Encerrar ficha</button><button class="btn-secondary shrink-0" :disabled="assigningWorkout" @click="personalizeWorkout"><Pencil class="h-4 w-4" />Personalizar nova versão</button></div></div>
                 <div class="grid gap-4 border-b border-[var(--wn-line)] p-5 sm:grid-cols-3"><MiniKpi label="Frequencia" :value="`${currentWorkout.sessionsPerWeek}x por semana`" caption="Sessoes planejadas" /><MiniKpi label="Duracao" :value="`${currentWorkout.durationWeeks} semanas`" caption="Ciclo do programa" /><MiniKpi label="Divisao" :value="`${currentWorkout.days.length} dias`" caption="Rotinas cadastradas" /></div>
                 <div class="p-5"><h3 class="font-semibold">Dias do treino</h3><div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><article v-for="(day, index) in currentWorkout.days" :key="day.id" class="rounded-xl border border-[var(--wn-line)] bg-[var(--wn-surface-soft)] p-4"><div class="flex items-center justify-between"><span class="grid h-8 w-8 place-items-center rounded-lg bg-white text-sm font-bold">{{ index + 1 }}</span><span class="text-xs text-[var(--wn-muted)]">{{ day.exercisesCount }} exercicios</span></div><p class="mt-3 font-semibold">{{ day.name }}</p><p class="mt-1 text-sm text-[var(--wn-muted)]">{{ day.focus || 'Foco geral' }}</p></article></div></div>
             </section>
@@ -497,6 +497,22 @@ const assignWorkout = async (workout) => {
         await window.axios.post(`/api/students/${student.value.id}/workouts/${workout.id}`);
         await loadWorkouts();
         workoutPickerOpen.value = false;
+    } finally { assigningWorkout.value = false; }
+};
+
+const closeWorkout = async () => {
+    if (!currentWorkout.value || !window.confirm('Encerrar a ficha deste aluno? O uso será bloqueado imediatamente. A ficha e as sessões serão preservadas no histórico.')) return;
+    const assignmentId = currentWorkout.value.assignmentId;
+    assigningWorkout.value = true;
+    formMessage.value = '';
+    try {
+        await window.axios.post(`/api/students/${student.value.id}/workout-plans/${assignmentId}/close`);
+        await loadWorkouts();
+        formMessageType.value = 'success';
+        formMessage.value = 'Ficha encerrada. O histórico foi preservado.';
+    } catch (e) {
+        formMessageType.value = 'error';
+        formMessage.value = e.response?.data?.message ?? 'Não foi possível encerrar a ficha.';
     } finally { assigningWorkout.value = false; }
 };
 
