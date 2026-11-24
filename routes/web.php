@@ -168,6 +168,7 @@ Route::prefix('api')->group(function () {
         Route::get('/students/{student}/workouts', [StudentController::class, 'workouts'])->middleware(EnsureOrganizationModule::class.':workouts');
         Route::post('/students/{student}/workouts/{workout}', [StudentController::class, 'assignWorkout'])->middleware(EnsureOrganizationModule::class.':workouts');
         Route::post('/students/{student}/workout-plans/{plan}/renew', [StudentController::class, 'renewWorkout'])->middleware(EnsureOrganizationModule::class.':workouts');
+        Route::post('/students/{student}/workout-plans/{plan}/close', [StudentController::class, 'closeWorkout'])->middleware(EnsureOrganizationModule::class.':workouts');
         Route::post('/students/{student}/charges', [StudentController::class, 'generateCharge'])->middleware(EnsureOrganizationModule::class.':finance');
         Route::post('/charges/{charge}/send', [StudentController::class, 'sendCharge'])->middleware(EnsureOrganizationModule::class.':finance');
         Route::post('/charges/{charge}/pay', [StudentController::class, 'payCharge'])->middleware(EnsureOrganizationModule::class.':finance');

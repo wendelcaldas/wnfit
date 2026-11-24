@@ -67,11 +67,11 @@
                             {{
                                 plan.accessStatus === "expired" ? "Vencida" : plan.status === "ativo"
                                     ? "Publicada"
-                                    : "Substituída"
+                                    : "Encerrada ou substituída"
                             }}</span
                         >
                     </summary>
-                    <div v-if="plan.accessStatus === 'expired'" class="mt-4 flex flex-wrap gap-3">
+                    <div v-if="['expired', 'closed'].includes(plan.accessStatus)" class="mt-4 flex flex-wrap gap-3">
                         <button v-if="plan.durationWeeks > 0" class="btn-secondary" :disabled="busy" @click="$emit('renew', plan)">
                             Renovar por {{ plan.durationWeeks }} semanas
                         </button>

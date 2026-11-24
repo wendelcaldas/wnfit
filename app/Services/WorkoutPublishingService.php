@@ -48,6 +48,19 @@ class WorkoutPublishingService
         return $this->replaceAssignment($student, $plan->treino_id, $plan->snapshot, $publisher, $endsOn);
     }
 
+    public function close(Aluno $student, StudentWorkoutPlan $plan): StudentWorkoutPlan
+    {
+        return DB::transaction(function () use ($student, $plan) {
+            Aluno::whereKey($student->id)->lockForUpdate()->firstOrFail();
+            $plan = StudentWorkoutPlan::where('aluno_id', $student->id)->findOrFail($plan->id);
+            abort_unless($plan->status === 'ativo', 422, 'Esta ficha já foi encerrada.');
+            StudentWorkoutPlan::where('aluno_id', $student->id)->where('status', 'ativo')->update(['status' => 'encerrado']);
+            $student->treinos()->updateExistingPivot($student->treinos()->pluck('treinos.id'), ['ativo' => false]);
+
+            return $plan->refresh();
+        });
+    }
+
     private function replaceAssignment(Aluno $student, ?int $workoutId, array $snapshot, ?int $publisher, ?string $endsOn): StudentWorkoutPlan
     {
         $weeks = filter_var($snapshot['durationWeeks'] ?? null, FILTER_VALIDATE_INT, [
